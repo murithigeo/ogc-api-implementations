@@ -1,0 +1,37 @@
+{
+    
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "moduleResolution": "NodeNext",
+        "allowUnreachableCode": false,
+        "checkJs": false,
+        "allowJs": true,
+        "target": "ESNext",
+        "isolatedModules": false,
+        "pretty": true,
+        "outDir": "build",
+        "module": "NodeNext",
+        "strict": false,
+        "esModuleInterop": true,
+        "types": [
+            //"vite/client",
+            "node"
+        ],
+        "typeRoots": [
+            "./node_modules/@types"
+        ],
+        "skipDefaultLibCheck": false,
+        //"esModuleInterop": true,
+    },
+    "include": [
+        "./*.ts",
+        "src/**/*",
+    ],
+    "exclude": [
+        "node_modules",
+        ]
+}

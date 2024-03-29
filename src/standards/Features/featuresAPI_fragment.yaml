@@ -1,0 +1,35 @@
+paths:
+  '/collections/{collectionId}/items':
+    x-exegesis-controller: featuresController
+    get:
+      operationId: getFeatures
+      parameters:
+        - $ref: '#/components/parameters/collectionId'
+        - $ref: '#/components/parameters/bbox'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/datetime'
+        - $ref: '#/components/parameters/crs'
+        - $ref: '#/components/parameters/bbox-crs'
+      responses:
+        '200':
+          description: Features retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+  '/collections/{collectionId}/items/{featureId}':
+    x-exegesis-controller: featuresController
+    get:
+      operationId: getOneFeature
+      parameters:
+        - $ref: '#/components/parameters/collectionId'
+        - $ref: '#/components/parameters/featureId'
+        - $ref: '#/components/parameters/crs'
+      responses:
+        '200':
+          description: Feature retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object

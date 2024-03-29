@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "name": "ogc-api-implementations",
+  "author": {
+    "name": "Edwin Gichuru",
+    "url": "https://github.com/murithigeo"
+  },
+  "license":"Apache-2.0",
+  "description": "OGC API Implementations",
+  "main": "./src/server.ts",
+  "scripts": {
+    "dev": "npx nodemon -exec",
+    "start": "npx ts-node src/server.ts"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/express": "^4.17.21",
+    "@types/js-yaml": "^4.0.9",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.11.30",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
+    "exegesis-express": "^4.0.0",
+    "express": "^4.19.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.1.0",
+    "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
+    "querystring": "^0.2.1",
+    "sequelize": "^6.37.1",
+    "ts-node": "^10.9.2"
+  }
+}
