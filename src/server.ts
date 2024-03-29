@@ -41,7 +41,7 @@ serverConfig.servers.push({
     url: `http://${ips}:${PORT}`,
     description: 'Localhost IP'
 });
-})
+})();
 
 //Run the function to initialize the OAS docs after the baseURL has been set
 initOASDocs();
