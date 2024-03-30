@@ -1,0 +1,7 @@
+servers:
+- url: http://localhost
+  description: "Local server"
+models:
+- modelName: gppdb
+  collectionId: gppdb
+  standards: [Features,Catalogue]
