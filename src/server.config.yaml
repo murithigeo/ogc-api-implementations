@@ -5,3 +5,5 @@ models:
 - modelName: gppdb
   collectionId: gppdb
   standards: [Features,Catalogue]
+activeStandards:
+-

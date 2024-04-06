@@ -1,5 +1,5 @@
 paths:
-  '/collections/{collectionId}/items':
+  '/features/collections/{collectionId}/items':
     x-exegesis-controller: featuresController
     get:
       operationId: getFeatures
@@ -18,7 +18,7 @@ paths:
             application/json:
               schema:
                 type: object
-  '/collections/{collectionId}/items/{featureId}':
+  '/features/collections/{collectionId}/items/{featureId}':
     x-exegesis-controller: featuresController
     get:
       operationId: getOneFeature

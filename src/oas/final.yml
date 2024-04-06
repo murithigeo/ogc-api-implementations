@@ -736,4 +736,6 @@ components:
         type: string
 servers:
   - url: http://localhost
-    description: Localhost server
+    description: Localhost
+  - url: http://192.168.117.225:80
+    description: Localhost IP

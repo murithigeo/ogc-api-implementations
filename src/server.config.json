@@ -1,0 +1,8 @@
+{
+    "modelsConfig":[],
+    "servers": [{
+        "url": "http://localhost",
+        "description": "Localhost"
+    }],
+    "port": 3000
+}
