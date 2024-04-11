@@ -1,10 +1,14 @@
 
+//OpenAPI Object
+/**
+ * @author exegesis
+ */
 type CollectionId = string | number;
 
 interface ModelsConfig {
     modelName: string;
     collectionId: CollectionId;
-    license: string;
+    license?: string;
 }
 
 /**
@@ -13,9 +17,12 @@ interface ModelsConfig {
  * @prop Connected Systems @alias ConnectedSystems @external https://ogcapi.ogc.org/connectedsystems
  * 
  */
-type OgcStandard = 'Features' | 'Common' | 'ConnectedSystems' | 'Coverages' | 'DGGS' | 'EDR' |
+type OgcStandard = 'Template' | 'Features' | 'Common' | 'ConnectedSystems' | 'Coverages' | 'DGGS' | 'EDR' |
     'SensorThings' | 'Joins' | 'Maps' | 'MovingFeatures' | 'Processes' | 'Records' | 'Routes' | 'Styles' | 'Tiles';
 
+/**
+ * @o
+ */
 
 export interface APIConfig {
     modelsConfig: ModelsConfig[];

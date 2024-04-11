@@ -10,7 +10,7 @@
   "main": "./src/server.ts",
   "scripts": {
     "dev": "npx nodemon -exec",
-    "start": "npx ts-node src/server.ts"
+    "build": "npx ts-node ./src/server.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

@@ -6,4 +6,7 @@ models:
   collectionId: gppdb
   standards: [Features,Catalogue]
 activeStandards:
--
+- pathToDoc: ../standards/Features/docFragment.yaml
+  standard: Features
+- pathToDoc: ./main.yaml
+  standard: Template

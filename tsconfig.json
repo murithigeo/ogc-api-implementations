@@ -14,7 +14,7 @@
         "isolatedModules": false,
         "pretty": true,
         "outDir": "build",
-        "module": "NodeNext",
+        "module": "Node16",
         "strict": false,
         "esModuleInterop": true,
         "types": [
