@@ -1,4 +1,14 @@
 paths:
+  '/features/':
+    x-exegesis-controller: featuresController
+    get:
+      x-exegesis-operationId: getLandingPage
+      responses:
+        '200':
+          description: Ok.
+          content:
+            application/json:
+              type: object
   '/features/collections/{collectionId}/items':
     x-exegesis-controller: featuresController
     get:
