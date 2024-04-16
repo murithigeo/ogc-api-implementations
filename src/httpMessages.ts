@@ -7,7 +7,8 @@ export const httpMessages= {
         userDoesnotExist: "User dooes not Exist"
     },
     queryparameters: {
-        crs: "Invalid crs or bbox-crs",
+        crs: "Invalid crs",
+        bboxcrs: "Invalid bbox-crs",
         otherparams: "Check and Ensure Documented Query Parameters are Being Used",
     },
     resources:{

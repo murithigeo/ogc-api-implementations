@@ -11,8 +11,8 @@ trs: "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
 
 
 standards:
-- standard: 'Feature'
-  pathToDoc: ../standards/Features/index.yaml
+- standard: 'features'
+  pathToDoc: ../standards/features/index.yaml
   defaultOptions:
     crs: 
       $ref: '#/allcrs'

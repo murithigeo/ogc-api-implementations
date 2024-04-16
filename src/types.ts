@@ -13,8 +13,8 @@ interface SupportedCrs {
  * @interface OGCStandards A type that enums standards that can be defined for the server
  * @type string
  */
-type Standards = 'Features' | 'Common' | 'ConnectedSystems' | 'Coverages' | 'DGGS' | 'EDR' |
-    'SensorThings' | 'Joins' | 'Maps' | 'MovingFeatures' | 'Processes' | 'Records' | 'Routes' | 'Styles' | 'Tiles';
+type Standards = 'features' | 'common' | 'connectedsystems' | 'coverages' | 'dggs' | 'edr' |
+    'sensorthings' | 'joins' | 'maps' | 'movingfeatures' | 'processes' | 'records' | 'routes' | 'styles' | 'tiles';
 type trs = string;
 
 //export type supportedLangs = 'en' | 'sw';
@@ -63,5 +63,23 @@ interface ServersArray {
 export interface ServerConfig {
     servers?: ServersArray[]; //nullish because of development mode
     standards: StandardsInterface[]
-    };
+};
 
+export interface Link {
+    rel: string;
+    href: string;
+    type: string;
+    title: string;
+    hreflang?: string;
+    length?: number;
+}
+
+
+export interface Crs_prop {
+    uri?: string;
+    version: number;
+    code: string | number;
+    srid: number;
+    authority: string;
+    isGeographic: boolean;
+}

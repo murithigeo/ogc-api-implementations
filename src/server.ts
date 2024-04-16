@@ -15,7 +15,7 @@ process.env.NODE_ENV = 'dev'; //This also assumes that the development occurs lo
 
 const serverConfig = YAML.load(fs.readFileSync(path.join(__dirname, '.', 'server.config.yaml'), 'utf-8')) as ServerConfig;
 fs.writeFileSync(path.resolve(__dirname, 'server.config.json'), JSON.stringify(serverConfig));
-console.log(serverConfig)
+//console.log(serverConfig)
 //
 if (process.env.NODE_ENV === 'dev') {
     var ifaces: any = os.networkInterfaces();
@@ -31,14 +31,22 @@ if (process.env.NODE_ENV === 'dev') {
     });
     const devServers = [
         {
-            url: `http://${ips}`,
-            description: `IP Adress of the local development machine. Used for testing OGC API Endpoints`
-        },
-        {
             url: 'http://localhost',
             description: `Localhost address. Used for testing OGC API Endpoints`
         }
     ];
+
+    //if dev machine is not connected to a LAN, the ips = 0 which is not a valid URL
+    if (ips !== 0) {
+        devServers.push({
+            url: `http://${ips}`,
+            description: `IP Adress of the local development machine. Used for testing OGC API Endpoints`
+        })
+    }
+    /**
+     * if @var ServersArray is nullish, instanciate the servers object
+     * if not nullish, just push to it
+     */
     !serverConfig.servers ? serverConfig.servers = devServers : serverConfig.servers.push(...devServers);
 }
 
@@ -48,6 +56,7 @@ export { serverConfig };
 //ExegesisOptions
 
 const exegesisOptions: exegesisExpress.ExegesisOptions = {
+    
     controllersPattern: '**/*.@(ts)',
     allowMissingControllers: false,
     ignoreServers: false,
@@ -85,12 +94,19 @@ async function createServer(standards: StandardsInterface[]) {
     // Instead of passing a path to final file, just leave file as is and push servers array into object at startup
     // Instead of using a controller & scalar CDN to render the OAS Doc, use the NPM Package.
 
-    for (const standard of standards) {
-        exegesisOptions.controllers = './standards/' + standard.standard + '/controllers';
-        generateOasObject(standard).then(async() => {
-            app.use('/' + standard.standard, await exegesisExpress.middleware('./oas/' + standard.standard + 'OAS.yml', exegesisOptions));
-        
-        })
+    for (const standardIstance of standards) {
+        exegesisOptions.controllers = path.resolve(__dirname, './standards/' + standardIstance.standard + '/controllers');
+        //console.log(exegesisOptions)
+        generateOasObject(standardIstance).then(openAPIObject => {
+            //console.log(standard)
+            //app.use(`/${standard.standard}`, await exegesisExpress(doc),exegesisOptions)
+            exegesisExpress.middleware(
+                openAPIObject
+                //path.resolve(__dirname,'./oas/' + standard.standard + 'OAS.yml')
+                , exegesisOptions).then(exegesisInstance => {
+                    app.use(`/${standardIstance.standard}`, exegesisInstance)
+                });
+        });
     }
     const server = http.createServer(app);
     return server;

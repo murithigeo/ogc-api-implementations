@@ -1,0 +1,22 @@
+openapi: 3.1.0
+info:
+  version: v1.0.1
+  title: >
+    A production ready-ish implementation of OGC API Standards.
+  contact:
+    name: OGC API Implementations
+    email: murithigeoxy@gmail.com
+    url: https://github.com/murithigeo
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+tags:
+  - name: EDR
+    description: Environmental Data Retrieval Endpoints.
+  - name: Features
+    description: Features Standard Endpoints.
+securitySchemes:
+  BasicAuth:
+    type: http
+    scheme: basic
+  
