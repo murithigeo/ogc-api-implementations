@@ -20,7 +20,15 @@ type trs = string;
 //export type supportedLangs = 'en' | 'sw';
 type CollectionId = string | number; //A collection can be accessed using a string/number
 
+/**
+ * @interface boundingboxQueryItems
+ */
 
+export type boundingboxQueryItems = [number,number,number, number];
+
+/**
+ * @interface boundingboxQueryItems_h
+ */
 /**
  * @interface FeatureStandardConfig Defines the collections available for querying on the /features endpoint
  */
@@ -76,6 +84,9 @@ export interface Link {
 
 
 export interface Crs_prop {
+    /**
+     * @type uri formed by computing `http://www.opengis.net/def/crs/{authority}/{version}/{code}
+     */
     uri?: string;
     version: number;
     code: string | number;
@@ -83,3 +94,23 @@ export interface Crs_prop {
     authority: string;
     isGeographic: boolean;
 }
+
+export interface Feature {
+    geometry: {
+        type: string;
+        coordinates: any;
+    };
+    id: string | number;
+    type: 'Feature';
+    properties?: {
+        [key: string | number]: string | boolean | number;
+    }
+};
+export interface FeatureCollection {
+    type: 'FeatureCollection';
+    numberMatched?: number;
+    numberReturned?: number;
+    timeStamp?: string;
+    features: Feature[];
+    links?: Link[]
+};

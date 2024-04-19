@@ -10,6 +10,8 @@ import { apiKeyAuthenticator } from './authentication/apikey';
 import { basicAuthenticator } from './authentication/basicAuth';
 import YAML from 'js-yaml';
 import { generateOasObject } from './oas';
+import { HFICModel } from './standards/features/components/db_functions/dbActions';
+import sequelize from './dbconnection';
 process.env.NODE_ENV = 'dev'; //This also assumes that the development occurs locally
 
 
@@ -17,6 +19,9 @@ const serverConfig = YAML.load(fs.readFileSync(path.join(__dirname, '.', 'server
 fs.writeFileSync(path.resolve(__dirname, 'server.config.json'), JSON.stringify(serverConfig));
 //console.log(serverConfig)
 //
+
+//check if model works 
+
 if (process.env.NODE_ENV === 'dev') {
     var ifaces: any = os.networkInterfaces();
     var ips: any = 0;
