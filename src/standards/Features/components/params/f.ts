@@ -1,27 +1,16 @@
-interface F_ContentTypes {
+import { ExegesisContext } from "exegesis-express";
+
+export interface ContentNegotiationObject {
     f: string;
     type: string;
 }
 
-const possibleContentTypes: F_ContentTypes[] = [
-    {
-        f: 'html',
-        type: 'text/html'
-    },
-    {
-        f: 'json',
-        type: 'application/json'
-    },
-    {
-        f: 'json',
-        type: 'application/geo+json'
-    },
-    {
-        f: 'json',
-        type: 'application/vnd.oai.openapi+json;version=3.0'
-    },
-    {
-        f: 'gpkg',
-        type: 'application/geopackage+sqlite3'
-    }
-]; 
+export async function initializeF(context: ExegesisContext, allowed_f_values: ContentNegotiationObject[]) {
+    const current_f_param = !context.params.query.f ? 'json' : context.params.query.f;
+    /**
+     * @param nonDuplicated_ContentTypes Ensure that the f value is not duplicated
+     */
+    const self_f_types = allowed_f_values.filter(obj => obj.f === current_f_param);
+    const alternate_f_types = allowed_f_values.filter(obj => obj.f !== current_f_param);
+    return { self_f_types, alternate_f_types };
+}

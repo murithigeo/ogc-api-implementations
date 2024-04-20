@@ -134,3 +134,7 @@ createServer(serverConfig.standards)
             process.exit(1)
         });
 
+function next(err?: Error, value?: void): void {
+    throw new Error('Function not implemented.');
+}
+

@@ -18,13 +18,13 @@ type Standards = 'features' | 'common' | 'connectedsystems' | 'coverages' | 'dgg
 type trs = string;
 
 //export type supportedLangs = 'en' | 'sw';
-type CollectionId = string | number; //A collection can be accessed using a string/number
-
+export type CollectionId = string | number; //A collection can be accessed using a string/number
+export type FeatureId = string | number;
 /**
  * @interface boundingboxQueryItems
  */
 
-export type boundingboxQueryItems = [number,number,number, number];
+export type boundingboxQueryItems = [number, number, number, number];
 
 /**
  * @interface boundingboxQueryItems_h
@@ -114,3 +114,15 @@ export interface FeatureCollection {
     features: Feature[];
     links?: Link[]
 };
+
+export interface RawGeoDataResult {
+    geom: {
+        //Normally crs obj includes additional metadata for each record
+        crs: {};
+        type: string;
+        //Do not trigger any error, let PostGIS return whatever coordinates object. Typechecking to be added
+        coordinates: any;
+    };
+    id: string | number;
+    [key: string]: any
+}

@@ -13,5 +13,6 @@ export const httpMessages= {
     },
     resources:{
         404: "Does not Exist on this Server",
+        500: "Server Failed to Process Request"
     }
 }
