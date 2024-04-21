@@ -10,7 +10,7 @@ export async function initializeF(context: ExegesisContext, allowed_f_values: Co
     /**
      * @param nonDuplicated_ContentTypes Ensure that the f value is not duplicated
      */
-    const self_f_types = allowed_f_values.filter(obj => obj.f === current_f_param);
-    const alternate_f_types = allowed_f_values.filter(obj => obj.f !== current_f_param);
-    return { self_f_types, alternate_f_types };
+    const selfOptions = allowed_f_values.filter(obj => obj.f === current_f_param);
+    const alternateOptions = allowed_f_values.filter(obj => obj.f !== current_f_param);
+    return { selfOptions, alternateOptions };
 }

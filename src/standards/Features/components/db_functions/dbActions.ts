@@ -57,10 +57,11 @@ export const HFICModel = (sequelize: Sequelize) => {
      * Check if [hfic] table exists in the database.
      * If it does not, sync the database
      */
+    /*
     (async () => {
 
         await model.sync().then(dbResult => {
-            if (dbResult) {
+            if (!dbResult) {
                 console.log(`sequelize has detected the requisite table does not exist in db.\n Creating table in DB`);
             }
         });
@@ -92,6 +93,7 @@ export const HFICModel = (sequelize: Sequelize) => {
             });
         };
     })();
+     */
     return model;
 };
 

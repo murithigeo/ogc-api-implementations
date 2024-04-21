@@ -22,8 +22,16 @@ exports.getItems = async function (context: ExegesisContext) {
             context.res.status(400).setBody({ message: `Invalid bbox Coord. Ref. Sys. Param ('bbox-crs') Requested: ${context.params.query['bbox-crs']}` })
         }
     } else {
+        const v = await generateLinks(context, [{
+            f: 'json',
+            type: 'application/geo+json',
+        },
+        {
+            f: 'html',
+            type: 'text/html'
+        }]);
+        console.log(v)
         try {
-            const v =await generateLinks('specificCollection', context, 'collection')
 
             const { count, rows } = await retrieveItems(context);
             const featuresAray = await parseGeoJson(rows as unknown as RawGeoDataResult[], 'geom', 'id');
