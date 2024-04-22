@@ -8,7 +8,12 @@ interface SupportedCrs {
     authority: string; //The Authority that governs the CRS defined in ./uri
     isGeographic: boolean; //Denotes whether the CRS is projected (uses x,y axis-order) or Geographic(uses y,x axis-order)
 }
+/**
+ * @type DbResultCount 
+ * The number of features in table that matched the query
+ */
 
+export type DbResultCount=number;
 /**
  * @interface OGCStandards A type that enums standards that can be defined for the server
  * @type string
@@ -74,10 +79,10 @@ export interface ServerConfig {
 };
 
 export interface Link {
-    rel: string;
+    rel:  'items'|'data'|'collection'|'self'|'prev'|'next'|'alternate'|'service-desc'|'service-doc'|'enclosure'|string|'conformance'|'license';
     href: string;
     type: string;
-    title: string;
+    title:string;
     hreflang?: string;
     length?: number;
 }

@@ -1,5 +1,5 @@
 paths:
-  '/':
+  '/features/':
     x-exegesis-controller: landingpageController
     get:
       x-exegesis-operationId: getLandingPage
@@ -15,7 +15,7 @@ paths:
             text/html:
               schema: 
                 type: string
-  '/conformance':
+  '/features/conformance':
     x-exegesis-controller: conformanceController
     description: >
       Access the conformance classes of this server (endpoint root)
@@ -33,7 +33,7 @@ paths:
             text/html:
               schema:
                 type: string
-  '/api':
+  '/features/api':
     x-exegesis-controller: apiController
     get:
       x-exegesis-operationId: getServiceDesc
@@ -48,7 +48,7 @@ paths:
             application/vnd.oai.openapi+json;version=3.0:
               schema:
                 type: object
-  '/api.html':
+  '/features/api.html':
     x-exegesis-controller: apiController
     get:
       x-exegesis-operationId: getServiceDoc
@@ -60,7 +60,7 @@ paths:
           content:
             text/html:
               type: string
-  '/collections':
+  '/features/collections':
     x-exegesis-controller: collectionsController
     get:
       x-exegesis-operationId: getCollectionsAll
@@ -86,7 +86,7 @@ paths:
                     minItems: 1
                     items:
                       $ref: '#/components/schemas/Collection'
-  '/collections/{collectionId}':
+  '/features/collections/{collectionId}':
     x-exegesis-controller: collectionsController
     parameters:
       - $ref: '#/components/parameters/collectionId'
@@ -105,7 +105,7 @@ paths:
             text/html:
               schema:
                 type: string
-  '/collections/{collectionId}/items':
+  '/features/collections/{collectionId}/items':
     x-exegesis-controller: featuresController
     get:
       operationId: getItems
@@ -130,7 +130,7 @@ paths:
             text/html:
               schema:
                 type: string
-  '/collections/{collectionId}/items/{featureId}':
+  '/features/collections/{collectionId}/items/{featureId}':
     x-exegesis-controller: featuresController
     get:
       operationId: getItems

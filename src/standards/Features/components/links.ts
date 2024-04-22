@@ -1,93 +1,9 @@
 import { ExegesisContext } from "exegesis-express";
 import { CollectionId, Link, FeatureId } from "../../../types";
 import { ContentNegotiationObject, initializeF } from "./params/f";
-import url from 'url';
+import { URL } from 'url';
 import coreServerQueryParams from "./params";
-async function filterQueryParams(context: ExegesisContext, excludedQueryParams: string[]) {
-    let queryParamString: string = ''; //Initialize the part of URL containing parameters
-    for (const [key, value] of Object.entries(context.params.query)) {
-        if (value !== undefined && !excludedQueryParams.includes(key)) {
-            queryParamString += `&${key}=${encodeURIComponent(value as string | boolean | number)}`;
-        };
-    };
-    return queryParamString;
-};
-async function generateResourceUrl(context: ExegesisContext) {
-    const url: string = context.api.serverObject.url + context.req.url + '/features'; //Because '
-    return url;
-};
-async function hasPageScenarios(count: number, offset: number, limit: number, hasNextPage: boolean, hasPrevPage: boolean) {
-    /**
-     * @param count because in a similar scenario where FeatureCollection.features.length<1(0), then there are no next or prev pages
-     */
-    if (count < 1) {
-        hasNextPage = false;
-        hasPrevPage = false;
-    } else if (count === offset) {
-        //This scenario is if @param count is equal to offset
-        //In this scenario, offset effectively skips over all the features that have matched the query
-        hasPrevPage = true;
-        hasNextPage = false;
-    };
-    return { hasNextPage, hasPrevPage };
-}
-async function generateSelfAlternateLinks(context: ExegesisContext, selfOptions: ContentNegotiationObject[], alternateOptions: ContentNegotiationObject[], queryString: string,) {
-    const resourceUrl = generateResourceUrl(context);
-    let links: Link[] = [];
-    for (const object of selfOptions) {
-        links.push({
-            rel: `self`,
-            title: `Document as ${object.f}`,
-            href: `${resourceUrl + queryString}`,
-            type: `${object.type}`
-        });
-    };
 
-    /**
-     * Generate @interface Link objects where f=alternate
-     */
-    for (const object of alternateOptions) {
-        links.push({
-            rel: 'alternate',
-            title: `This document as ${object.f} `,
-            href: `${resourceUrl + queryString}`,
-            type: `${object.type}`
-        });
-    };
-    return links;
-};
-
-
-async function generatePrevNextLinks(context: ExegesisContext, count: number, selfOptions: ContentNegotiationObject[], queryString: string) {
-    let links: Link[] = [];
-    const resourceUrl = generateResourceUrl(context);
-    let { prevPageOffset, nextPageOffset, hasNextPage, hasPrevPage, offset, limit } = await coreServerQueryParams(context);
-
-    hasNextPage = (await hasPageScenarios(count, offset, limit, hasNextPage, hasNextPage)).hasNextPage;
-    hasPrevPage = (await hasPageScenarios(count, offset, limit, hasNextPage, hasPrevPage)).hasPrevPage;
-    if (hasPrevPage === true) {
-        for (const linkParams of selfOptions) {
-            links.push({
-                rel: `prev`,
-                title: `Next Page of results`,
-                href: `${resourceUrl}?f=${linkParams.f}&offset=${prevPageOffset + queryString}`,
-                type: `${linkParams.type}`
-            });
-        };
-    };
-
-    if (hasNextPage === true) {
-        for (const linkParams of selfOptions) {
-            links.push({
-                rel: `next`,
-                title: `next Page of results`,
-                href: `${resourceUrl}?f=${linkParams.f}&offset=${nextPageOffset + queryString}`,
-                type: `${linkParams.type}`
-            });
-        };
-    };
-    return links;
-}
 
 
 export async function generateLinks(
@@ -152,7 +68,7 @@ export async function generateLinks(
             //const url = new URL('http://localhost/features/collections/x/items/f');
 
             // Remove the last path segment
-            baseURL.pathname = (baseURL.pathname.slice(0, -baseURL.pathname.split('/').pop().length))
+            resourceUrl.pathname = (baseURL.pathname.slice(0, -baseURL.pathname.split('/').pop().length))
             baseURL.toString();
 
             //console.log(url.toString()); // Output: http://localhost/features/collections/x/items
@@ -179,6 +95,12 @@ export async function generateLinks(
             links.push(...nextPrevLinks);
             break;
         case 'Landing':
+            /**
+             * @interface Link generate two links for @rel data (html/json)
+             */
+            for (const linkParams of alternateOptions && selfOptions) {
+                links.push
+            }
             links.push(
                 {
                     rel: 'conformance',
@@ -192,6 +114,7 @@ export async function generateLinks(
                     href: `${resourceUrl}/api`,
                     title: `View the OpenApi Document as an interactive console`
                 },
+
                 {
                     rel: `data`,
                     type: `${selfOptions[0].type}`,
