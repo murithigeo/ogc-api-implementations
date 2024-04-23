@@ -8,8 +8,6 @@ import { ExegesisContext } from 'exegesis-express';
 import coreServerQueryParams from '../params';
 
 
-
-
 //Define the database model for the data
 export const HFICModel = (sequelize: Sequelize) => {
     const model = sequelize.define('hfic', {
@@ -50,7 +48,8 @@ export const HFICModel = (sequelize: Sequelize) => {
                     ]
                 }
             }
-        }
+        },
+
     });
 
     /**

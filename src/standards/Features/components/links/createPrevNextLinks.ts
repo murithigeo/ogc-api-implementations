@@ -9,31 +9,38 @@ export default async function createPrevNextLinks(context: ExegesisContext, coun
     let { hasNextPage, hasPrevPage, limit, offset, nextPageOffset, prevPageOffset } = await coreServerQueryParams(context);
     const linkToCurrentEndpoint = await createUrlToCurrentEndpoint(context);
 
+    console.log(`_hasNextPage: ${hasNextPage}`)
+    console.log(`_hasPrevPage: ${hasPrevPage}`) 
     //Ensure that boolean conditions for including prev & next links are mutated if they meet the conditions
     hasNextPage = (await verifyHas_NextPrevStatus(context, count)).hasNextPage;
     hasPrevPage = (await verifyHas_NextPrevStatus(context, count)).hasPrevPage;
 
+    console.log(`hasNextPage: ${hasNextPage}`)
+    console.log(`hasPrevPage: ${hasPrevPage}`)
+
     let links: Link[] = []
     //
     if (hasPrevPage === true) {
-        for (const selfLinkConfigObj of selfOptions) {
+        queryString += `&offset=${prevPageOffset}&limit=${limit}`
+        for (const option of selfOptions) {
             links.push({
                 rel: `prev`,
                 title: `Previous page of results`,
-                href: `${linkToCurrentEndpoint}?f=${selfLinkConfigObj.f + queryString}`,
-                type: selfLinkConfigObj.type
+                href: `${linkToCurrentEndpoint + queryString}& f=${option.f} `,
+                type: option.type
             });
         };
         if (hasNextPage === true) {
-            for (const selfLinkConfigObj of selfOptions) {
+            queryString += `& offset=${nextPageOffset}& limit=${limit} `
+            for (const option of selfOptions) {
                 links.push({
                     rel: 'next',
                     title: `Next page of results`,
-                    href: `${linkToCurrentEndpoint}?f=${selfLinkConfigObj.f + queryString}`,
-                    type: selfLinkConfigObj.type
+                    href: `${linkToCurrentEndpoint + queryString}& f=${option.f} `,
+                    type: option.type
                 });
             }
         };
-        return links;
-    }
+    };
+    return links;
 };

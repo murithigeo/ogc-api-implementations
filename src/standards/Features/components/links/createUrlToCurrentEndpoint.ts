@@ -8,6 +8,7 @@ import { ExegesisContext } from "exegesis-express";
  * 
  */
 export default async function createUrlToCurrentEndpoint(context: ExegesisContext): Promise<URL> {
-    const url = new URL(context.api.serverObject.url + context.req.url);
+    let url = new URL(context.api.serverObject.url + context.req.url);
+    url.search = '';
     return url;
 };

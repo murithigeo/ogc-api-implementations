@@ -7,7 +7,8 @@ import { httpMessages } from "../../../httpMessages";
 import { retrieveItems } from "../components/db_functions/dbActions";
 import { parseGeoJson } from "../components/parseGeoJson";
 import { RawGeoDataResult } from "../../../types";
-import { generateLinks } from "../components/links";
+import createLinksForObjects from "../components/links";
+import { ContentNegotiationObject } from "../components/params/f";
 
 exports.getItems = async function (context: ExegesisContext) {
     const { limit, offset, contentcrsHeader, bbox, validated_bboxcrs, validated_crs, unexpectedParams, flipCoords } = await coreServerQueryParams(context);
@@ -22,14 +23,13 @@ exports.getItems = async function (context: ExegesisContext) {
             context.res.status(400).setBody({ message: `Invalid bbox Coord. Ref. Sys. Param ('bbox-crs') Requested: ${context.params.query['bbox-crs']}` })
         }
     } else {
-        const v = await generateLinks(context, [{
-            f: 'json',
-            type: 'application/geo+json',
-        },
-        {
-            f: 'html',
-            type: 'text/html'
-        }]);
+        console.log(context.req.url)
+        const contentNegotiation_Values: ContentNegotiationObject[] = [
+            { f: 'json', type: 'application/geo+json' },
+            { f: 'html', type: 'text/html' }
+        ];
+        const queryParamsToIgnore: string[] = ['limit,offset', 'f'];
+        const v = await createLinksForObjects('FeatureCollection', context, contentNegotiation_Values, queryParamsToIgnore,1000)
         console.log(v)
         try {
 

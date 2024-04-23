@@ -23,8 +23,8 @@ export async function initializeLimitOffset(context: ExegesisContext) {
      * @param hasPrevPage @type boolean If offset is less than 0, then no features have been skipped, meaning no previous link is present;
      * @param hasNextPage @type boolean If offse
      */
-    const hasPrevPage: boolean = offset < 1 || offset - limit === 0 ? false : true;
-    const hasNextPage: boolean = offset - limit < 1 || offset - limit === 1 ? false : true;
+    const hasPrevPage: boolean = offset < 1 || offset - limit <0 ? false : true;
+    const hasNextPage: boolean = offset - limit < 0 /**|| offset - limit === 1 */? false : true;
 
     return { offset, limit, prevPageOffset, nextPageOffset, hasNextPage, hasPrevPage };
 };

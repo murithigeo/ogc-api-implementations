@@ -79,7 +79,7 @@ export interface ServerConfig {
 };
 
 export interface Link {
-    rel:  'items'|'data'|'collection'|'self'|'prev'|'next'|'alternate'|'service-desc'|'service-doc'|'enclosure'|string|'conformance'|'license';
+    rel:  'items'|'data'|'collection'|'self'|'prev'|'next'|'alternate'|'service-desc'|'service-doc'|'enclosure'|'conformance'|'license';
     href: string;
     type: string;
     title:string;

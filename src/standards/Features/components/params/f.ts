@@ -11,6 +11,10 @@ export async function initializeF(context: ExegesisContext, allowed_f_values: Co
      * @param nonDuplicated_ContentTypes Ensure that the f value is not duplicated
      */
     const selfOptions = allowed_f_values.filter(obj => obj.f === current_f_param);
+    if(selfOptions.length>1){
+        throw new Error('Only one link object can have the `self` rel prop')
+    }
     const alternateOptions = allowed_f_values.filter(obj => obj.f !== current_f_param);
+    
     return { selfOptions, alternateOptions };
 }
