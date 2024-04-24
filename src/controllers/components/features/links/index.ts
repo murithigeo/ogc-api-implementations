@@ -3,11 +3,11 @@ import { CollectionId, Link, FeatureId } from "../../../../types";
 import { ContentNegotiationObject, initializeF } from "../params/f";
 import { URL } from 'url';
 import coreServerQueryParams from "../params";
-import createSelfAltLinks from "../links/createSelfAltLinks";
-import filter_generateQueryParamString from "../links/createQueryString";
-import { createLinksToCollectionFromFeature, createLinksToCollectionFromItems, createLinksToItemsFromCollection, createLinksToItemsFromFeature } from "../links/createLinksToNestedResource";
-import createUrlToCurrentEndpoint from "../links/createUrlToCurrentEndpoint";
-import createPrevNextLinks from "../links/createPrevNextLinks";
+import createSelfAltLinks from "./createSelfAltLinks";
+import filter_generateQueryParamString from "./createQueryString";
+import { createLinksToCollectionFromFeature, createLinksToCollectionFromItems, createLinksToItemsFromCollection, createLinksToItemsFromFeature } from "./createLinksToNestedResource";
+import createUrlToCurrentEndpoint from "./createUrlToCurrentEndpoint";
+import createPrevNextLinks from "./createPrevNextLinks";
 
 
 
@@ -30,7 +30,7 @@ export default async function createLinksForObjects(
     const { selfOptions, alternateOptions } = await initializeF(context, contentTypes_f);
 
     //Initialize the queryParamString
-    const queryString = await filter_generateQueryParamString(context, queryParamsToIgnore);
+    const queryString = await filter_generateQueryParamString(context, excludedQueryParams);
 
     //Generate rel=self|alternate links & initialize the link array
     const links = await createSelfAltLinks(context, selfOptions, alternateOptions, queryString)
@@ -48,6 +48,9 @@ export default async function createLinksForObjects(
     const resourceUrl = await createUrlToCurrentEndpoint(context);
     /**
      * Generate a @interface Link Object where rel=self
+     */
+    /***
+     * Instead of manually appending prevPageOffset, json and nextPageOffset to the url string, just use URL.SearchParams.set method.
      */
     switch (mode) {
         case 'Collection':

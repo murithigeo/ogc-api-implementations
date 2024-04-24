@@ -1,7 +1,7 @@
 import { ExegesisContext } from "exegesis-express";
-import { supportedcrs_properties } from "../../components/config";
 import { httpMessages } from "../../../../httpMessages";
 import { Crs_prop } from "../../../../types";
+import { supportedcrs_properties } from "../config";
 
 
 async function validateCRS(crs: string) {

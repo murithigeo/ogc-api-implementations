@@ -23,13 +23,14 @@ exports.getItems = async function (context: ExegesisContext) {
             context.res.status(400).setBody({ message: `Invalid bbox Coord. Ref. Sys. Param ('bbox-crs') Requested: ${context.params.query['bbox-crs']}` })
         }
     } else {
-        console.log(context.req.url)
+        //console.log(context.req.url)
         const contentNegotiation_Values: ContentNegotiationObject[] = [
             { f: 'json', type: 'application/geo+json' },
             { f: 'html', type: 'text/html' }
         ];
-        const queryParamsToIgnore: string[] = ['limit,offset', 'f'];
-        const v = await createLinksForObjects('FeatureCollection', context, contentNegotiation_Values, queryParamsToIgnore,1000)
+        console.log(context.params.query.offset)
+        //const queryParamsToIgnore: string[] = ['offset', 'f'];
+        const v = await createLinksForObjects('FeatureCollection', context, contentNegotiation_Values,null,1000)
         console.log(v)
         try {
 

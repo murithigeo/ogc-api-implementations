@@ -5,7 +5,7 @@ import validateQueryParams from "../../../../components/validateQueryParameters"
 
 export default async function coreServerQueryParams(context: ExegesisContext) {
     const { flipCoords, validated_bboxcrs, validated_crs } = await validateIncomingCrs_BboxCrs(context);
-    const { limit, offset, prevPageOffset, nextPageOffset,hasNextPage,hasPrevPage } = await initializeLimitOffset(context);
+    const { limit, offset, prevPageOffset, nextPageOffset} = await initializeLimitOffset(context);
     const bbox = await initializeBoundingBox(context);
     const unexpectedParams = await validateQueryParams(context);
     const contentcrsHeader = await initializeContentCrsHeader(validated_crs);
@@ -20,7 +20,7 @@ export default async function coreServerQueryParams(context: ExegesisContext) {
         bbox,
         nextPageOffset,
         prevPageOffset,
-        hasNextPage,
-        hasPrevPage
+        //hasNextPage,
+        //hasPrevPage
     };
 }

@@ -11,20 +11,21 @@ export default async function createSelfAltLinks(context: ExegesisContext, selfO
      * Generate links for all objects in the @selfOptions Array
      */
     for (const option of selfOptions) {
-        queryString += `f=${option.f}`
+        //queryString += `&f=${option.f}`
         links.push({
             rel: 'self',
             title: `This document as ${option.f}`,
-            href: `${linkToCurrentResource + queryString}`,
+            href: `${linkToCurrentResource + queryString}&f=${option.f}`,
             type: option.type
         });
     };
     for (const option of alternateOptions) {
-        queryString += `f=${option.f}`
+        //queryString += `&f=${option.f}`;
+        //console.log(queryString)
         links.push({
             rel: 'alternate',
             title: `This document as ${option.f}`,
-            href: `${linkToCurrentResource + queryString}`,
+            href: `${linkToCurrentResource + queryString}&f=${option.f}`,
             type: option.type
         });
     };
