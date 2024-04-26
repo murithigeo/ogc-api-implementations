@@ -61,7 +61,12 @@ export default async function filter_generateQueryParamString(
 }
 export async function addApiKeyToQueryParamString(context: ExegesisContext) {
   let apiKeyParamString = "";
-  if (context.user && context.user.apiKey !== (undefined || null)) {
+  if (
+    context.security &&
+    context.security.apiKeyAuth &&
+    context.security.apiKeyAuth.user &&
+    context.user.apiKey !== (undefined || null)
+  ) {
     apiKeyParamString += `&apiKey=${context.user.apiKey}`;
   }
   //console.log(apiKeyParamString)

@@ -1,14 +1,14 @@
 import { ExegesisContext } from "exegesis-express";
-import { validateIncomingCrs_BboxCrs } from "../components/params/crs_operations";
-import validateQueryParams from "../../../components/validateQueryParameters";
-import sequelize from "../../../dbconnection";
-import coreServerQueryParams from "../components/params";
-import { httpMessages } from "../../../httpMessages";
-import { retrieveItems } from "../components/db_functions/dbActions";
-import { parseGeoJson } from "../components/parseGeoJson";
-import { RawGeoDataResult } from "../../../types";
-import createLinksForObjects from "../components/links";
-import { ContentNegotiationObject } from "../components/params/f";
+import { validateIncomingCrs_BboxCrs } from "../components/features/params/crs_operations";
+import validateQueryParams from "../../components/validateQueryParameters";
+import sequelize from "../../dbconnection";
+import coreServerQueryParams from "../components/features/params";
+import { httpMessages } from "../../httpMessages";
+import { retrieveItems } from "../components/features/db_functions/dbActions";
+import { parseGeoJson } from "../components/features/parseGeoJson";
+import { RawGeoDataResult } from "../../types";
+import createLinksForObjects from "../components/features/links";
+import { ContentNegotiationObject } from "../components/features/params/f";
 
 exports.getItems = async function (context: ExegesisContext) {
     const { limit, offset, contentcrsHeader, bbox, validated_bboxcrs, validated_crs, unexpectedParams, flipCoords } = await coreServerQueryParams(context);
@@ -30,6 +30,8 @@ exports.getItems = async function (context: ExegesisContext) {
         ];
         console.log(context.params.query.offset)
         //const queryParamsToIgnore: string[] = ['offset', 'f'];
+        //console.log(context.api.)
+        console.log(context.req.url);
         const v = await createLinksForObjects('FeatureCollection', context, contentNegotiation_Values,null,1000)
         console.log(v)
         try {

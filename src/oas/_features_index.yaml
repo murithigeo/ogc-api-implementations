@@ -330,8 +330,7 @@ components:
       minItems: 2
     LinearRing:
       description: >
-        A linear ring is a closed LineString with four or more positions.
-
+        A linear ring is a closed LineString with four or more positions
         The first and last positions are equivalent, and they MUST contain
         identical values; their representation SHOULD also be identical.
 

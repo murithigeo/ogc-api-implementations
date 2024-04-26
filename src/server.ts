@@ -65,7 +65,6 @@ export { serverConfig };
 
 //ExegesisOptions
 
-
 //console.log(serverConfig);
 // Define the http protocol
 let protocol: "http" | "https";
@@ -99,21 +98,19 @@ async function createServer(standards: StandardsInterface[]) {
   const exegesisInstance = await exegesisExpress.default(
     await generateOasObject(serverConfig.standards),
     {
-        controllers: path.resolve(
-            __dirname,'./controllers'
-          ),
-        controllersPattern: "**/**/*.@(ts)",
-        allowMissingControllers: true,
-        ignoreServers: false,
-        autoHandleHttpErrors:true,
-        authenticators: {
-          ApiKeyAuth: apiKeyAuthenticator,
-          BasicAuth: basicAuthenticator,
-        },
-      }
+      controllers: path.resolve(__dirname, "./controllers/bin"),
+      controllersPattern: "**/**/*.@(ts)",
+      allowMissingControllers: true,
+      ignoreServers: false,
+      autoHandleHttpErrors: true,
+      authenticators: {
+        ApiKeyAuth: apiKeyAuthenticator,
+        BasicAuth: basicAuthenticator,
+      },
+    }
   );
   console.log(exegesisInstance);
-  app.use(exegesisInstance);
+  app.use("/features", exegesisInstance);
   const server = http.createServer(app);
   return server;
 }

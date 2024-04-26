@@ -2,7 +2,7 @@ import {RawGeoDataResult, Feature } from "../../../types";
 
 
 
-export async function parseGeoJson(dbResult: RawGeoDataResult[], geomColumnName: string, featureIdColumnName: string|number) {
+export async function parseDbResToGeoJson(dbResult: RawGeoDataResult[], geomColumnName: string, featureIdColumnName: string|number) {
     var newFeaturesArray: Feature[] = [];
     /**
      * @param dbResult is less than one, then no record present thus no features
