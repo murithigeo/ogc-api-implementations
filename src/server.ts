@@ -11,6 +11,9 @@ import { basicAuthenticator } from "./authentication/basicAuth";
 import YAML from "js-yaml";
 import { generateOasObject } from "./oas";
 import sequelize from "./dbconnection";
+import genServerObjectsForDevMode from "./components/localServers";
+import featuresExegesisInstance from "./standards/features";
+import validateQueryParams from "./components/validateQueryParameters";
 process.env.NODE_ENV = "dev"; //This also assumes that the development occurs locally
 
 const serverConfig = YAML.load(
@@ -20,48 +23,10 @@ fs.writeFileSync(
   path.resolve(__dirname, "server.config.json"),
   JSON.stringify(serverConfig)
 );
-//console.log(serverConfig)
-//
-
-//check if model works
-
-if (process.env.NODE_ENV === "dev") {
-  var ifaces: any = os.networkInterfaces();
-  var ips: any = 0;
-  Object.keys(ifaces).forEach((dev) => {
-    if (!dev.toLowerCase().includes("wsl")) {
-      // Filter out WSL interfaces
-      ifaces[dev].forEach((details: any) => {
-        if (details.family === "IPv4" && !details.internal) {
-          ips = details.address;
-        }
-      });
-    }
-  });
-  const devServers = [
-    {
-      url: "http://localhost",
-      description: `Localhost address. Used for testing OGC API Endpoints`,
-    },
-  ];
-
-  //if dev machine is not connected to a LAN, the ips = 0 which is not a valid URL
-  if (ips !== 0) {
-    devServers.push({
-      url: `http://${ips}`,
-      description: `IP Adress of the local development machine. Used for testing OGC API Endpoints`,
-    });
-  }
-  /**
-   * if @var ServersArray is nullish, instanciate the servers object
-   * if not nullish, just push to it
-   */
-  !serverConfig.servers
-    ? (serverConfig.servers = devServers)
-    : serverConfig.servers.push(...devServers);
+if (!serverConfig.servers) {
+  serverConfig.servers = [];
 }
-
-export { serverConfig };
+Promise.resolve(genServerObjectsForDevMode(serverConfig.servers));
 
 //ExegesisOptions
 
@@ -78,8 +43,18 @@ process.env.ROOT_URL = `${protocol}://${baseURL}${
   PORT === 80 || PORT === 443 || PORT === 3000 ? "" : ":" + PORT
 }${location}`;
 
+export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
+  controllersPattern: "**/**/*.@(ts)",
+  allowMissingControllers: true,
+  ignoreServers: false,
+  autoHandleHttpErrors: true,
+  authenticators: {
+    ApiKeyAuth: apiKeyAuthenticator,
+    BasicAuth: basicAuthenticator,
+  },
+};
 // Configure exegesis & express
-async function createServer(standards: StandardsInterface[]) {
+async function createServer() {
   const app = express();
 
   // Configure access log
@@ -89,33 +64,17 @@ async function createServer(standards: StandardsInterface[]) {
   );
 
   app.use(morgan("combined", { stream: accessLogStream }));
+  app.use(async (req, res, next) => {
+    console.log(req.query)
+    next()
+  });
 
-  // Init exegesis
-  //    const openAPiDoc = initOASDocs()
-  // Instead of passing a path to final file, just leave file as is and push servers array into object at startup
-  // Instead of using a controller & scalar CDN to render the OAS Doc, use the NPM Package.
-
-  const exegesisInstance = await exegesisExpress.default(
-    await generateOasObject(serverConfig.standards),
-    {
-      controllers: path.resolve(__dirname, "./controllers/bin"),
-      controllersPattern: "**/**/*.@(ts)",
-      allowMissingControllers: true,
-      ignoreServers: false,
-      autoHandleHttpErrors: true,
-      authenticators: {
-        ApiKeyAuth: apiKeyAuthenticator,
-        BasicAuth: basicAuthenticator,
-      },
-    }
-  );
-  console.log(exegesisInstance);
-  app.use("/features", exegesisInstance);
+  app.use(await featuresExegesisInstance());
   const server = http.createServer(app);
   return server;
 }
 
-createServer(serverConfig.standards)
+createServer()
   .then((server) => {
     server.listen(PORT, () => {
       if (serverConfig.servers) {
@@ -134,3 +93,5 @@ createServer(serverConfig.standards)
     console.error(err.stack);
     process.exit(1);
   });
+
+export { serverConfig };

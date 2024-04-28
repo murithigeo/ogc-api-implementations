@@ -790,9 +790,6 @@ components:
       required: false
       schema:
         type: string
-        enum:
-          - json
-          - html
         default: json
       style: form
       explode: false

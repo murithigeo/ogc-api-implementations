@@ -8,6 +8,11 @@ interface SupportedCrs {
   authority: string; //The Authority that governs the CRS defined in ./uri
   isGeographic: boolean; //Denotes whether the CRS is projected (uses x,y axis-order) or Geographic(uses y,x axis-order)
 }
+export type CN_Value = "json" | "gpkg" | "yaml" | "html";
+export interface F_AssociatedType {
+  f: CN_Value;
+  type: string;
+}
 /**
  * @type DbResultCount
  * The number of features in table that matched the query
@@ -77,7 +82,7 @@ export interface StandardsInterface {
 /**
  * @interface ServersArray defines the servers which can be queried as enum by the OAS spec.
  */
-interface ServersArray {
+export interface ServersArray {
   url?: string;
   description?: string;
   port?: number;
