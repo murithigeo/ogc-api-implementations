@@ -1,7 +1,7 @@
 import YAML from "js-yaml";
 import fs from "fs";
 import path from "path";
-import { serverConfig } from "../server";
+import { servers } from "../server";
 async function parseOasFragment(yamlFile: any): Promise<any> {
   const doc = YAML.load(fs.readFileSync(yamlFile, "utf-8"));
   return doc;
@@ -9,7 +9,7 @@ async function parseOasFragment(yamlFile: any): Promise<any> {
 async function parseOasDoc(yamlFile: any) {
   const mainDoc = await parseOasFragment(path.resolve(__dirname,"../oas/index.yaml"));
   const fragmentToParse: any = await parseOasFragment(yamlFile);
-  mainDoc.servers = serverConfig.servers;
+  mainDoc.servers = servers;
 
   if (fragmentToParse) {
     if (fragmentToParse.securitySchemes) {

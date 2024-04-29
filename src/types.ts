@@ -68,34 +68,19 @@ interface nestedStandardOptions {
   supportedCrs?: SupportedCrs[]; //If none are defined, then the default will be set as CRS84
   trs?: trs;
 }
-
-export interface StandardsInterface {
-  standard: Standards;
-  pathToDoc: string;
-  publish: boolean;
-  defaultOptions: {
-    crs: SupportedCrs[];
-    trs: trs;
-  };
-  collections: nestedStandardOptions[];
-}
 /**
  * @interface ServersArray defines the servers which can be queried as enum by the OAS spec.
  */
-export interface ServersArray {
-  url?: string;
+export interface oasDocServers {
+  url: string;
   description?: string;
-  port?: number;
+  //port?: number;
 }
 
 /**
  * @interface ServerConfig
  */
 
-export interface ServerConfig {
-  servers?: ServersArray[]; //nullish because of development mode
-  standards: StandardsInterface[];
-}
 
 export interface Link {
   rel:

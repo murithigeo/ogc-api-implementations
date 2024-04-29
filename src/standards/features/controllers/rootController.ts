@@ -3,13 +3,13 @@ import { genLinksForRoot } from "../components/links";
 import initCommonQueryParams from "../components/params";
 import YAML from "js-yaml";
 import { CN_Value } from "../../../types";
-import validateQueryParams from "../../../components/validateQueryParameters";
 
 exports.getLandingPage = async function (context: ExegesisContext) {
-  const { f, urlToThisEP, unexpectedParamsRes } = await initCommonQueryParams(
+  const { f, urlToThisEP } = await initCommonQueryParams(
     context
   );
 
+  //Promise.resolve(validateQueryParams(context));
   //if(typeof f!==('json'||'yaml'))
   const links = await genLinksForRoot(context, [
     { f: "json", type: "application/json" },

@@ -6,10 +6,9 @@ import {
   supportedcrs_array,
 } from "../crsconfig";
 import { CN_Value, Crs_prop, F_AssociatedType } from "../../../types";
-import validateQueryParams from "../../../components/validateQueryParameters";
 import invalCrsRes from "../../../components/invalidCrs";
 
-async function validate_crs_string(crsPram: string): Promise<Crs_prop[]> {
+export async function validate_crs_string(crsPram: string): Promise<Crs_prop[]> {
   const validCrs = crs_properties.filter((crsProp) => crsProp.uri === crsPram);
   return validCrs;
 }
@@ -149,7 +148,7 @@ async function f_param_init(context: ExegesisContext): Promise<CN_Value> {
 export default async function initCommonQueryParams(
   context: ExegesisContext
 ): Promise<{
-  unexpectedParamsRes: ExegesisResponse;
+  //unexpectedParamsRes: ExegesisResponse;
   contentcrsHeader: string;
   limit: number;
   flipCoords: boolean;
@@ -161,7 +160,7 @@ export default async function initCommonQueryParams(
   offset: number;
   f: CN_Value;
   urlToThisEP: URL;
-  invalidcrsbboxRes: ExegesisResponse;
+  //invalidcrsbboxRes: ExegesisResponse;
 }> {
   const { flipCoords, bboxcrs_vArray, crs_vArray } = await coordParams_validate(
     context
@@ -172,11 +171,11 @@ export default async function initCommonQueryParams(
     await limitoffset_param_init(context);
   const f = await f_param_init(context);
   const urlToThisEP = await requestPathUrl(context);
-  const unexpectedParamsRes = await validateQueryParams(context);
-  const invalidcrsbboxRes = await invalCrsRes(context);
+  //const unexpectedParamsRes = await validateQueryParams(context);
+  //const invalidcrsbboxRes = await invalCrsRes(context);
   return {
-    invalidcrsbboxRes,
-    unexpectedParamsRes,
+    //invalidcrsbboxRes,
+    //unexpectedParamsRes,
     contentcrsHeader,
     flipCoords,
     bboxArray,

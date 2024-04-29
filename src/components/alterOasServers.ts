@@ -1,7 +1,8 @@
 import os from "os";
-import { ServerConfig, ServersArray } from "../types";
+import { oasDocServers } from "../types";
+import { PORT } from "../server";
 
-async function genServerObjectsForDevMode(servers: ServersArray[]) {
+async function alterServers(servers: oasDocServers[]) {
   if (process.env.NODE_ENV === "dev") {
     var ifaces: any = os.networkInterfaces();
     var ips: any = 0;
@@ -17,16 +18,30 @@ async function genServerObjectsForDevMode(servers: ServersArray[]) {
     });
     if (ips !== 0) {
       servers.push({
-        url: `http://${ips}`,
+        url: `http://${ips}:${PORT}`,
         description: `This is the internal IP address of the localmachine`,
       });
     }
     servers.push({
-      url: "http://localhost",
+      url: "http://localhost" + PORT,
       description: "Localhost",
     });
+  }
+  if (process.env.NODE_ENV === "prod") {
+    if (process.env.PROD_URL && process.env.PORT) {
+      servers.push({
+        url: process.env.PROD_URL + ":" + process.env.PORT,
+        description: `Production server`,
+      });
+    }
+  }
+  for (const serverObj of servers) {
+    if (!URL.canParse(serverObj.url)) {
+      console.log("Please provide standardized URLs");
+      process.exit(1);
+    }
   }
   return servers;
 }
 
-export default genServerObjectsForDevMode;
+export default alterServers;

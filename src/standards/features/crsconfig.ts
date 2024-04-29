@@ -18,17 +18,19 @@ const crs_properties: Crs_prop[] = [
     authority: "EPSG",
     isGeographic: true,
   },
+  {
+    authority: "OGC",
+    srid: 4326,
+    version: 1.3,
+    isGeographic: false,
+    code: 'CRS84h'
+  }
 ];
 
 for (const crsObject of crs_properties) {
   crsObject.uri = `http://www.opengis.net/def/crs/${crsObject.authority}/${crsObject.version}/${crsObject.code}`;
 }
 
-if (crs_properties[0].code !== ("CRS84" || "CRS84h")) {
-  throw new Error(
-    `Please set CRS84 as first element of supported coordinate ref. sys. array`
-  );
-}
 ///console.log(crs_properties)
 /**
  * Generate a string[] for the above CRS comprised of the uri attribute.

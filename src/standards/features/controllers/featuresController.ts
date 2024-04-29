@@ -1,5 +1,4 @@
 import { ExegesisContext } from "exegesis-express";
-import validateQueryParams from "../../../components/validateQueryParameters";
 import sequelize from "../../../dbconnection";
 import { httpMessages } from "../../../httpMessages";
 import parseDbResToGeoJson from "../components/parsedbResToGeoJson";
@@ -18,8 +17,8 @@ exports.getItems = async function (context: ExegesisContext) {
     bboxArray,
     bboxcrs_vArray,
     crs_vArray,
-    unexpectedParamsRes,
-    invalidcrsbboxRes,
+    //unexpectedParamsRes,
+    //invalidcrsbboxRes,
     flipCoords,
   } = await initCommonQueryParams(context);
 
@@ -37,11 +36,11 @@ exports.getItems = async function (context: ExegesisContext) {
   context.res
     .status(200)
     .set("content-type", "application/json")
-    .setBody(v && v);
+    .setBody(v);
 };
 
 exports.getItem = async function (context: ExegesisContext) {
-  const { crs_vArray, unexpectedParamsRes } = await initCommonQueryParams(context);
+  const { crs_vArray,  } = await initCommonQueryParams(context);
   if (crs_vArray.length < 1) {
     /*
     if (unexpectedParams.length > 0) {
