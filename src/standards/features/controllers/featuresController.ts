@@ -26,34 +26,15 @@ exports.getItems = async function (context: ExegesisContext) {
     { f: "json", type: "application/geo+json" },
     { f: "html", type: "text/html" },
   ];
-  //const queryParamsToIgnore: string[] = ['offset', 'f'];
-  //console.log(context.api.)
-  const v = await genLinksForFeatureCollection(
-    context,
-    contentNegotiation_Values
-  );
-  console.log(v);
+console.log(context.params.path)
+
   context.res
     .status(200)
     .set("content-type", "application/json")
-    .setBody(v);
+    .setBody('c');
 };
 
 exports.getItem = async function (context: ExegesisContext) {
   const { crs_vArray,  } = await initCommonQueryParams(context);
-  if (crs_vArray.length < 1) {
-    /*
-    if (unexpectedParams.length > 0) {
-      context.res
-        .status(400)
-        .setBody(`Unexpected Query Parameters detected: ${unexpectedParams}`);
-    }
-    */
-    if (crs_vArray.length < 1) {
-      context.res
-        .status(400)
-        .setBody(`Invalid crs Requested: ${context.params.query.crs}`);
-    }
-  } else {
-  }
+  
 };

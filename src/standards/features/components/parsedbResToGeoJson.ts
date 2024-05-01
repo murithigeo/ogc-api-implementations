@@ -16,7 +16,7 @@ async function parseDbResToGeoJson(
      * if length is not less than 1, then there are features present
      */
     for (const record of dbResult) {
-      const { geom, [featureIdColumnName]: id, ...otherProperties } = record;
+      const { [geomColumnName]:geom, [featureIdColumnName]: id, ...otherProperties } = record;
       const { type, coordinates } = geom;
       const propertiesObject = {
         [featureIdColumnName]: id,

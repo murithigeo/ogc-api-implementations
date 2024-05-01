@@ -6,10 +6,9 @@ import {
   supportedcrs_array,
 } from "../crsconfig";
 import { CN_Value, Crs_prop, F_AssociatedType } from "../../../types";
-import invalCrsRes from "../../../components/invalidCrs";
 
-export async function validate_crs_string(crsPram: string): Promise<Crs_prop[]> {
-  const validCrs = crs_properties.filter((crsProp) => crsProp.uri === crsPram);
+export async function validate_crs_string(crsuri: string): Promise<Crs_prop[]> {
+  const validCrs = crs_properties.filter((crsProp) => crsProp.uri === crsuri);
   return validCrs;
 }
 
@@ -23,12 +22,7 @@ async function crs_param_init(context: ExegesisContext): Promise<string> {
 async function bboxcrs_param_init(context: ExegesisContext): Promise<string> {
   const bboxcrsstring: string = context.params.query["bbox-crs"]
     ? context.params.query["bbox-crs"]
-    : supportedcrs_array.filter(
-        (crsuri) =>
-          crsuri ===
-          ("http://www.opengis.net/def/crs/OGC/1.3/CRS84" ||
-            "http://www.opengis.net/def/crs/OGC/1.3/CRS84h")
-      );
+    : supportedcrs_array.filter((crsuri) => crsuri === (crs84Uri || crs84hUri));
   return bboxcrsstring;
 }
 
@@ -66,23 +60,24 @@ async function bbox_param_init(
   let bboxArray: bbox_w_height | bbox_wo_height;
   if (context.params.query.bbox) {
     const bboxParam = context.params.query.bbox;
-    if (bboxcrs_vArray.length > 0) {
-      if (bboxcrs_vArray[0].uri === crs84hUri) {
-        bboxArray = [
-          bboxParam[0], //xmin
-          bboxParam[1], //ymin
-          bboxParam[2], //h
-          bboxParam[3], //xmax
-          bboxParam[4], //ymax
-          bboxParam[5], //h
-        ];
-      } else {
-        if (bboxcrs_vArray[0].isGeographic === false) {
-          bboxArray = [bboxParam[0], bboxParam[1], bboxParam[2], bboxParam[3]];
-        }
-        if (bboxcrs_vArray[0].isGeographic === true) {
-          bboxArray = [bboxParam[1], bboxParam[0], bboxParam[3], bboxParam[2]];
-        }
+    //Depreciated because invalid crs errors are controlled using the the invalid crs plugin
+    //TODO: Each standard instance should have its own allowed crsArray
+    // if (bboxcrs_vArray.length > 0) {
+    if (bboxcrs_vArray[0].uri === crs84hUri) {
+      bboxArray = [
+        bboxParam[0], //xmin
+        bboxParam[1], //ymin
+        bboxParam[2], //h
+        bboxParam[3], //xmax
+        bboxParam[4], //ymax
+        bboxParam[5], //h
+      ];
+    } else {
+      if (bboxcrs_vArray[0].isGeographic === false) {
+        bboxArray = [bboxParam[0], bboxParam[1], bboxParam[2], bboxParam[3]];
+      }
+      if (bboxcrs_vArray[0].isGeographic === true) {
+        bboxArray = [bboxParam[1], bboxParam[0], bboxParam[3], bboxParam[2]];
       }
     }
   }

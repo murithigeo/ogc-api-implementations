@@ -1,6 +1,6 @@
 import { Crs_prop } from "../../types";
-const crs84Uri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
-const crs84hUri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84h";
+const crs84Uri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+const crs84hUri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84h"
 const crs_properties: Crs_prop[] = [
   {
     authority: "OGC",
@@ -23,21 +23,21 @@ const crs_properties: Crs_prop[] = [
     srid: 4326,
     version: 1.3,
     isGeographic: false,
-    code: 'CRS84h'
-  }
+    code: "CRS84h",
+  },
 ];
 
 for (const crsObject of crs_properties) {
-  crsObject.uri = `http://www.opengis.net/def/crs/${crsObject.authority}/${crsObject.version}/${crsObject.code}`;
+  crsObject.uri = 
+    `http://www.opengis.net/def/crs/${crsObject.authority}/${crsObject.version}/${crsObject.code}`
+  
 }
 
 ///console.log(crs_properties)
 /**
  * Generate a string[] for the above CRS comprised of the uri attribute.
  */
-const supportedcrs_array = crs_properties.map(
-  (crsObject: { uri?: string }) => crsObject.uri
-);
+const supportedcrs_array = crs_properties.map((crsObject) => crsObject.uri);
 
-const trs: string = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian";
-export { supportedcrs_array, crs_properties, trs,crs84Uri,crs84hUri };
+const trs = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian"
+export { supportedcrs_array, crs_properties, trs, crs84Uri, crs84hUri };

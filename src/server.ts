@@ -10,9 +10,7 @@ import { basicAuthenticator } from "./authentication/basicAuth";
 import sequelize from "./dbconnection";
 import genServerObjectsForDevMode from "./components/alterOasServers";
 import featuresExegesisInstance from "./standards/features";
-//import unexpectedQueryParamsPlugin from "./plugins/validateQueryParams";
-import queryparametersfilterPlugin from "./plugins/exegesis-plugin-unexpectedQueryParams";
-import bboxcrs_crsPlugin from "./plugins/exegesis-plugin-validateCrs";
+
 process.env.NODE_ENV = "dev"; //This also assumes that the development occurs locally
 
 let servers: oasDocServers[] = [];
@@ -30,7 +28,6 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
     ApiKeyAuth: apiKeyAuthenticator,
     BasicAuth: basicAuthenticator,
   },
-  plugins: [queryparametersfilterPlugin(), bboxcrs_crsPlugin()],
 };
 // Configure exegesis & express
 async function createServer() {

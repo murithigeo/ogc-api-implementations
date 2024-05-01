@@ -1,9 +1,9 @@
 paths:
   '/features/':
-    tags:
-      - Features
     x-exegesis-controller: rootController
     get:
+      tags:
+        - Features
       x-exegesis-operationId: getLandingPage
       parameters:
         - $ref: '#/components/parameters/f'
@@ -18,12 +18,12 @@ paths:
               schema: 
                 type: string
   '/features/conformance':
-    tags:
-      - Features
     x-exegesis-controller: conformanceController
     description: >
       Access the conformance classes of this server (endpoint root)
     get:
+      tags:
+        - Features
       x-exegesis-operationId: getConformance
       parameters:
         - $ref: '#/components/parameters/f'
@@ -38,10 +38,10 @@ paths:
               schema:
                 type: string
   '/features/api':
-    tags:
-      - Features
     x-exegesis-controller: apiController
     get:
+      tags:
+        - Features
       x-exegesis-operationId: getServiceDesc
       description: >
         Access the OpenAPI document describing the functionalities of this server.
@@ -55,10 +55,10 @@ paths:
               schema:
                 type: object
   '/features/api.html':
-    tags:
-      - Features
     x-exegesis-controller: apiController
     get:
+      tags:
+        - Features
       x-exegesis-operationId: getServiceDoc
       description: >
         Access an Interactive Web Console to test the functionalities of this server.
@@ -70,10 +70,10 @@ paths:
               schema:
                 type: string
   '/features/collections':
-    tags:
-      - Features
     x-exegesis-controller: collectionsController
     get:
+      tags:
+        - Features
       x-exegesis-operationId: getCollectionsAll
       description: >
         Get all collections/datasets currently available in the server.
@@ -98,12 +98,12 @@ paths:
                     items:
                       $ref: '#/components/schemas/Collection'
   '/features/collections/{collectionId}':
-    tags:
-      - Features
     x-exegesis-controller: collectionsController
     parameters:
       - $ref: '#/components/parameters/collectionId'
     get:
+      tags:
+        - Features
       x-exegesis-operationId: getCollectionOne
       parameters:
         - $ref: '#/components/parameters/f'
@@ -119,11 +119,11 @@ paths:
               schema:
                 type: string
   '/features/collections/{collectionId}/items':
-    tags:
-      - Features
     x-exegesis-controller: featuresController
     get:
-      operationId: getItems
+      tags:
+        - Features
+      x-exegesis-operationId: getItems
       description: >
         Retrieve all items in a collection. Number returned is subject to query parameters invoked
       parameters:
@@ -146,11 +146,11 @@ paths:
               schema:
                 type: string
   '/features/collections/{collectionId}/items/{featureId}':
-    tags:
-      - Features
     x-exegesis-controller: featuresController
     get:
-      operationId: getItem
+      tags:
+        - Features
+      x-exegesis-operationId: getItem
       description: >
         Retrieve all items in a collection. Number returned is subject to query parameters invoked
       parameters:

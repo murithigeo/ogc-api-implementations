@@ -176,43 +176,120 @@ async function addApiKeyToSearchParams(
   }
   return linkToTargetEndpoint;
 }
-async function genLinksToItemsFromCollection(
+export async function genLinksToItemsFromCollection(
   context: ExegesisContext,
   optionsForSelf: F_AssociatedType[],
-  optionsForAlt: F_AssociatedType[]
+  optionsForAlt: F_AssociatedType[],
+  mode: "root" | "nested",
+  collectionId?: string | number
 ): Promise<Link[]> {
+  //When mode=root then urlToThisEP = /collections
+  //else urlToThisEP=/collections/{collectionId}
   const { urlToThisEP } = await initCommonQueryParams(context);
-  const links: Link[] = [];
+  urlToThisEP.search = "";
 
-  for (let option of optionsForSelf) {
-    option = await changeLinkTypeForNestLinks(
-      option,
-      "json",
-      "application/json"
-    );
-    urlToThisEP.searchParams.set(`f`, option.f);
-    links.push({
-      rel: `items`,
-      href: urlToThisEP.toString(),
-      title: `View the items of this collection as ${option.f}`,
-      type: option.type,
-    });
+  if (mode === "nested") {
+    const links: Link[] = [];
+    for (let option of optionsForSelf) {
+      option = await changeLinkTypeForNestLinks(
+        option,
+        "json",
+        "application/geo+json"
+      );
+      let urlForOption = new URL(urlToThisEP.href);
+      urlForOption.pathname = urlForOption.pathname + "/items";
+      console.log(urlForOption.href);
+      urlForOption.searchParams.set(`f`, option.f);
+      links.push({
+        rel: `items`,
+        href: urlForOption.toString(),
+        title: `View the items of this collection as ${option.f}`,
+        type: option.type,
+      });
+    }
+    for (let option of optionsForAlt) {
+      let urlForOption = new URL(urlToThisEP.href);
+      urlForOption.pathname = urlForOption.pathname + "/items";
+      urlForOption.searchParams.set(`f`, option.f);
+      //urlToThisEP.searchParams.set("f", option.f);
+      option = await changeLinkTypeForNestLinks(
+        option,
+        "json",
+        "application/geo+json"
+      );
+      links.push({
+        rel: "items",
+        href: urlToThisEP.toString(),
+        title: `View the items in this collection as ${option.f}`,
+        type: option.type,
+      });
+    }
+    return links;
+  } else {
+    const links: Link[] = [];
+
+    //Links to collections
+    for (let option of optionsForSelf) {
+      ///Links to items
+      let urlForOption = new URL(urlToThisEP.href);
+      urlForOption.pathname=urlForOption.pathname + collectionId+'/items';
+      urlForOption.searchParams.set(`f`, option.f);
+      links.push({
+        rel: `items`,
+        href: urlForOption.toString(),
+        title: `View the items of this collection as ${option.f}`,
+        type: option.type,
+      });
+    }
+    for (let option of optionsForAlt) {
+      let urlForOption = new URL(urlToThisEP.href);
+      urlForOption.pathname=urlForOption.pathname + collectionId+'/items';
+      urlForOption.searchParams.set(`f`, option.f);
+      //urlToThisEP.searchParams.set("f", option.f);
+
+      links.push({
+        rel: "items",
+        href: urlForOption.toString(),
+        title: `View the items in this collection as ${option.f}`,
+        type: option.type,
+      });
+    }
+    for (let option of optionsForSelf) {
+      ///Links to items
+      option = await changeLinkTypeForNestLinks(
+        option,
+        "json",
+        "application/geo+json"
+      );
+      let urlForOption = new URL(urlToThisEP.href);
+      urlForOption.pathname + collectionId + "/items";
+      urlForOption.searchParams.set(`f`, option.f);
+      links.push({
+        rel: `items`,
+        href: urlForOption.toString(),
+        title: `View the items of this collection as ${option.f}`,
+        type: option.type,
+      });
+    }
+    for (let option of optionsForAlt) {
+      let urlForOption = new URL(urlToThisEP.href);
+      urlForOption.pathname + collectionId + "/items";
+      urlForOption.searchParams.set(`f`, option.f);
+      //urlToThisEP.searchParams.set("f", option.f);
+      option = await changeLinkTypeForNestLinks(
+        option,
+        "json",
+        "application/geo+json"
+      );
+      links.push({
+        rel: "items",
+        href: urlToThisEP.toString(),
+        title: `View the items in this collection as ${option.f}`,
+        type: option.type,
+      });
+    }
+    return links;
   }
-  for (let option of optionsForAlt) {
-    urlToThisEP.searchParams.set("f", option.f);
-    option = await changeLinkTypeForNestLinks(
-      option,
-      "json",
-      "application/geo+json"
-    );
-    links.push({
-      rel: "items",
-      href: urlToThisEP.toString(),
-      title: `View the items in this collection as ${option.f}`,
-      type: option.type,
-    });
-  }
-  return links;
 }
 
 async function genLinksToItemsFromFeature(
@@ -311,26 +388,42 @@ async function genLinksForFeatureCollection(
 
 async function genLinksForCollection(
   context: ExegesisContext,
-  allowed_f_values: F_AssociatedType[]
+  allowed_f_values: F_AssociatedType[],
+  mode: "root" | "nested"
 ) {
   const { optionsForAlt, optionsForSelf } = await filter_f_types(
     context,
     allowed_f_values
   );
   const links: Link[] = [];
-  //Self Alt Links
-  links.push(
-    ...(await genSelfAltLinks(context, optionsForSelf, optionsForAlt))
-  );
 
-  //Link to Items
-  links.push(
-    ...(await genLinksToItemsFromCollection(
-      context,
-      optionsForSelf,
-      optionsForAlt
-    ))
-  );
+  if (mode === "nested") {
+    //Self Alt Links
+    links.push(
+      ...(await genSelfAltLinks(context, optionsForSelf, optionsForAlt))
+    );
+    links.push(
+      ...(await genLinksToItemsFromCollection(
+        context,
+        optionsForSelf,
+        optionsForAlt,
+        "nested"
+      ))
+    );
+  }
+  if (mode === "root") {
+    //Link to Items
+    links.push(
+      ...(await genLinksToItemsFromCollection(
+        context,
+        optionsForSelf,
+        optionsForAlt,
+        "nested"
+      ))
+    );
+  }
+
+  return links;
 }
 
 async function genLinksForConformance(
@@ -350,6 +443,81 @@ async function genLinksForConformance(
   return links;
 }
 
+async function _rootSpecificLinks(
+  origLinkToEP: URL,
+  optionsForSelf: F_AssociatedType[],
+  optionsForAlt: F_AssociatedType[]
+) {
+  const links: Link[] = [];
+  origLinkToEP.search = "";
+
+  //links to /conformance && /collections (link to same content type as the one user is currently on)
+  for (const option of optionsForSelf) {
+    let urlForOption = new URL(origLinkToEP.href);
+    urlForOption.pathname + "conformance";
+    urlForOption.searchParams.set("f", option.f);
+    links.push({
+      rel: "conformance",
+      title: `View the conformance document as ${option.f}`,
+      href: urlForOption.toString(),
+      type: option.type,
+    });
+    urlForOption = new URL(origLinkToEP.href);
+    urlForOption.pathname + "collections";
+    urlForOption.searchParams.set("f", option.f);
+    links.push({
+      rel: "data",
+      title: `View the collections document as ${option.f}`,
+      href: urlForOption.toString(),
+      type: option.type,
+    });
+  }
+  //links to /conformance && /collections (link to different content type as the one user is currently on)
+  for (const option of optionsForAlt) {
+    //conformance
+    let urlForOption = new URL(origLinkToEP.href);
+    urlForOption.pathname + "conformance";
+    urlForOption.searchParams.set("f", option.f);
+    links.push({
+      rel: "conformance",
+      title: `View the conformance document as ${option.f}`,
+      href: urlForOption.toString(),
+      type: option.type,
+    });
+
+    //collections
+    urlForOption = new URL(origLinkToEP.href);
+    urlForOption.pathname + "collections";
+    urlForOption.searchParams.set("f", option.f);
+    links.push({
+      rel: "data",
+      title: `View the collections document as ${option.f}`,
+      href: urlForOption.toString(),
+      type: option.type,
+    });
+  }
+
+  //Links to /api && /api.html
+
+  let urlForOption = new URL(origLinkToEP.href);
+
+  urlForOption.pathname = origLinkToEP.pathname + `api`;
+  links.push({
+    rel: "service-desc",
+    type: `application/vnd.oai.openapi+json;version=3.0`,
+    title: `View the OpenAPI Spec Doc`,
+    href: urlForOption.toString(),
+  });
+  urlForOption = new URL(origLinkToEP.href);
+  urlForOption.pathname = urlForOption.pathname + "api.html";
+  links.push({
+    rel: "service-doc",
+    type: "text/html",
+    title: `View the OpenAPI Spec Doc on an Interactive Web Console`,
+    href: urlForOption.toString(),
+  });
+  return links;
+}
 async function genLinksForRoot(
   context: ExegesisContext,
   allowed_f_values: F_AssociatedType[]
@@ -368,49 +536,17 @@ async function genLinksForRoot(
   const { urlToThisEP } = await initCommonQueryParams(context);
   urlToThisEP.search = "";
 
-  //To Conformance
-  for (let option of optionsForSelf && optionsForSelf) {
-    urlToThisEP.pathname = urlToThisEP + "/conformance";
-    urlToThisEP.searchParams.set("f", option.f);
-    links.push({
-      rel: "conformance",
-      title: `View the conformance document as ${option.f}`,
-      href: urlToThisEP.toString(),
-      type: option.type,
-    });
-  }
-
-  for (let option of optionsForSelf && optionsForAlt) {
-    urlToThisEP.pathname = urlToThisEP + "/collections";
-    urlToThisEP.searchParams.set("f", option.f);
-    links.push({
-      rel: "data",
-      href: urlToThisEP.toString(),
-      title: `View collections as ${option.f}`,
-      type: option.type,
-    });
-  }
-  urlToThisEP.pathname = urlToThisEP.pathname + `/api`;
-  links.push({
-    rel: "service-desc",
-    type: `application/vnd.oai.openapi+json;version=3.0`,
-    title: `View the OpenAPI Spec Doc`,
-    href: urlToThisEP.toString(),
-  });
-  urlToThisEP.pathname = urlToThisEP.pathname + "/api.html";
-  links.push({
-    rel: "service-doc",
-    type: "text/html",
-    title: `View the OpenAPI Spec Doc on an Interactive Web Console`,
-    href: urlToThisEP.toString(),
-  });
+  //Push links to /api, /api.html, /conformance & /collections
+  links.push(
+    ...(await _rootSpecificLinks(urlToThisEP, optionsForSelf, optionsForAlt))
+  );
   return links;
 }
 
 async function genLinkForCollectionsRoot(
   context: ExegesisContext,
   allowed_f_values: F_AssociatedType[]
-) {
+): Promise<Link[]> {
   const { optionsForSelf, optionsForAlt } = await filter_f_types(
     context,
     allowed_f_values
@@ -420,6 +556,20 @@ async function genLinkForCollectionsRoot(
     optionsForSelf,
     optionsForAlt
   );
+
+  /*
+  links.push(
+    ...(await genLinksToItemsFromCollection(
+      context,
+      optionsForSelf,
+      optionsForAlt,
+      "root",
+      collectionId
+    ))
+    
+  );
+  */
+  return links;
 }
 
 export {

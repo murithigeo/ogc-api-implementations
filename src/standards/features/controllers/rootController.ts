@@ -2,37 +2,33 @@ import { ExegesisContext } from "exegesis-express";
 import { genLinksForRoot } from "../components/links";
 import initCommonQueryParams from "../components/params";
 import YAML from "js-yaml";
-import { CN_Value } from "../../../types";
+import { CN_Value, F_AssociatedType } from "../../../types";
+import { genRootDoc } from "../components/generateJsonDocs";
+import convertJsonToYAML from "../components/convertToYaml";
+import genValidationErrorFor_F from "../components/validationError_f";
 
 exports.getLandingPage = async function (context: ExegesisContext) {
-  const { f, urlToThisEP } = await initCommonQueryParams(
-    context
-  );
-
-  //Promise.resolve(validateQueryParams(context));
-  //if(typeof f!==('json'||'yaml'))
-  const links = await genLinksForRoot(context, [
-    { f: "json", type: "application/json" },
-    { f: "yaml", type: "application/yaml" },
+  const { f, urlToThisEP } = await initCommonQueryParams(context);
+  const allowed_f_values: F_AssociatedType[] = [
     { f: "html", type: "text/html" },
-  ]);
-  /*
+    { f: "json", type: "application/json" },
+    { f: "yaml", type: "text/yaml" },
+  ];
+  const _jsonDoc = await genRootDoc(context, allowed_f_values);
   switch (f) {
     case "json":
       context.res
         .status(200)
-        .set(`content-type`, `application/json`)
-        .setBody(links);
+        .set("content-type", "application/json")
+        .setBody(_jsonDoc);
       break;
     case "yaml":
       context.res
         .status(200)
         .set("content-type", "text/yaml")
-        .setBody(YAML.dump(links, { lineWidth: -1 }));
+        .setBody(await convertJsonToYAML(_jsonDoc));
       break;
     default:
-      console.log(`default reached`);
-    //context.makeError(400, "Invalid parameter value" + f);
+      context.res.status(400).setBody(await genValidationErrorFor_F(context));
   }
-  */
 };

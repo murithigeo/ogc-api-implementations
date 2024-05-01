@@ -23,7 +23,7 @@ async function alterServers(servers: oasDocServers[]) {
       });
     }
     servers.push({
-      url: "http://localhost" + PORT,
+      url: "http://localhost:" + PORT,
       description: "Localhost",
     });
   }
