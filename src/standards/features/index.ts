@@ -3,14 +3,29 @@ import path from "path";
 import parseOasDoc from "../../components/parseOasDoc";
 import { globalexegesisOptions } from "../../server";
 import validateRequestsPlugin from "./plugins/exegesis-plugin-validateRequests";
-//console.log(globalexegesisOptions)
+import { F_AssociatedType } from "../../types";
+const allowed_F_values: F_AssociatedType[] = [
+  {
+    f: "json",
+    type: "application/json", //This value will be mutated during link creation to application/geo+json when appropriate
+  },
+  {
+    f: "yaml",
+    type: "text/yaml",
+  },
+];
+
 export const featuresOasDoc = parseOasDoc(
   path.resolve(__dirname, "./index.yaml")
 );
 async function featuresExegesisInstance() {
   globalexegesisOptions.controllers = path.resolve(__dirname, "./controllers");
   globalexegesisOptions.plugins = [
-    validateRequestsPlugin(["yaml", "json"], ["apiKey"], _listOfCollections),
+    validateRequestsPlugin(
+      allowed_F_values.map((opt) => opt.f),
+      ["apiKey"],
+      _listOfCollections
+    ),
   ];
   return exegesisExpress.middleware(
     await featuresOasDoc,
@@ -39,5 +54,5 @@ const collections: CollectionConfig[] = [
 ];
 
 const _listOfCollections = collections.map((coll) => coll.collectionId);
-export { _listOfCollections, collections, CollectionConfig };
+export { _listOfCollections, collections, CollectionConfig,allowed_F_values };
 export default featuresExegesisInstance;

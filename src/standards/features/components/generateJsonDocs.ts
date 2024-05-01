@@ -9,14 +9,7 @@ import {
   FeatureCollection,
   Link,
 } from "../../../types";
-import {
-  genLinkForCollectionsRoot,
-  genLinksForCollection,
-  genLinksForConformance,
-  genLinksForFeatureCollection,
-  genLinksForRoot,
-  genLinksToItemsFromCollection,
-} from "./links";
+import { genLinksAll, genLinksToColl_ItemsWhenAtRoot } from "./links";
 import initCommonQueryParams from "./params";
 import { CollectionConfig } from "..";
 import { querySpatialExtent, queryTemporalIntervals } from "./db_queries";
@@ -37,14 +30,11 @@ async function numMatchedInit(
 async function genFeatureCollection(
   context: ExegesisContext,
   featuresArray: Feature[],
-  count: number
+  count: number,
+  allowed_f_values: F_AssociatedType[]
 ): Promise<FeatureCollection> {
   //In order to reduce complexity in generating links (rel=(next|prev)), just remove link obj where hasNextPage|prev=false
-  let links = await genLinksForFeatureCollection(context, [
-    { f: "json", type: "application/geo+json" },
-    { f: "html", type: "text/html" },
-    { f: "yaml", type: "application/yaml" },
-  ]);
+  let links = await genLinksAll(context, allowed_f_values, "Items");
   const { offset, limit } = await initCommonQueryParams(context);
   let hasNextPage: boolean, hasPrevPage: boolean;
   hasPrevPage = offset < 1 || count - limit - offset <= 0 ? false : true;
@@ -57,7 +47,7 @@ async function genFeatureCollection(
     links = links.filter((obj) => obj.rel !== "prev");
   }
 
-  const featurecollection: FeatureCollection = {
+  return {
     type: "FeatureCollection",
     timeStamp: new Date().toJSON(),
     numberReturned: featuresArray.length,
@@ -65,7 +55,6 @@ async function genFeatureCollection(
     features: featuresArray,
     links: links,
   };
-  return featurecollection;
 }
 
 async function genConformance(
@@ -75,7 +64,7 @@ async function genConformance(
 ) {
   return {
     conformsTo: conformanceClasses,
-    links: await genLinksForConformance(context, allowed_f_values),
+    links: await genLinksAll(context, allowed_f_values, "Conformance"),
   };
 }
 async function genRootDoc(
@@ -84,7 +73,7 @@ async function genRootDoc(
 ) {
   const doc = {
     title: "Root of the features implementation instance",
-    links: await genLinksForRoot(context, allowed_f_values),
+    links: await genLinksAll(context, allowed_f_values, "Root"),
   };
   return doc;
 }
@@ -118,7 +107,7 @@ async function genOneCollectionDoc(
   context: ExegesisContext,
   allowed_f_values: F_AssociatedType[],
   collectionOptions: CollectionConfig,
-  mode: "root" | "nested"
+  mode: "root" | "specific"
 ): Promise<Collection> {
   const _extentbbox = await querySpatialExtent(
     collectionOptions.modelName,
@@ -156,9 +145,13 @@ async function genOneCollectionDoc(
     itemType: "feature",
     storageCrs: _extentbbox[0].length > 4 ? crs84hUri : crs84Uri,
     links:
-      mode === "nested"
-        ? await genLinksForCollection(context, allowed_f_values, "nested")
-        : await genLinksForCollection(context, allowed_f_values, "root"),
+      mode === "specific"
+        ? await genLinksAll(context, allowed_f_values, "Collection")
+        : await genLinksToColl_ItemsWhenAtRoot(
+            context,
+            collectionOptions.collectionId,
+            allowed_f_values
+          ),
   };
 }
 
@@ -190,7 +183,7 @@ async function genCollectionsRootDoc(
   return {
     title: "All collections",
     collections: _allCollections,
-    links: await genLinkForCollectionsRoot(context, allowed_F_values,),
+    links: await genLinksAll(context, allowed_F_values, "collectionsRoot"),
   };
 }
 export {

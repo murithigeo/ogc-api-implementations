@@ -154,7 +154,7 @@ export default async function initCommonQueryParams(
   prevPageOffset: number;
   offset: number;
   f: CN_Value;
-  urlToThisEP: URL;
+  readonly urlToThisEP: URL;
   //invalidcrsbboxRes: ExegesisResponse;
 }> {
   const { flipCoords, bboxcrs_vArray, crs_vArray } = await coordParams_validate(

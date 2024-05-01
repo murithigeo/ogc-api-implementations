@@ -15,17 +15,31 @@ function makeExegesisPlugin(
     postSecurity: async (pluginContext: ExegesisPluginContext) => {
       //Access documented params. Includes path & query params
       const _oasListedParams = await pluginContext.getParams();
-
+      //console.log('collid',_oasListedParams.path.collectionId);
       //Handle collections not existent or served by the server
-      if (
-        _oasListedParams.path.collectionId &&
-        !listOfCollections.includes(_oasListedParams.path.collectionId)
-      ) {
-        pluginContext.res.status(404).json({
-          requestedCollection: _oasListedParams.path.collectionId,
-          response: "Does not exist",
-          statusCode: 404,
-        });
+
+      if (_oasListedParams.path.collectionId === "") {
+        pluginContext.res.status(400).setBody(
+          pluginContext.makeValidationError(
+            "collectionId cannot be an empty string",
+            {
+              in: "path",
+              name: "collectionId",
+              docPath: pluginContext.api.pathItemPtr,
+            }
+          )
+        );
+      }
+
+      if (_oasListedParams.path.collectionId) {
+        if (!listOfCollections.includes(_oasListedParams.path.collectionId)) {
+          pluginContext.res.status(404).json({
+            requestedCollection: _oasListedParams.path.collectionId,
+            response: "Does not exist",
+            statusCode: 404,
+          });
+        }
+        
       }
       //Handle Unexpected Query Params
 
@@ -99,9 +113,8 @@ function makeExegesisPlugin(
           _oasListedParams.query.crs
         );
         if (
-          !URL.canParse(_oasListedParams.query.crs)||
-          _crs_Array.length < 1 
-          
+          !URL.canParse(_oasListedParams.query.crs) ||
+          _crs_Array.length < 1
         ) {
           pluginContext.res.status(400).setBody(
             pluginContext.makeValidationError("crs invalid or unsupported", {
@@ -111,7 +124,10 @@ function makeExegesisPlugin(
             })
           );
         }
-        if (!URL.canParse(_oasListedParams.query['bbox-crs'])||_bboxcrs_Array.length < 1) {
+        if (
+          !URL.canParse(_oasListedParams.query["bbox-crs"]) ||
+          _bboxcrs_Array.length < 1
+        ) {
           pluginContext.res.status(400).setBody(
             pluginContext.makeValidationError(
               "bbox-crs invalid or unsupported",

@@ -18,11 +18,11 @@ exports.getCollectionsAll = async function (context: ExegesisContext) {
     collections,
     allowedTypes
   );
-  console.log(_collectionsAll)
-  context.res.status(200).setBody(_collectionsAll)
+  context.res.status(200).setBody(_collectionsAll);
 };
 exports.getCollectionOne = async function (context: ExegesisContext) {
   const { f } = await initCommonQueryParams(context);
+  console.log(context.params.path)
   const _collectionDoc = await genOneCollectionDoc(
     context,
     allowedTypes,
@@ -30,7 +30,7 @@ exports.getCollectionOne = async function (context: ExegesisContext) {
       (collection) =>
         (collection.collectionId = context.params.path.collectionId)
     ),
-    "nested"
+    "specific"
   );
   switch (f) {
     case "yaml":
