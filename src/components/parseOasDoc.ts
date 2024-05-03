@@ -2,14 +2,17 @@ import YAML from "js-yaml";
 import fs from "fs";
 import path from "path";
 import { servers } from "../server";
+import alterServers from "./alterOasServers";
 async function parseOasFragment(yamlFile: any): Promise<any> {
   const doc = YAML.load(fs.readFileSync(yamlFile, "utf-8"));
   return doc;
 }
-async function parseOasDoc(yamlFile: any) {
-  const mainDoc = await parseOasFragment(path.resolve(__dirname,"../oas/index.yaml"));
+async function parseOasDoc(yamlFile: any, standard: "features" | "edr") {
+  const mainDoc = await parseOasFragment(
+    path.resolve(__dirname, "../oas/index.yaml")
+  );
   const fragmentToParse: any = await parseOasFragment(yamlFile);
-  mainDoc.servers = servers;
+  mainDoc.servers = await alterServers(servers, standard);
 
   if (fragmentToParse) {
     if (fragmentToParse.securitySchemes) {

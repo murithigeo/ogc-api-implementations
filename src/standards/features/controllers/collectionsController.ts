@@ -1,5 +1,5 @@
 import { ExegesisContext, ExegesisOptions } from "exegesis-express";
-import { _listOfCollections, collections } from "..";
+import { collections_properties, allowed_F_values } from "..";
 import {
   genCollectionsRootDoc,
   genOneCollectionDoc,
@@ -7,26 +7,38 @@ import {
 import initCommonQueryParams from "../components/params";
 import convertJsonToYAML from "../components/convertToYaml";
 import { F_AssociatedType } from "../../../types";
-const allowedTypes: F_AssociatedType[] = [
-  { f: "json", type: "application/json" },
-  { f: "yaml", type: "text/yaml" },
-];
+
 exports.getCollectionsAll = async function (context: ExegesisContext) {
   //context.res.status(200).setBody();
   const _collectionsAll = await genCollectionsRootDoc(
     context,
-    collections,
-    allowedTypes
+    collections_properties.collections,
+    allowed_F_values
   );
-  context.res.status(200).setBody(_collectionsAll);
+  switch ((await initCommonQueryParams(context)).f) {
+    case "json":
+      context.res
+        .status(200)
+        .set("content-type", "application/json")
+        .setBody(_collectionsAll);
+      break;
+    case "yaml":
+      context.res
+        .status(200)
+        .set("content-type", "text/yaml")
+        .setBody(await convertJsonToYAML(_collectionsAll));
+      break;
+    default:
+      context.res.status(400);
+  }
 };
 exports.getCollectionOne = async function (context: ExegesisContext) {
   const { f } = await initCommonQueryParams(context);
-  console.log(context.params.path)
+  console.log(context.params.path);
   const _collectionDoc = await genOneCollectionDoc(
     context,
-    allowedTypes,
-    collections.find(
+    allowed_F_values,
+    collections_properties.collections.find(
       (collection) =>
         (collection.collectionId = context.params.path.collectionId)
     ),

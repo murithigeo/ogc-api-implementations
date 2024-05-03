@@ -1,3 +1,5 @@
+import { allowed_F_values } from "./standards/features";
+
 /**
  * @interface supportedCrs defines an array of Coordinate Reference Systems that a Collection Supports
  * @example {uri: "http://www.opengis.net/def/crs/OGC/1.3/CRS84", srid: 4326, authority: "OGC", isGeographic: false  }
@@ -8,7 +10,9 @@ interface SupportedCrs {
   authority: string; //The Authority that governs the CRS defined in ./uri
   isGeographic: boolean; //Denotes whether the CRS is projected (uses x,y axis-order) or Geographic(uses y,x axis-order)
 }
-export type CN_Value = "json" | "gpkg" | "yaml" | "html";
+
+//const arrayOfAllowedFParam = allowed_F_values.map((val) => val.f);
+export type CN_Value = "yaml" | "json";
 export interface F_AssociatedType {
   f: CN_Value;
   type: string;
@@ -81,7 +85,6 @@ export interface oasDocServers {
  * @interface ServerConfig
  */
 
-
 export interface Link {
   rel:
     | "items"
@@ -125,6 +128,7 @@ export interface Feature {
   properties?: {
     [key: string | number]: string | boolean | number;
   };
+  links?:Link[]
 }
 export interface FeatureCollection {
   type: "FeatureCollection";

@@ -31,6 +31,25 @@ function makeExegesisPlugin(
         );
       }
 
+      //cover the gray are between the length of the bounding box
+      //minLength=4
+      //maxLength=6
+      //Means that we can not validate requests with a length of 5
+      if (
+        _oasListedParams.query.bbox &&
+        _oasListedParams.query.bbox.length === 5
+      ) {
+        pluginContext.res.status(400).setBody(
+          pluginContext.makeValidationError(
+            "bbox can only have 4 or 6 elements",
+            {
+              in: "query",
+              docPath: pluginContext.api.pathItemPtr,
+              name: "bbox",
+            }
+          )
+        );
+      }
       if (_oasListedParams.path.collectionId) {
         if (!listOfCollections.includes(_oasListedParams.path.collectionId)) {
           pluginContext.res.status(404).json({
@@ -39,7 +58,6 @@ function makeExegesisPlugin(
             statusCode: 404,
           });
         }
-        
       }
       //Handle Unexpected Query Params
 
@@ -52,12 +70,12 @@ function makeExegesisPlugin(
       const _allParams = Array.from(new URLSearchParams(_url.search).keys());
 
       //undocumented Params to ignore
-      const allowedParams: string[] = ["apiKey"];
+      const allowedParams: string[] = [];
 
       //Push query params you want to ignore into the allowedparams array
       //Only if you provide some
 
-      if (queryParamsToIgnore && queryParamsToIgnore.length > 1) {
+      if (queryParamsToIgnore && queryParamsToIgnore.length > 0) {
         allowedParams.push(...queryParamsToIgnore);
       }
 
@@ -103,42 +121,33 @@ function makeExegesisPlugin(
           )
         );
       }
-      //Handle invalid crs Params. Only for routes with crs or bbox-crs param
-      if (_oasListedParams.query.crs || _oasListedParams.query["bbox-crs"]) {
-        const _bboxcrs_Array = await validate_crs_string(
-          _oasListedParams.query["bbox-crs"]
-        );
 
-        const _crs_Array = await validate_crs_string(
-          _oasListedParams.query.crs
+      //Handle invalid crs Params. Only for routes with crs or bbox-crs param
+      if (
+        _oasListedParams.query.crs &&
+        !(await validate_crs_string(_oasListedParams.query.crs))
+      ) {
+        pluginContext.res.status(400).setBody(
+          pluginContext.makeValidationError("crs invalid or unsupported", {
+            in: "query",
+            name: "crs",
+            docPath: pluginContext.api.pathItemPtr,
+          })
         );
-        if (
-          !URL.canParse(_oasListedParams.query.crs) ||
-          _crs_Array.length < 1
-        ) {
-          pluginContext.res.status(400).setBody(
-            pluginContext.makeValidationError("crs invalid or unsupported", {
-              in: "query",
-              name: "crs",
-              docPath: pluginContext.api.pathItemPtr,
-            })
-          );
-        }
-        if (
-          !URL.canParse(_oasListedParams.query["bbox-crs"]) ||
-          _bboxcrs_Array.length < 1
-        ) {
-          pluginContext.res.status(400).setBody(
-            pluginContext.makeValidationError(
-              "bbox-crs invalid or unsupported",
-              {
-                in: "query",
-                name: "bbox-crs",
-                docPath: pluginContext.api.pathItemPtr,
-              }
-            )
-          );
-        }
+      }
+
+      //Handle invalid bboxcrs
+      if (
+        _oasListedParams.query["bbox-crs"] &&
+        !(await validate_crs_string(_oasListedParams.query["bbox-crs"]))
+      ) {
+        pluginContext.res.status(400).setBody(
+          pluginContext.makeValidationError("bbox-crs invalid or unsupported", {
+            in: "query",
+            name: "bbox-crs",
+            docPath: pluginContext.api.pathItemPtr,
+          })
+        );
       }
     },
   };

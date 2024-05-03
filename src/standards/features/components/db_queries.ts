@@ -3,6 +3,11 @@ import sequelize from "../models"; //Do not import the main db connection becaus
 type ExtentBbox_crs84 = [number, number, number, number][];
 type ExtentBbox_crs84H = [number, number, number, number, number, number][];
 
+
+/**
+ * @function ST_hasZ is not available from postgis v3.5^
+ * Can be used to run specific queries for CRS84 & CRS84 depending on @flag hasZ
+ */
 async function querySpatialExtent(
   modelname: string,
   bboxgenScope: string

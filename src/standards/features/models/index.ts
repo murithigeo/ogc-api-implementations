@@ -1,5 +1,5 @@
 import sequelize from "../../../dbconnection";
-import { newFeatures } from "./mountains";
+//import { newFeatures } from "./mountains";
 
 //import models models
 import _pointsModel from "./points.model";
@@ -11,24 +11,31 @@ sequelize.models.mountains = _pointsModel(sequelize);
 
 //_mountainsModel.sync({});
 
-/*.then(() => {
-    for (const feature of newFeatures) {
-      _mountainsModel.findOrCreate({
-        where: {
-          name: feature.id,
-        },
-        raw: true,
-        defaults: {
-          name: feature.id,
-          geom: feature.geometry,
-          regions: feature.properties.regions,
-          countries: feature.properties.countries,
-          height_ft: feature.properties.height_ft,
-          height_m: feature.properties.height_m,
-        },
-      });
-    }
+/*.then(() => {*/
+/*
+(async()=>{
+  for (const feature of newFeatures) {
+    await sequelize.models.mountains.findOrCreate({
+      where: {
+        name: feature.id,
+      },
+      raw: true,
+      defaults: {
+        name: feature.id,
+        geom: feature.geometry,
+        regions: feature.properties.regions,
+        countries: feature.properties.countries,
+        height_ft: feature.properties.height_ft,
+        height_m: feature.properties.height_m,
+      },
+    });
+  }
+})()
+    
+*/
+/*
   });
 
   */
-export default sequelize;
+ const featuresSeqInstance=sequelize
+export default featuresSeqInstance;

@@ -44,6 +44,22 @@ async function genLinksAll(
   /**
    * optionsforSelf &optionsforAlt
    */
+  (async () => {
+    mode === "Collection" ||
+    mode === "Conformance" ||
+    mode === "Root" ||
+    mode === "collectionsRoot"
+      ? allowed_f_values.forEach((element) => {
+          if (element.f === "json") {
+            element.type = "application/json";
+          }
+        })
+      : allowed_f_values.forEach((element) => {
+          if (element.f === "json") {
+            element.type = "application/geo+json";
+          }
+        });
+  })();
 
   const { optionsForSelf, optionsForAlt } = await filter_f_types(
     context,
@@ -54,9 +70,11 @@ async function genLinksAll(
    * @const links
    */
   const links: Link[] = [];
+
   /**
    * @Link rel=self& alt
    */
+
   for (const option of optionsForSelf) {
     //Mutate type to application/geo+json if f=json
     let _tempLink = new URL(urlToThisEP);
@@ -111,6 +129,7 @@ async function genLinksAll(
       //Non dynamic routes (/api&/api.html)
       var _tempLink = new URL(urlToThisEP.href);
       _tempLink.pathname = _tempLink.pathname + "api";
+      _tempLink.search = "";
       links.push({
         rel: "service-desc",
         href: _tempLink.toString(),
@@ -120,6 +139,7 @@ async function genLinksAll(
 
       var _tempLink = new URL(urlToThisEP.href);
       _tempLink.pathname = _tempLink.pathname + "api.html";
+      _tempLink.search = "";
       links.push({
         rel: "service-doc",
         href: _tempLink.toString(),
@@ -128,19 +148,17 @@ async function genLinksAll(
       });
       break;
     case "Collection":
-      //urlToThisEP= http://serverurl/features/collections/{collectionId}
-      //Provide links to Items at currentUrl/items
       for (let option of allowed_f_values) {
-        var _tempLink = new URL(urlToThisEP.href);
-        _tempLink.pathname = _tempLink + "items";
+        (async () => {
+          if (option.f === "json") {
+            option.type = "application/geo+json";
+          }
+        })();
+        var _tempLink = new URL(urlToThisEP);
+        _tempLink.search = "";
+        _tempLink.pathname = _tempLink.pathname + "/items";
         _tempLink.searchParams.set("f", option.f);
 
-        //Remember to also change option.type to application/geo+json
-        option = await changeLinkTypeForNestLinks(
-          option,
-          "json",
-          "application/geo+json"
-        );
         links.push({
           href: _tempLink.toString(),
           title: `View the items in this collection as ${option.f}`,
@@ -213,7 +231,11 @@ async function genLinksAll(
         _tempLink = new URL(
           new URL("../../", _tempLink).toString().slice(0, -1)
         );
-        
+        option = await changeLinkTypeForNestLinks(
+          option,
+          "json",
+          "application/json"
+        );
         _tempLink.searchParams.set("f", option.f);
         links.push({
           rel: "collection",
@@ -221,8 +243,12 @@ async function genLinksAll(
           title: `View the collection doc`,
           type: option.type,
         });
-        
-        option=await changeLinkTypeForNestLinks(option,'json','application/geo+json')
+
+        option = await changeLinkTypeForNestLinks(
+          option,
+          "json",
+          "application/geo+json"
+        );
         var _tempLink = new URL(urlToThisEP);
         _tempLink.search = "";
         _tempLink = new URL(new URL("./", _tempLink).toString().slice(0, -1));
@@ -236,7 +262,22 @@ async function genLinksAll(
       }
       break;
   }
+  for (let link of links) {
+    link = await addApiKeyToSearchParams(context, link);
+  }
   return links;
+}
+
+async function addApiKeyToSearchParams(context: ExegesisContext, link: Link) {
+  if (context.security.ApiKeyAuth) {
+    if (context.user.apiKey) {
+      //@ts-ignore
+      var _tempLink = new URL(link.href);
+      _tempLink.searchParams.set("apiKey", context.user.apiKey);
+      link.href = _tempLink.toString();
+    }
+  }
+  return link;
 }
 
 async function genLinksToColl_ItemsWhenAtRoot(
@@ -252,9 +293,7 @@ async function genLinksToColl_ItemsWhenAtRoot(
     //links to /{collectionId}
     var _tempLink = new URL(urlToThisEP);
     _tempLink.search = "";
-    _tempLink = new URL(
-      new URL(collectionId, _tempLink + "/").toString().slice(0, -1)
-    );
+    _tempLink = new URL(new URL(collectionId, _tempLink + "/").toString());
     _tempLink.searchParams.set("f", option.f);
     option = await changeLinkTypeForNestLinks(
       option,
@@ -270,7 +309,7 @@ async function genLinksToColl_ItemsWhenAtRoot(
     var _tempLink = new URL(urlToThisEP);
     _tempLink.search = "";
     _tempLink = new URL(
-      new URL(collectionId + "/items", _tempLink + "/").toString().slice(0, -1)
+      new URL(collectionId + "/items", _tempLink + "/").toString()
     );
     _tempLink.searchParams.set("f", option.f);
     option = await changeLinkTypeForNestLinks(
@@ -285,6 +324,9 @@ async function genLinksToColl_ItemsWhenAtRoot(
       rel: "items",
     });
   }
+  for (let link of links) {
+    link = await addApiKeyToSearchParams(context, link);
+  }
   return links;
 }
 async function changeLinkTypeForNestLinks(
@@ -294,27 +336,6 @@ async function changeLinkTypeForNestLinks(
 ): Promise<F_AssociatedType> {
   linkOption.f === fValue ? (linkOption.type = intendedType) : linkOption;
   return linkOption;
-}
-
-async function addApiKeyToSearchParams(
-  context: ExegesisContext,
-  linkToTargetEndpoint: URL
-): Promise<URL> {
-  if (context.security) {
-    if (context.security.apiKey) {
-      if (context.security.apiKeyAuth) {
-        if (context.security.apiKeyAuth.user) {
-          if (context.security.apiKeyAuth.user.apiKey) {
-            linkToTargetEndpoint.searchParams.set(
-              "apiKey",
-              `${context.security.apiKeyAuth.user.apiKey}`
-            );
-          }
-        }
-      }
-    }
-  }
-  return linkToTargetEndpoint;
 }
 
 export { genLinksToColl_ItemsWhenAtRoot, genLinksAll };

@@ -1,5 +1,4 @@
 import { DataTypes, Sequelize } from "sequelize";
-import { newFeatures } from "./mountains";
 
 const _pointsModel = (sequelize: Sequelize) => {
   const model = sequelize.define(

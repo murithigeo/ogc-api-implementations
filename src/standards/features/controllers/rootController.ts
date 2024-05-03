@@ -3,16 +3,12 @@ import initCommonQueryParams from "../components/params";
 import { CN_Value, F_AssociatedType } from "../../../types";
 import { genRootDoc } from "../components/generateJsonDocs";
 import convertJsonToYAML from "../components/convertToYaml";
-import genValidationErrorFor_F from "../components/validationError_f";
+import { allowed_F_values } from "..";
 
 exports.getLandingPage = async function (context: ExegesisContext) {
-  const { f, urlToThisEP } = await initCommonQueryParams(context);
-  const allowed_f_values: F_AssociatedType[] = [
-    { f: "html", type: "text/html" },
-    { f: "json", type: "application/json" },
-    { f: "yaml", type: "text/yaml" },
-  ];
-  const _jsonDoc = await genRootDoc(context, allowed_f_values);
+  const { f } = await initCommonQueryParams(context);
+  const _jsonDoc = await genRootDoc(context, allowed_F_values);
+
   switch (f) {
     case "json":
       context.res
@@ -27,6 +23,6 @@ exports.getLandingPage = async function (context: ExegesisContext) {
         .setBody(await convertJsonToYAML(_jsonDoc));
       break;
     default:
-      context.res.status(400).setBody(await genValidationErrorFor_F(context));
+      context.res.status(400).setBody('t')
   }
 };

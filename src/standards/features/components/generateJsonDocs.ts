@@ -11,9 +11,9 @@ import {
 } from "../../../types";
 import { genLinksAll, genLinksToColl_ItemsWhenAtRoot } from "./links";
 import initCommonQueryParams from "./params";
-import { CollectionConfig } from "..";
+import { CollectionsConfig, _allsupportedcrsUris } from "..";
 import { querySpatialExtent, queryTemporalIntervals } from "./db_queries";
-import { crs84Uri, crs84hUri, supportedcrs_array, trs } from "../crsconfig";
+import { crs84Uri, crs84hUri, CollectionConfig, trs } from "../";
 
 async function numMatchedInit(
   count: number,
@@ -37,8 +37,9 @@ async function genFeatureCollection(
   let links = await genLinksAll(context, allowed_f_values, "Items");
   const { offset, limit } = await initCommonQueryParams(context);
   let hasNextPage: boolean, hasPrevPage: boolean;
-  hasPrevPage = offset < 1 || count - limit - offset <= 0 ? false : true;
-  hasNextPage = count <= 1 ? false : true;
+
+  hasPrevPage = offset < 1 || limit - offset <= 1 ? false : true;
+  hasNextPage = offset < 1 || offset - limit <= 1 ? false : true;
 
   if (hasNextPage === false) {
     links = links.filter((obj) => obj.rel !== "next");
@@ -109,10 +110,18 @@ async function genOneCollectionDoc(
   collectionOptions: CollectionConfig,
   mode: "root" | "specific"
 ): Promise<Collection> {
-  const _extentbbox = await querySpatialExtent(
+  let _extent_bbox = await querySpatialExtent(
     collectionOptions.modelName,
     collectionOptions.bboxgenScope
   );
+
+
+  //Since the ETS does not support 6-coodinate bbox, remove the Z-axis vals
+  if (_extent_bbox[0].length > 4) {
+    _extent_bbox[0].splice(2, 1); //Remove Zmin
+    _extent_bbox[0].splice(4, 1); //Remove Zmax
+  }
+
   const _extent_interval = await queryTemporalIntervals(
     collectionOptions.modelName,
     collectionOptions.datetimeColumns
@@ -120,10 +129,12 @@ async function genOneCollectionDoc(
 
   return {
     id: collectionOptions.collectionId,
+    description:collectionOptions.description,
+    title: collectionOptions.title,
     extent: {
       spatial: {
-        bbox: _extentbbox,
-        crs: _extentbbox[0].length === 4 ? crs84Uri : crs84hUri,
+        bbox: _extent_bbox,
+        crs: _extent_bbox[0].length === 4 ? crs84Uri : crs84hUri, //crs84Uri : crs84hUri,
       },
       temporal: {
         interval: _extent_interval,
@@ -131,19 +142,24 @@ async function genOneCollectionDoc(
       },
     },
     crs:
-      _extentbbox[0].length === 4
+      _extent_bbox[0].length === 4
         ? [
             crs84Uri,
-            ...supportedcrs_array.filter(
+            ..._allsupportedcrsUris.filter(
               (string) => string !== crs84Uri && string !== crs84hUri
             ),
           ]
         : [
+            //Remove CRS84h from list of allowed CRS because it does not allow 6-element bbox queries
             crs84hUri,
-            ...supportedcrs_array.filter((string) => string !== crs84hUri),
+            crs84Uri,
+            ..._allsupportedcrsUris.filter(
+              (string) => string !== crs84hUri && string !== crs84Uri
+            ),
           ],
     itemType: "feature",
-    storageCrs: _extentbbox[0].length > 4 ? crs84hUri : crs84Uri,
+    //Alter the ternary operator to achieve get CRS84 no matter what
+    storageCrs: _extent_bbox[0].length > 4 ? crs84hUri : crs84Uri,
     links:
       mode === "specific"
         ? await genLinksAll(context, allowed_f_values, "Collection")
@@ -186,7 +202,17 @@ async function genCollectionsRootDoc(
     links: await genLinksAll(context, allowed_F_values, "collectionsRoot"),
   };
 }
+
+async function genFeature(
+  context: ExegesisContext,
+  feature: Feature,
+  allowed_f_values: F_AssociatedType[]
+) {
+  feature.links = await genLinksAll(context, allowed_f_values, "Feature");
+  return feature;
+}
 export {
+  genFeature,
   genRootDoc,
   genFeatureCollection,
   genConformance,

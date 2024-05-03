@@ -19,4 +19,10 @@ securitySchemes:
   BasicAuth:
     type: http
     scheme: basic
+  ApiKeyAuth:
+    type: apiKey
+    in: query
+    name: apiKey
+    default: 89287c36-c8d6-48bc-a4a7-d5bd8a426294
+    description: Authenticate requests using a server-validated string. Is relatively simple to implement    
   

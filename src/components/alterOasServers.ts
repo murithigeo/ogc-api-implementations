@@ -2,7 +2,10 @@ import os from "os";
 import { oasDocServers } from "../types";
 import { PORT } from "../server";
 
-async function alterServers(servers: oasDocServers[]) {
+async function alterServers(
+  servers: oasDocServers[],
+  standard: "features" | "edr"
+) {
   if (process.env.NODE_ENV === "dev") {
     var ifaces: any = os.networkInterfaces();
     var ips: any = 0;
@@ -18,19 +21,21 @@ async function alterServers(servers: oasDocServers[]) {
     });
     if (ips !== 0) {
       servers.push({
-        url: `http://${ips}:${PORT}`,
+        url: `http://${ips}:${PORT}/${standard}`,
         description: `This is the internal IP address of the localmachine`,
       });
     }
+    /*
     servers.push({
-      url: "http://localhost:" + PORT,
+      url: `http://localhost:${PORT}/${standard}`,
       description: "Localhost",
     });
+    */
   }
-  if (process.env.NODE_ENV === "prod") {
+  if (process.env.NODE_ENV === "production") {
     if (process.env.PROD_URL && process.env.PORT) {
       servers.push({
-        url: process.env.PROD_URL + ":" + process.env.PORT,
+        url: `${process.env.PROD_URL}:${process.env.PORT}/${standard}`,
         description: `Production server`,
       });
     }

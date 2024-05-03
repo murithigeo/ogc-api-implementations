@@ -1,7 +1,9 @@
 paths:
-  '/features/':
+  '/':
     x-exegesis-controller: rootController
     get:
+      security:
+        - ApiKeyAuth: []
       tags:
         - Features
       x-exegesis-operationId: getLandingPage
@@ -14,14 +16,16 @@ paths:
             application/json:
               schema: 
                 $ref: '#/components/schemas/Landing'
-            text/html:
+            text/yaml:
               schema: 
                 type: string
-  '/features/conformance':
+  '/conformance':
     x-exegesis-controller: conformanceController
     description: >
       Access the conformance classes of this server (endpoint root)
     get:
+      security:
+        - ApiKeyAuth: []
       tags:
         - Features
       x-exegesis-operationId: getConformance
@@ -34,10 +38,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Conformance'
-            text/html:
+            text/yaml:
               schema:
                 type: string
-  '/features/api':
+  '/api':
     x-exegesis-controller: apiController
     get:
       tags:
@@ -54,7 +58,7 @@ paths:
             application/vnd.oai.openapi+json;version=3.0:
               schema:
                 type: object
-  '/features/api.html':
+  '/api.html':
     x-exegesis-controller: apiController
     get:
       tags:
@@ -66,12 +70,14 @@ paths:
         '200':
           description: Ok.
           content:
-            text/html:
+            text/yaml:
               schema:
                 type: string
-  '/features/collections':
+  '/collections':
     x-exegesis-controller: collectionsController
     get:
+      security:
+        - ApiKeyAuth: []
       tags:
         - Features
       x-exegesis-operationId: getCollectionsAll
@@ -97,11 +103,13 @@ paths:
                     minItems: 1
                     items:
                       $ref: '#/components/schemas/Collection'
-  '/features/collections/{collectionId}':
+  '/collections/{collectionId}':
     x-exegesis-controller: collectionsController
     parameters:
       - $ref: '#/components/parameters/collectionId'
     get:
+      security:
+        - ApiKeyAuth: []
       tags:
         - Features
       x-exegesis-operationId: getCollectionOne
@@ -115,12 +123,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Collection'
-            text/html:
+            text/yaml:
               schema:
                 type: string
-  '/features/collections/{collectionId}/items':
+  '/collections/{collectionId}/items':
     x-exegesis-controller: featuresController
     get:
+      security:
+        - ApiKeyAuth: []
       tags:
         - Features
       x-exegesis-operationId: getItems
@@ -142,12 +152,14 @@ paths:
             application/geo+json:
               schema:
                 $ref: '#/components/schemas/genericFeatureCollection'
-            text/html:
+            text/yaml:
               schema:
                 type: string
-  '/features/collections/{collectionId}/items/{featureId}':
+  '/collections/{collectionId}/items/{featureId}':
     x-exegesis-controller: featuresController
     get:
+      security:
+        - ApiKeyAuth: []
       tags:
         - Features
       x-exegesis-operationId: getItem
@@ -156,12 +168,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/collectionId'
         - $ref: '#/components/parameters/featureId'
-        - $ref: '#/components/parameters/bbox'
-        - $ref: '#/components/parameters/limit'
-        - $ref: '#/components/parameters/offset'
-        - $ref: '#/components/parameters/datetime'
         - $ref: '#/components/parameters/crs'
-        - $ref: '#/components/parameters/bbox-crs'
         - $ref: '#/components/parameters/f'
       responses:
         '200':
@@ -170,7 +177,7 @@ paths:
             application/geo+json:
               schema:
                 $ref: '#/components/schemas/genericFeature'
-            text/html:
+            text/yaml:
               schema:
                 type: string
 components:
@@ -788,7 +795,7 @@ components:
       required: false
       schema:
         type: integer
-        minimum: 100
+        minimum: 0
         maximum: 500
         default: 100
       style: form
@@ -798,6 +805,8 @@ components:
       name: offset
       required: false
       schema:
+        minimum: 0
+        default: 0
         type: integer
       style: form
       explode: false
@@ -807,6 +816,7 @@ components:
       required: false
       schema:
         type: string
+        enum: [json,yaml]
         default: json
       style: form
       explode: false
