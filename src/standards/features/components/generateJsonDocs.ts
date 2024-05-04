@@ -115,7 +115,6 @@ async function genOneCollectionDoc(
     collectionOptions.bboxgenScope
   );
 
-
   //Since the ETS does not support 6-coodinate bbox, remove the Z-axis vals
   if (_extent_bbox[0].length > 4) {
     _extent_bbox[0].splice(2, 1); //Remove Zmin
@@ -129,7 +128,7 @@ async function genOneCollectionDoc(
 
   return {
     id: collectionOptions.collectionId,
-    description:collectionOptions.description,
+    description: collectionOptions.description,
     title: collectionOptions.title,
     extent: {
       spatial: {
@@ -145,21 +144,22 @@ async function genOneCollectionDoc(
       _extent_bbox[0].length === 4
         ? [
             crs84Uri,
+            crs84hUri,
             ..._allsupportedcrsUris.filter(
               (string) => string !== crs84Uri && string !== crs84hUri
             ),
           ]
         : [
             //Remove CRS84h from list of allowed CRS because it does not allow 6-element bbox queries
-            crs84hUri,
             crs84Uri,
+            crs84hUri,
             ..._allsupportedcrsUris.filter(
               (string) => string !== crs84hUri && string !== crs84Uri
             ),
           ],
     itemType: "feature",
     //Alter the ternary operator to achieve get CRS84 no matter what
-    storageCrs: _extent_bbox[0].length > 4 ? crs84hUri : crs84Uri,
+    storageCrs: _extent_bbox[0].length > 4 ? crs84hUri : crs84hUri,
     links:
       mode === "specific"
         ? await genLinksAll(context, allowed_f_values, "Collection")

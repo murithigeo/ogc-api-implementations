@@ -1,5 +1,5 @@
 import * as exegesisExpress from "exegesis-express";
-import path from "path";
+import * as path from "path";
 import parseOasDoc from "../../components/parseOasDoc";
 import { globalexegesisOptions } from "../../server";
 import validateRequestsPlugin from "./plugins/exegesis-plugin-validateRequests";
@@ -93,12 +93,12 @@ const collections_properties: CollectionsConfig = {
 };
 
 export const featuresOasDoc = parseOasDoc(
-  path.resolve(__dirname, "./index.yaml"),
+ './src/standards/features/index.yaml',
   "features"
 );
 
 async function featuresExegesisInstance() {
-  globalexegesisOptions.controllers = path.resolve(__dirname, "./controllers");
+  //globalexegesisOptions.controllers = path.resolve(__dirname, "./controllers");
   globalexegesisOptions.plugins = [
     validateRequestsPlugin(
       allowed_F_values.map((opt) => opt.f),

@@ -263,7 +263,10 @@ async function genLinksAll(
       break;
   }
   for (let link of links) {
-    link = await addApiKeyToSearchParams(context, link);
+    //Let the openapi doc and interactive console be accessible to everybody
+    if (link.rel !== "service-desc" && link.rel !== "service-doc") {
+      link = await addApiKeyToSearchParams(context, link);
+    }
   }
   return links;
 }

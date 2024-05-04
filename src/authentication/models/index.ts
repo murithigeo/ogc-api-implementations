@@ -1,3 +1,4 @@
+/*
 import sequelize from "../../dbconnection";
 
 import userModel from "./users";
@@ -42,3 +43,4 @@ sequelize.models.users = userModel(sequelize);
 const authSeqInstance = sequelize;
 //Remember to import this instance of the connection, not the one at root
 export default authSeqInstance;
+*/

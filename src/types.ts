@@ -1,5 +1,6 @@
 import { allowed_F_values } from "./standards/features";
 
+
 /**
  * @interface supportedCrs defines an array of Coordinate Reference Systems that a Collection Supports
  * @example {uri: "http://www.opengis.net/def/crs/OGC/1.3/CRS84", srid: 4326, authority: "OGC", isGeographic: false  }

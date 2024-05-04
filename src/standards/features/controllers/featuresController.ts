@@ -128,7 +128,8 @@ async function dbQueryMountains(
     : undefined;
   //bboxQuery
   const bboxQuery = context.params.query.bbox
-    ? reqBboxcrs.uri === crs84hUri
+    ? //reqBboxcrs.uri === crs84hUri  &&
+     context.params.query.bbox.length>4
       ? Sequelize.where(
           Sequelize.fn(
             "ST_Intersects",
@@ -156,7 +157,7 @@ async function dbQueryMountains(
 
   //Height Query
   const heightQuery =
-    context.params.query["bbox-crs"] === crs84hUri && context.params.query.bbox
+    context.params.query["bbox-crs"] === crs84hUri && context.params.query.bbox.length>4
       ? {
           [Op.and]: [
             Sequelize.where(

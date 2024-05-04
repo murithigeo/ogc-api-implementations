@@ -1,4 +1,4 @@
-import os from "os";
+import * as os from "os";
 import { oasDocServers } from "../types";
 import { PORT } from "../server";
 
@@ -6,7 +6,12 @@ async function alterServers(
   servers: oasDocServers[],
   standard: "features" | "edr"
 ) {
-  if (process.env.NODE_ENV === "dev") {
+  if (
+    process.env.NODE_ENV === "development" ||
+    process.env.NODE_ENV === "test"
+  ) {
+
+    //Must be connected to a LAN/Internet for this to work. If not connected, ip will be zero and therefore invalid
     var ifaces: any = os.networkInterfaces();
     var ips: any = 0;
     Object.keys(ifaces).forEach((dev) => {
@@ -19,18 +24,22 @@ async function alterServers(
         });
       }
     });
+
     if (ips !== 0) {
       servers.push({
         url: `http://${ips}:${PORT}/${standard}`,
         description: `This is the internal IP address of the localmachine`,
       });
     }
-    /*
-    servers.push({
-      url: `http://localhost:${PORT}/${standard}`,
-      description: "Localhost",
-    });
-    */
+
+    //Only use localhost on development environment otherwise during tests, TeamEngine will throw error
+    if (process.env.NODE_ENV === "development") {
+      servers.push({
+        url: `http://localhost:${PORT}/${standard}`,
+        description: "Localhost",
+      });
+    }
+    
   }
   if (process.env.NODE_ENV === "production") {
     if (process.env.PROD_URL && process.env.PORT) {

@@ -1,3 +1,6 @@
+
+/*
+
 import { DataTypes, Sequelize } from "sequelize";
 import bcrypt from "bcrypt";
 const userModel = (sequelize: Sequelize) => {
@@ -35,3 +38,6 @@ const userModel = (sequelize: Sequelize) => {
 };
 
 export default userModel;
+
+
+*/

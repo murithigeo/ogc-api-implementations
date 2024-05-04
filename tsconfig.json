@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "sourceMap": true,
         "jsx": "react-jsx",
         "allowImportingTsExtensions": false,
         "noEmit": false,
@@ -9,13 +8,14 @@
         "allowUnreachableCode": false,
         "checkJs": false,
         "allowJs": true,
-        "target": "ES5",
+        "target": "ESNext",
         "isolatedModules": false,
         "pretty": true,
-        "outDir": "./dist/",
+        "outDir": "dist/compile",
         "module": "NodeNext",
         "strict": false,
         "esModuleInterop": true,
+        "moduleResolution": "NodeNext",
         "types": [
             //"vite/client",
             "node"

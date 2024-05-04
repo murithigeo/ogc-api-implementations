@@ -3,9 +3,7 @@ import { crs84Uri, crs84hUri, _allCrsProperties } from "../";
 import { CN_Value, Crs_prop, F_AssociatedType } from "../../../types";
 
 export async function validate_crs_string(crsuri: string): Promise<Crs_prop> {
-  const validCrs = _allCrsProperties.find(
-    (crsProp) => crsProp.uri === crsuri
-  );
+  const validCrs = _allCrsProperties.find((crsProp) => crsProp.uri === crsuri);
   return validCrs;
 }
 
@@ -37,11 +35,11 @@ async function coordParams_validate(context: ExegesisContext): Promise<{
   reqCrs: Crs_prop;
   reqBboxcrs: Crs_prop;
 }> {
-  const reqBboxcrs = (
-    await validate_crs_string(await bboxcrs_param_init(context))
+  const reqBboxcrs = await validate_crs_string(
+    await bboxcrs_param_init(context)
   );
 
-  const reqCrs = (await validate_crs_string(await crs_param_init(context)));
+  const reqCrs = await validate_crs_string(await crs_param_init(context));
 
   //console.log(await validate_crs_string(await crs_param_init(context)))
 
@@ -69,7 +67,7 @@ async function bbox_param_init(
     //Depreciated because invalid crs errors are controlled using the the invalid crs plugin
     //TODO: Each standard instance should have its own allowed crsArray
     // if (bboxcrs_vArray.length > 0) {
-    if (reqBboxcrs.uri === crs84hUri) {
+    if (reqBboxcrs.uri === crs84hUri && bboxParam.length > 4) {
       bboxArray = [
         bboxParam[0], //xmin
         bboxParam[1], //ymin

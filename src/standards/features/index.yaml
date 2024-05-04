@@ -2,8 +2,7 @@ paths:
   '/':
     x-exegesis-controller: rootController
     get:
-      security:
-        - ApiKeyAuth: []
+
       tags:
         - Features
       x-exegesis-operationId: getLandingPage
@@ -24,8 +23,7 @@ paths:
     description: >
       Access the conformance classes of this server (endpoint root)
     get:
-      security:
-        - ApiKeyAuth: []
+
       tags:
         - Features
       x-exegesis-operationId: getConformance
@@ -76,8 +74,7 @@ paths:
   '/collections':
     x-exegesis-controller: collectionsController
     get:
-      security:
-        - ApiKeyAuth: []
+
       tags:
         - Features
       x-exegesis-operationId: getCollectionsAll
@@ -108,8 +105,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/collectionId'
     get:
-      security:
-        - ApiKeyAuth: []
+
       tags:
         - Features
       x-exegesis-operationId: getCollectionOne
@@ -129,8 +125,7 @@ paths:
   '/collections/{collectionId}/items':
     x-exegesis-controller: featuresController
     get:
-      security:
-        - ApiKeyAuth: []
+
       tags:
         - Features
       x-exegesis-operationId: getItems
@@ -158,8 +153,7 @@ paths:
   '/collections/{collectionId}/items/{featureId}':
     x-exegesis-controller: featuresController
     get:
-      security:
-        - ApiKeyAuth: []
+
       tags:
         - Features
       x-exegesis-operationId: getItem

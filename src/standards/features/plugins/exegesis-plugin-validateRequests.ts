@@ -5,6 +5,7 @@ import {
 } from "exegesis-express";
 import { URL } from "url";
 import { validate_crs_string } from "../components/params";
+import { crs84hUri } from "..";
 function makeExegesisPlugin(
   data: { apiDoc: any },
   allowed_F_values: string[],
@@ -17,7 +18,6 @@ function makeExegesisPlugin(
       const _oasListedParams = await pluginContext.getParams();
       //console.log('collid',_oasListedParams.path.collectionId);
       //Handle collections not existent or served by the server
-
       if (_oasListedParams.path.collectionId === "") {
         pluginContext.res.status(400).setBody(
           pluginContext.makeValidationError(
@@ -137,18 +137,43 @@ function makeExegesisPlugin(
       }
 
       //Handle invalid bboxcrs
-      if (
-        _oasListedParams.query["bbox-crs"] &&
-        !(await validate_crs_string(_oasListedParams.query["bbox-crs"]))
-      ) {
-        pluginContext.res.status(400).setBody(
-          pluginContext.makeValidationError("bbox-crs invalid or unsupported", {
-            in: "query",
-            name: "bbox-crs",
-            docPath: pluginContext.api.pathItemPtr,
-          })
-        );
+      if (_oasListedParams.query["bbox-crs"]) {
+        if (!(await validate_crs_string(_oasListedParams.query["bbox-crs"]))) {
+          pluginContext.res.status(400).setBody(
+            pluginContext.makeValidationError(
+              "bbox-crs invalid or unsupported",
+              {
+                in: "query",
+                name: "bbox-crs",
+                docPath: pluginContext.api.pathItemPtr,
+              }
+            )
+          );
+        }
       }
+
+      //Validate CRS84h and bbox/
+
+      //Awaiting answer on expected behavior
+      /*
+      if (
+        _oasListedParams.query["bbox-crs"] === crs84hUri &&
+        _oasListedParams.query.bbox.length < 6
+      ) {
+        pluginContext.res
+          .status(400)
+          .setBody(
+            pluginContext.makeValidationError(
+              "bbox elements must be exactly 6 items",
+              {
+                in: "query",
+                name: "bbox",
+                docPath: pluginContext.api.pathItemPtr,
+              }
+            )
+          );
+      }
+          */
     },
   };
 }

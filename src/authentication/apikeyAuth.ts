@@ -3,7 +3,6 @@ import {
   ExegesisPlugin,
   ExegesisRunner,
 } from "exegesis";
-import authSeqInstance from "./models";
 export async function apiKeyAuthenticator(
   pluginContext: ExegesisPluginContext,
   info: any
@@ -18,6 +17,7 @@ export async function apiKeyAuthenticator(
     apiKey = "5ec2449c-9952-4c54-b897-5643bc1ba0a0";
   }
 
+  /*
   const dbRes: any = await authSeqInstance.models.users.findOne({
     where: { apiKey: apiKey },
     attributes: {
@@ -25,7 +25,6 @@ export async function apiKeyAuthenticator(
     },
     raw: true,
 
-    //@ts-expect-error
     includeIgnoreAttributes: false,
   });
 
@@ -36,11 +35,10 @@ export async function apiKeyAuthenticator(
       message: "Invalid apiKey",
     };
   }
+  */
   return {
     type: "success",
     user: {
-      apiKey,
-      username: dbRes.username,
-    },
+      apiKey,    },
   };
 }
