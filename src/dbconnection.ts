@@ -8,6 +8,7 @@ const sequelize = new Sequelize(
   process.env.DB_PASS ?? "postgres",
   {
     host: process.env.DB_HOST,
+    ssl:true,
     dialect: "postgres",
     dialectOptions: {
       useUTC: true,
