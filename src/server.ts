@@ -24,7 +24,7 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
   //controllers: path.join(__dirname, "./standards/features/controllers"), //Temporary measure
   controllersPattern: "**/**/*.@(js|ts)",
   allowMissingControllers: true,
-  ignoreServers: false,
+  ignoreServers: true,
   autoHandleHttpErrors: true,
   authenticators: {
     ApiKeyAuth: apiKeyAuthenticator,
