@@ -18,7 +18,7 @@ let servers: oasDocServers[] = [];
 //Environmental Variables
 const PORT: number = parseInt(<string>process.env.PORT) || 3000; //Default port
 //process.env.NODE_ENV = "test" as "production" | "test" | "development"; //Set the environment
-
+console.log(process.env.NODE_ENV)
 export { PORT, servers };
 export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
   //controllers: path.join(__dirname, "./standards/features/controllers"), //Temporary measure
@@ -36,7 +36,8 @@ async function createServer() {
   const app = express();
 
   app.use((req, res, next) => {
-    console.log(req.headers)
+    console.log(`reqUrl: ${req.url}`)
+    console.log(`reqR_Path: ${req.path}`)
     //console.log(req.);
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
     req.url = decodeURIComponent(req.url);

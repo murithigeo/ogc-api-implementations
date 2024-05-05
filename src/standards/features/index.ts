@@ -99,7 +99,7 @@ export const featuresOasDoc = parseOasDoc(
 
 async function featuresExegesisInstance() {
   globalexegesisOptions.controllers = path.resolve(__dirname, "./controllers");
-  console.log(await featuresOasDoc)
+  console.log((await featuresOasDoc).servers)
   globalexegesisOptions.plugins = [
     validateRequestsPlugin(
       allowed_F_values.map((opt) => opt.f),
