@@ -44,7 +44,13 @@ async function alterServers(
   process.env.PROD_URL
     ? servers.push({
         url: `${process.env.PROD_URL}:${process.env.PORT}/${standard}`,
-        description: "Live production server"
+        description: "Live production server 1"
+      })
+    : servers;
+    process.env.PROD_URL2
+    ? servers.push({
+        url: `${process.env.PROD_URL2}:${process.env.PORT}/${standard}`,
+        description: "Live production server 2"
       })
     : servers;
   for (const serverObj of servers) {
