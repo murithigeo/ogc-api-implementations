@@ -7,12 +7,15 @@ const sequelize = new Sequelize(
   process.env.DB_USER ?? "postgres",
   process.env.DB_PASS ?? "postgres",
   {
-    host: process.env.DB_HOST??'localhost',
+    host: process.env.DB_HOST ?? "localhost",
     port: 5432,
-    ssl:true,
+    //ssl: true,
     dialect: "postgres",
     dialectOptions: {
       useUTC: true,
+      ssl: {
+        require: true,
+      },
     },
     timezone: "+03:00",
     pool: {
