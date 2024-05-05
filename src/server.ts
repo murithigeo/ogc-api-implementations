@@ -36,7 +36,7 @@ async function createServer() {
   const app = express();
 
   app.use((req, res, next) => {
-    console.log(req.baseUrl)
+    console.log(req.headers)
     //console.log(req.);
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
     req.url = decodeURIComponent(req.url);
