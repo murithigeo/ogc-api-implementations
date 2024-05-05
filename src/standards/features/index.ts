@@ -110,7 +110,7 @@ async function featuresExegesisInstance() {
       )
     ),
   ];
-  return exegesisExpress.middleware(
+  return exegesisExpress.default(
     await featuresOasDoc,
     globalexegesisOptions
   );

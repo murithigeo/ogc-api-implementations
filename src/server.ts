@@ -37,8 +37,9 @@ async function createServer() {
 
   app.use((req, res, next) => {
     console.log(`reqUrl: ${req.url}`)
-    console.log(`reqR_Path: ${req.path}`)
-    //console.log(req.);
+    //console.log(`reqR_Path: ${JSON.stringify(req)}`)
+
+    //console.log(req)
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
     req.url = decodeURIComponent(req.url);
     next();
@@ -49,7 +50,7 @@ async function createServer() {
     process.env.NODE_ENV === "development"
   ) {
     const accessLogStream = fs.createWriteStream(
-      path.join(__dirname, "./logs/reqs.log"),
+      path.join(process.cwd(), "./src/logs/reqs.log"),
       { flags: "a" }
     );
     app.use(morgan("combined", { stream: accessLogStream }));
