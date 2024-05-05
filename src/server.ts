@@ -32,6 +32,53 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
     BasicAuth: basicAuthenticator,
   },
 };
+
+/**
+ *
+ * @returns
+ */
+const app = express();
+
+app.use((req, res, next) => {
+  //console.log(`reqUrl: ${req.url}`)
+
+  //    console.log(`${req.hostname}`);
+  //console.log(`reqR_Path: ${JSON.stringify(req)}`)
+
+  //console.log(req)
+  //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
+  req.url = decodeURIComponent(req.url);
+  next();
+});
+// Configure access log
+if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development") {
+  const accessLogStream = fs.createWriteStream(
+    path.join(process.cwd(), "./src/logs/reqs.log"),
+    { flags: "a" }
+  );
+  app.use(morgan("combined", { stream: accessLogStream }));
+}
+
+//main instance. Services routes at server
+//Roots include listed in ./root/index.yaml
+//const _mainExInstance= await _rootInstance ()
+/**
+_rootInstance().then((instance) => {
+  //console.log()
+  app.use(instance);
+});
+ */
+///app.use(_mainExInstance)
+
+//Specific instances
+featuresExegesisInstance().then((instance) => {
+  app.use("/features", instance);
+});
+
+app.listen(PORT,()=>{for (const server of servers){
+  console.log("Server running @ ",server.url)
+}})
+/*
 // Configure exegesis & express
 async function createServer() {
   const app = express();
@@ -70,14 +117,14 @@ async function createServer() {
 
   return server;
 }
+*/
 
+/*
 createServer()
   .then((server) => {
     server.listen(PORT, () => {
       for (const server of servers) {
-        console.log(
-          `_serverurl: ${server.url}`
-        );
+        console.log(`_serverurl: ${server.url}`);
       }
     });
   })
@@ -85,3 +132,4 @@ createServer()
     console.error(err.stack);
     process.exit(1);
   });
+*/

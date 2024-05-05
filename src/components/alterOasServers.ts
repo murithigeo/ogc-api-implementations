@@ -53,6 +53,7 @@ async function alterServers(
       })
     : servers;
   for (const serverObj of servers) {
+    console.log(serverObj.url)
     if (!URL.canParse(serverObj.url)) {
       console.log("Please provide standardized URLs");
       process.exit(1);

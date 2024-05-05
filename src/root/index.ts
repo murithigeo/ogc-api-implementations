@@ -5,7 +5,10 @@ import * as exegesisExpress from "exegesis-express";
 
 const _rootDoc = parseOasDoc("./src/root/index.yaml");
 
-export default async function _rootInstance() {
+async function _rootInstance() {
   globalexegesisOptions.controllers = path.resolve(__dirname, "./controllers");
+  console.log(globalexegesisOptions)
   return exegesisExpress.middleware(await _rootDoc, globalexegesisOptions);
 }
+
+export default _rootInstance
