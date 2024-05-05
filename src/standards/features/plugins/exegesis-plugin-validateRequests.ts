@@ -15,7 +15,7 @@ function makeExegesisPlugin(
   return {
     postSecurity: async (pluginContext: ExegesisPluginContext) => {
 
-      console.log(pluginContext.api.serverObject)
+      //console.log(pluginContext.api.serverObject)
       //Access documented params. Includes path & query params
       const _oasListedParams = await pluginContext.getParams();
       //console.log('collid',_oasListedParams.path.collectionId);
