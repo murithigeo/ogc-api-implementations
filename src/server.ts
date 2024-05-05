@@ -40,9 +40,14 @@ async function createServer() {
     //console.log(`reqUrl: ${req.url}`)
 
     console.log(`b4: ${req.protocol}`);
-    process.env.NODE_ENV === "production" ? (req.protocol = "https") : "";
+    app.use((req, res, next) => {
+      if (process.env.NODE_ENV === "production") {
+        req.headers["x-forwarded-proto"] = "https";
+      }
+      next();
+    });
     console.log(`after upgrade: ${req.protocol}`);
-  
+
     //console.log(`reqR_Path: ${JSON.stringify(req)}`)
 
     //console.log(req)
