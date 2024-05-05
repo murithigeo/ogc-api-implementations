@@ -42,13 +42,13 @@ async function alterServers(
 
   process.env.PROD_URL
     ? servers.push({
-        url: `${process.env.PROD_URL}:${process.env.PORT}`,
+        url: `${process.env.PROD_URL}`,
         description: "Live production server 1"
       })
     : servers;
     process.env.PROD_URL2
     ? servers.push({
-        url: `${process.env.PROD_URL2}:${process.env.PORT}`,
+        url: `${process.env.PROD_URL2}`,
         description: "Live production server 2"
       })
     : servers;
