@@ -14,13 +14,12 @@ import _rootInstance from "./root";
 import https from "https";
 //This also assumes that the development occurs locally
 
-let servers: oasDocServers[] = [];
+//let servers: oasDocServers[] = [];
 
 //Environmental Variables
 const PORT: number = parseInt(<string>process.env.PORT) || 443; //Default port
-//process.env.NODE_ENV = "test" as "production" | "test" | "development"; //Set the environment
-console.log(process.env.NODE_ENV);
-export { PORT, servers };
+
+export { PORT };
 export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
   //controllers: path.join(__dirname, "./standards/features/controllers"), //Temporary measure
   controllersPattern: "**/**/*.@(js|ts)",
@@ -37,7 +36,6 @@ async function createServer() {
   const app = express();
 
   app.use((req, res, next) => {
-    
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
     req.url = decodeURIComponent(req.url);
     next();
@@ -60,7 +58,7 @@ async function createServer() {
   app.use(_mainExInstance);
 
   //Specific inst
-  app.use("/features", await featuresExegesisInstance());
+  app.use(await featuresExegesisInstance());
   const server = http.createServer(app);
 
   return server;
@@ -69,10 +67,9 @@ async function createServer() {
 createServer()
   .then((server) => {
     server.listen(PORT, () => {
-      console.log(server.listening);
-      for (const server of servers) {
-        console.log(`_serverurl: ${server.url}`);
-      }
+      console.log("Server listening on: ", PORT, server.listening);
+      //console.log()
+      //console.log("Server is accessible @: ", servers[i].url);
     });
   })
   .catch((err) => {

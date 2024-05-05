@@ -1,21 +1,20 @@
 import * as YAML from "js-yaml";
 import * as fs from "fs";
 import * as path from "path";
-import { servers } from "../server";
 import alterServers from "./alterOasServers";
 
 async function parseOasFragment(yamlFile: any): Promise<any> {
   return YAML.load(fs.readFileSync(yamlFile, "utf-8"));
 }
 
-async function parseOasDoc(yamlFile: any) {
+async function parseOasDoc(yamlFile: any, standard: "features" | "edr" | "") {
   let mainDoc: any, fragmentToParse: any;
   mainDoc = await parseOasFragment(
     path.join(process.cwd(), "./src/oas/index.yaml")
   );
   fragmentToParse = await parseOasFragment(path.join(process.cwd(), yamlFile));
 
-  mainDoc.servers = await alterServers(servers);
+  mainDoc.servers = await alterServers(standard);
 
   if (fragmentToParse) {
     if (fragmentToParse.securitySchemes) {

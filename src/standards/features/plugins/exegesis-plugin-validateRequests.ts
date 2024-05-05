@@ -13,15 +13,8 @@ function makeExegesisPlugin(
   listOfCollections: string[]
 ): ExegesisPluginInstance {
   return {
-    preRouting:({req,res})=>{
-      console.log(`hostname: ${req.hostname}`)
-    },
-    postRouting: async(pluginContext:ExegesisPluginContext)=>{
-    console.log(pluginContext.api.serverObject)
-    },
     postSecurity: async (pluginContext: ExegesisPluginContext) => {
 
-      //console.log(pluginContext.api.serverObject)
       //Access documented params. Includes path & query params
       const _oasListedParams = await pluginContext.getParams();
       //console.log('collid',_oasListedParams.path.collectionId);

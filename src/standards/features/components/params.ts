@@ -126,7 +126,7 @@ async function requestPathUrl(context: ExegesisContext): Promise<URL> {
    * @context.req.uri is the pathname
    */
   const urlString = new URL(
-    context.api.serverObject.url + "/features" + context.req.url //.replace("/features", "")
+    context.api.serverObject.url + context.req.url.replace("/features", "")
   );
   //console.log(urlString);
   //console.log(context.api.serverObject.url)

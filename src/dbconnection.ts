@@ -13,9 +13,12 @@ const sequelize = new Sequelize(
     dialect: "postgres",
     dialectOptions: {
       useUTC: true,
-      ssl: {
-        require: true,
-      },
+      ssl:
+        process.env.NODE_ENV === "production"
+          ? {
+              require: true,
+            }
+          :false,
     },
     timezone: "+03:00",
     pool: {

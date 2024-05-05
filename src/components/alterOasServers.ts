@@ -3,8 +3,10 @@ import { oasDocServers } from "../types";
 import { PORT } from "../server";
 
 async function alterServers(
-  servers: oasDocServers[],
+  //servers: oasDocServers[],
+  standard: "features" | "edr" | ""
 ) {
+  const servers: oasDocServers[] = [];
   if (
     process.env.NODE_ENV === "development" ||
     process.env.NODE_ENV === "test"
@@ -22,10 +24,9 @@ async function alterServers(
         });
       }
     });
-
     if (ips !== 0) {
       servers.push({
-        url: `http://${ips}:${PORT}`,
+        url: `http://${ips}:${PORT}/${standard}`,
         description: `This is the internal IP address of the localmachine`,
       });
     }
@@ -33,32 +34,43 @@ async function alterServers(
     //Only use localhost on development environment otherwise during tests, TeamEngine will throw error
     if (process.env.NODE_ENV === "development") {
       servers.push({
-        url: `http://localhost:${PORT}`,
+        url: `http://localhost:${PORT}/${standard}`,
         description: "Localhost",
       });
     }
   }
-
-
+  if(process.env.NODE_ENV==="production"&&!process.env.PROD_URL){
+    throw new Error("At least 1 url to server must be defined")
+  }
   process.env.PROD_URL
     ? servers.push({
-        url: `${process.env.PROD_URL}`,
-        description: "Live production server 1"
+        url: `${process.env.PROD_URL}/${standard}`,
+        description: "Live production server",
       })
     : servers;
-    process.env.PROD_URL2
+
+    
+  process.env.PROD_URL2
     ? servers.push({
-        url: `${process.env.PROD_URL2}`,
-        description: "Live production server 2"
+        url: `${process.env.PROD_URL2}/${standard}`,
+        description: "Live production server",
       })
     : servers;
   for (const serverObj of servers) {
-    //console.log(serverObj.url)
     if (!URL.canParse(serverObj.url)) {
       console.log("Please provide standardized URLs");
       process.exit(1);
     }
   }
+  //Log the baseurl of the new primary url
+  const _firstServer = new URL(servers[0].url);
+  console.log(
+    `Primary URL is: ${_firstServer.protocol}//${_firstServer.hostname}`
+  );
+  if(servers.length<1){
+    throw new Error("At least 1 server must be defined")
+  }
+  //console.log(new URL(servers[0].url).hostname)
   return servers;
 }
 

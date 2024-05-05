@@ -93,7 +93,8 @@ const collections_properties: CollectionsConfig = {
 };
 
 export const featuresOasDoc = parseOasDoc(
- './src/standards/features/index.yaml',
+  "./src/standards/features/index.yaml",
+  "features"
 );
 
 async function featuresExegesisInstance() {
