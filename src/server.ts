@@ -16,7 +16,7 @@ import featuresExegesisInstance from "./standards/features";
 let servers: oasDocServers[] = [];
 
 //Environmental Variables
-const PORT: number = parseInt(<string>process.env.PORT) || 3000; //Default port
+const PORT: number = parseInt(<string>process.env.PORT) || 443; //Default port
 //process.env.NODE_ENV = "test" as "production" | "test" | "development"; //Set the environment
 console.log(process.env.NODE_ENV);
 export { PORT, servers };

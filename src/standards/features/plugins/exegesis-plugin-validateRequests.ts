@@ -16,6 +16,9 @@ function makeExegesisPlugin(
     preRouting:({req,res})=>{
       console.log(`hostname: ${req.hostname}`)
     },
+    postRouting: async(pluginContext:ExegesisPluginContext)=>{
+    console.log(pluginContext.api.serverObject)
+    },
     postSecurity: async (pluginContext: ExegesisPluginContext) => {
 
       //console.log(pluginContext.api.serverObject)
