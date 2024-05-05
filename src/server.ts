@@ -39,8 +39,10 @@ async function createServer() {
   app.use((req, res, next) => {
     //console.log(`reqUrl: ${req.url}`)
 
-    console.log(`${req.protocol}`);
+    console.log(`b4: ${req.protocol}`);
     process.env.NODE_ENV === "production" ? (req.protocol = "https") : "";
+    console.log(`after upgrade: ${req.protocol}`);
+  
     //console.log(`reqR_Path: ${JSON.stringify(req)}`)
 
     //console.log(req)
