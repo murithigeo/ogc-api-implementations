@@ -11,7 +11,7 @@ import { apiKeyAuthenticator } from "./authentication/apikeyAuth";
 import { basicAuthenticator } from "./authentication/basicAuth";
 import featuresExegesisInstance from "./standards/features";
 import _rootInstance from "./root";
-import https from 'https';
+import https from "https";
 //This also assumes that the development occurs locally
 
 let servers: oasDocServers[] = [];
@@ -36,11 +36,11 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
 async function createServer() {
   const app = express();
 
-  
   app.use((req, res, next) => {
     //console.log(`reqUrl: ${req.url}`)
 
     console.log(`${req.protocol}`);
+    process.env.NODE_ENV === "production" ? (req.protocol = "https") : "";
     //console.log(`reqR_Path: ${JSON.stringify(req)}`)
 
     //console.log(req)
