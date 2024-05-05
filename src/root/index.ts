@@ -7,7 +7,6 @@ const _rootDoc = parseOasDoc("./src/root/index.yaml");
 
 async function _rootInstance() {
   globalexegesisOptions.controllers = path.resolve(__dirname, "./controllers");
-  console.log(globalexegesisOptions)
   return exegesisExpress.middleware(await _rootDoc, globalexegesisOptions);
 }
 

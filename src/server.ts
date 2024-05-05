@@ -11,7 +11,7 @@ import { apiKeyAuthenticator } from "./authentication/apikeyAuth";
 import { basicAuthenticator } from "./authentication/basicAuth";
 import featuresExegesisInstance from "./standards/features";
 import _rootInstance from "./root";
-
+import https from 'https';
 //This also assumes that the development occurs locally
 
 let servers: oasDocServers[] = [];
@@ -32,61 +32,15 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
     BasicAuth: basicAuthenticator,
   },
 };
-
-/**
- *
- * @returns
- */
-const app = express();
-
-app.use((req, res, next) => {
-  //console.log(`reqUrl: ${req.url}`)
-
-  //    console.log(`${req.hostname}`);
-  //console.log(`reqR_Path: ${JSON.stringify(req)}`)
-
-  //console.log(req)
-  //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
-  req.url = decodeURIComponent(req.url);
-  next();
-});
-// Configure access log
-if (process.env.NODE_ENV === "test" || process.env.NODE_ENV === "development") {
-  const accessLogStream = fs.createWriteStream(
-    path.join(process.cwd(), "./src/logs/reqs.log"),
-    { flags: "a" }
-  );
-  app.use(morgan("combined", { stream: accessLogStream }));
-}
-
-//main instance. Services routes at server
-//Roots include listed in ./root/index.yaml
-//const _mainExInstance= await _rootInstance ()
-/**
-_rootInstance().then((instance) => {
-  //console.log()
-  app.use(instance);
-});
- */
-///app.use(_mainExInstance)
-
-//Specific instances
-featuresExegesisInstance().then((instance) => {
-  app.use("/features", instance);
-});
-
-app.listen(PORT,()=>{for (const server of servers){
-  console.log("Server running @ ",server.url)
-}})
-/*
 // Configure exegesis & express
 async function createServer() {
   const app = express();
 
+  
   app.use((req, res, next) => {
     //console.log(`reqUrl: ${req.url}`)
 
-//    console.log(`${req.hostname}`);
+    console.log(`${req.protocol}`);
     //console.log(`reqR_Path: ${JSON.stringify(req)}`)
 
     //console.log(req)
@@ -108,21 +62,20 @@ async function createServer() {
 
   //main instance. Services routes at server
   //Roots include listed in ./root/index.yaml
-  const _mainExInstance= await _rootInstance ()
-  app.use(_mainExInstance)
+  const _mainExInstance = await _rootInstance();
+  app.use(_mainExInstance);
 
-  //Specific instances
-  app.use('/features',await featuresExegesisInstance());
-  const server = http.createServer(app);
+  //Specific inst
+  app.use("/features", await featuresExegesisInstance());
+  const server = https.createServer({},app);
 
   return server;
 }
-*/
 
-/*
 createServer()
   .then((server) => {
     server.listen(PORT, () => {
+      console.log(server.listening);
       for (const server of servers) {
         console.log(`_serverurl: ${server.url}`);
       }
@@ -132,4 +85,3 @@ createServer()
     console.error(err.stack);
     process.exit(1);
   });
-*/
