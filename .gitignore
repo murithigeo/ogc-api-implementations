@@ -3,3 +3,4 @@ env
 compile
 build
 .vscode
+src/logs

@@ -13,6 +13,9 @@ function makeExegesisPlugin(
   listOfCollections: string[]
 ): ExegesisPluginInstance {
   return {
+    preRouting:({req,res})=>{
+      console.log(`hostname: ${req.hostname}`)
+    },
     postSecurity: async (pluginContext: ExegesisPluginContext) => {
 
       //console.log(pluginContext.api.serverObject)

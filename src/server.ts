@@ -18,13 +18,13 @@ let servers: oasDocServers[] = [];
 //Environmental Variables
 const PORT: number = parseInt(<string>process.env.PORT) || 3000; //Default port
 //process.env.NODE_ENV = "test" as "production" | "test" | "development"; //Set the environment
-console.log(process.env.NODE_ENV)
+console.log(process.env.NODE_ENV);
 export { PORT, servers };
 export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
   //controllers: path.join(__dirname, "./standards/features/controllers"), //Temporary measure
   controllersPattern: "**/**/*.@(js|ts)",
   allowMissingControllers: true,
-  ignoreServers: true,
+  ignoreServers: false,
   autoHandleHttpErrors: true,
   authenticators: {
     ApiKeyAuth: apiKeyAuthenticator,
@@ -36,7 +36,9 @@ async function createServer() {
   const app = express();
 
   app.use((req, res, next) => {
-    console.log(`reqUrl: ${req.url}`)
+    //console.log(`reqUrl: ${req.url}`)
+
+    console.log(`${req.hostname}`);
     //console.log(`reqR_Path: ${JSON.stringify(req)}`)
 
     //console.log(req)
@@ -57,8 +59,8 @@ async function createServer() {
   }
 
   //console.log(globalexegesisOptions.controllers);
-  const featuresMiddleware= await featuresExegesisInstance()
-  app.use(featuresMiddleware)
+  const featuresMiddleware = await featuresExegesisInstance();
+  app.use(featuresMiddleware);
   const server = http.createServer(app);
 
   return server;
