@@ -57,8 +57,11 @@ async function createServer() {
   }
 
   //console.log(globalexegesisOptions.controllers);
-  app.use(await featuresExegesisInstance());
+  const featuresMiddleware= await featuresExegesisInstance()
+  app.use(featuresMiddleware)
+  console.log(app)
   const server = http.createServer(app);
+
   return server;
 }
 
