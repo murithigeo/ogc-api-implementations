@@ -4,7 +4,6 @@ import { PORT } from "../server";
 
 async function alterServers(
   servers: oasDocServers[],
-  standard: "features" | "edr"
 ) {
   if (
     process.env.NODE_ENV === "development" ||

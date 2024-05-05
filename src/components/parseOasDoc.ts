@@ -8,14 +8,14 @@ async function parseOasFragment(yamlFile: any): Promise<any> {
   return YAML.load(fs.readFileSync(yamlFile, "utf-8"));
 }
 
-async function parseOasDoc(yamlFile: any, standard: "features" | "edr") {
+async function parseOasDoc(yamlFile: any) {
   let mainDoc: any, fragmentToParse: any;
   mainDoc = await parseOasFragment(
     path.join(process.cwd(), "./src/oas/index.yaml")
   );
   fragmentToParse = await parseOasFragment(path.join(process.cwd(), yamlFile));
 
-  mainDoc.servers = await alterServers(servers, standard);
+  mainDoc.servers = await alterServers(servers);
 
   if (fragmentToParse) {
     if (fragmentToParse.securitySchemes) {

@@ -10,6 +10,7 @@ import { oasDocServers } from "./types";
 import { apiKeyAuthenticator } from "./authentication/apikeyAuth";
 import { basicAuthenticator } from "./authentication/basicAuth";
 import featuresExegesisInstance from "./standards/features";
+import _rootInstance from "./root";
 
 //This also assumes that the development occurs locally
 
@@ -38,7 +39,7 @@ async function createServer() {
   app.use((req, res, next) => {
     //console.log(`reqUrl: ${req.url}`)
 
-    console.log(`${req.hostname}`);
+//    console.log(`${req.hostname}`);
     //console.log(`reqR_Path: ${JSON.stringify(req)}`)
 
     //console.log(req)
@@ -58,9 +59,13 @@ async function createServer() {
     app.use(morgan("combined", { stream: accessLogStream }));
   }
 
-  //console.log(globalexegesisOptions.controllers);
-  const featuresMiddleware = await featuresExegesisInstance();
-  app.use('/features',featuresMiddleware);
+  //main instance. Services routes at server
+  //Roots include listed in ./root/index.yaml
+  const _mainExInstance= await _rootInstance ()
+  app.use(_mainExInstance)
+
+  //Specific instances
+  app.use('/features',await featuresExegesisInstance());
   const server = http.createServer(app);
 
   return server;
@@ -71,9 +76,8 @@ createServer()
     server.listen(PORT, () => {
       for (const server of servers) {
         console.log(
-          `LandingPage or TeamEngine Endpoint is available at ${server.url}`
+          `_serverurl: ${server.url}`
         );
-        console.log(`API documentation is available at ${server.url}/api.html`);
       }
     });
   })

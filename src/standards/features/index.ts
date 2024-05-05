@@ -94,12 +94,11 @@ const collections_properties: CollectionsConfig = {
 
 export const featuresOasDoc = parseOasDoc(
  './src/standards/features/index.yaml',
-  "features"
 );
 
 async function featuresExegesisInstance() {
   globalexegesisOptions.controllers = path.resolve(__dirname, "./controllers");
-  console.log((await featuresOasDoc).servers)
+  //console.log((await featuresOasDoc).servers)
   globalexegesisOptions.plugins = [
     validateRequestsPlugin(
       allowed_F_values.map((opt) => opt.f),
@@ -110,7 +109,7 @@ async function featuresExegesisInstance() {
       )
     ),
   ];
-  return exegesisExpress.default(
+  return exegesisExpress.middleware(
     await featuresOasDoc,
     globalexegesisOptions
   );

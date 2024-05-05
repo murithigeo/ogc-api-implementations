@@ -1,0 +1,13 @@
+paths: 
+  /helloworld:
+    x-exegesis-controller: helloWorldController
+    get:
+      x-exegesis-operationId: helloWorld
+      responses:
+        "200":
+          description: Ok.
+          content:
+            text/yam:
+              schema:
+                type: string
+                format: binary
