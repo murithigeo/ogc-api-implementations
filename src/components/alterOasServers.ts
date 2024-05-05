@@ -10,7 +10,6 @@ async function alterServers(
     process.env.NODE_ENV === "development" ||
     process.env.NODE_ENV === "test"
   ) {
-
     //Must be connected to a LAN/Internet for this to work. If not connected, ip will be zero and therefore invalid
     var ifaces: any = os.networkInterfaces();
     var ips: any = 0;
@@ -39,16 +38,15 @@ async function alterServers(
         description: "Localhost",
       });
     }
-    
   }
-  if (process.env.NODE_ENV === "production") {
-    if (process.env.PROD_URL && process.env.PORT) {
-      servers.push({
+
+
+  process.env.PROD_URL
+    ? servers.push({
         url: `${process.env.PROD_URL}:${process.env.PORT}/${standard}`,
-        description: `Production server`,
-      });
-    }
-  }
+        description: "Live production server"
+      })
+    : servers;
   for (const serverObj of servers) {
     if (!URL.canParse(serverObj.url)) {
       console.log("Please provide standardized URLs");

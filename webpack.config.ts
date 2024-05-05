@@ -1,10 +1,10 @@
 import path from "path";
 
 module.exports = {
-  entry: "./dist/compile/src/server.js",
+  entry: "./compile/src/server.js",
   output: {
-    filename: "full.js",
-    path: path.resolve(__dirname, "dist/build"),
+    filename: "server.js",
+    path: path.resolve(__dirname, "build"),
   },
   mode: "production",
   optimization: {

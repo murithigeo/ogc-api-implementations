@@ -21,7 +21,7 @@ const PORT: number = parseInt(<string>process.env.PORT) || 3000; //Default port
 
 export { PORT, servers };
 export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
-  controllers: path.join(__dirname,'./standards/features/controllers'), //Temporary measure
+  //controllers: path.join(__dirname, "./standards/features/controllers"), //Temporary measure
   controllersPattern: "**/**/*.@(js|ts)",
   allowMissingControllers: true,
   ignoreServers: false,
@@ -36,18 +36,24 @@ async function createServer() {
   const app = express();
 
   app.use((req, res, next) => {
-    console.log(req);
+    //console.log(req.);
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
     req.url = decodeURIComponent(req.url);
     next();
   });
   // Configure access log
-  const accessLogStream = fs.createWriteStream(
-    path.join(__dirname, "./logs/reqs.log"),
-    { flags: "a" }
-  );
-  app.use(morgan("combined", { stream: accessLogStream }));
-console.log(globalexegesisOptions.controllers)
+  if (
+    process.env.NODE_ENV === "test" ||
+    process.env.NODE_ENV === "development"
+  ) {
+    const accessLogStream = fs.createWriteStream(
+      path.join(__dirname, "./logs/reqs.log"),
+      { flags: "a" }
+    );
+    app.use(morgan("combined", { stream: accessLogStream }));
+  }
+
+  //console.log(globalexegesisOptions.controllers);
   app.use(await featuresExegesisInstance());
   const server = http.createServer(app);
   return server;

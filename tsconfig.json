@@ -11,7 +11,7 @@
         "target": "ESNext",
         "isolatedModules": false,
         "pretty": true,
-        "outDir": "dist/compile",
+        "outDir": "compile",
         "module": "NodeNext",
         "strict": false,
         "esModuleInterop": true,
@@ -27,7 +27,6 @@
         //"esModuleInterop": true,
     },
     "include": [
-        "./*.ts",
         "src/**/*",
     ],
     "exclude": [

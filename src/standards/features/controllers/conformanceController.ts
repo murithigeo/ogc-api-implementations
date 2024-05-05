@@ -5,7 +5,7 @@ import initCommonQueryParams from "../components/params";
 import convertJsonToYAML from "../components/convertToYaml";
 import { allowed_F_values } from "..";
 
-exports.getConformance = async function (context: ExegesisContext) {
+ export async function getConformance (context: ExegesisContext) {
   const { f } = await initCommonQueryParams(context);
   const conformanceClasses: string[] = [
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",

@@ -10,9 +10,8 @@
   "main": "./src/server.ts",
   "scripts": {
     "dev": "npx nodemon -exec",
-    "start": "npx ts-node ./src/server.ts",
-    "build": "npx tsc && webpack && npm run copycontrollers",
-    "copycontrollers":"copyfiles -u 3 \"dist/compile/src/**/*/controllers/*\" \"dist/compile/src/controllers/*\" dist/build"
+    "start": "node ./compile/server.js",
+    "build": "npx tsc"
   },
   "dependencies": {
     "@asyncapi/parser": "^3.0.14",

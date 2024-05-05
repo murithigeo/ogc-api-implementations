@@ -1,0 +1,4 @@
+//"copycontrollers":"copyfiles -u 2 \"compile/src/**/*/controllers/*\" \"compile/src/controllers/*\" build"
+
+//No build step
+npm run controllers
