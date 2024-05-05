@@ -67,7 +67,7 @@ async function createServer() {
 
   //Specific inst
   app.use("/features", await featuresExegesisInstance());
-  const server = https.createServer({},app);
+  const server = http.createServer(app);
 
   return server;
 }
