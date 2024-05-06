@@ -1,4 +1,5 @@
 import express from "express";
+import cors from 'cors';
 //const express = require("express");
 import morgan from "morgan";
 //const morgan = require("morgan");
@@ -37,6 +38,7 @@ async function createServer() {
 
   //app.set("trust proxy", true);
 
+  app.use(cors());
   app.use((req, res, next) => {
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
     //console.log("b4", req.headers["x-forwarded-proto"]);
