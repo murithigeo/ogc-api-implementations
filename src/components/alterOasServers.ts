@@ -39,8 +39,8 @@ async function alterServers(
       });
     }
   }
-  if(process.env.NODE_ENV==="production"&&!process.env.PROD_URL){
-    throw new Error("At least 1 url to server must be defined")
+  if (process.env.NODE_ENV === "production" && !process.env.PROD_URL) {
+    throw new Error("At least 1 url to server must be defined");
   }
   process.env.PROD_URL
     ? servers.push({
@@ -49,7 +49,6 @@ async function alterServers(
       })
     : servers;
 
-    
   process.env.PROD_URL2
     ? servers.push({
         url: `${process.env.PROD_URL2}/${standard}`,
@@ -61,17 +60,21 @@ async function alterServers(
       console.log("Please provide standardized URLs");
       process.exit(1);
     }
+    serverObj.variables = {
+      protocol: ["https", "http"],
+      default: "https",
+    };
   }
-  if(servers.length<1){
-    throw new Error("At least 1 server must be defined")
+  if (servers.length < 1) {
+    throw new Error("At least 1 server must be defined");
   }
-  
+
   //Log the baseurl of the new primary url
   const _firstServer = new URL(servers[0].url);
-  console.log(
-    `Primary URL is: ${_firstServer.protocol}//${_firstServer.hostname}`
-  );
-
+  //console.log(
+    //`Primary URL is: ${_firstServer.protocol}//${_firstServer.hostname}`
+  //);
+  console.log(servers)
   return servers;
 }
 

@@ -1,6 +1,5 @@
 import { allowed_F_values } from "./standards/features";
 
-
 /**
  * @interface supportedCrs defines an array of Coordinate Reference Systems that a Collection Supports
  * @example {uri: "http://www.opengis.net/def/crs/OGC/1.3/CRS84", srid: 4326, authority: "OGC", isGeographic: false  }
@@ -79,6 +78,10 @@ interface nestedStandardOptions {
 export interface oasDocServers {
   url: string;
   description?: string;
+  variables?: {
+    protocol?: ("http" | "https")[];
+    default?: "https";
+  };
   //port?: number;
 }
 
@@ -129,7 +132,7 @@ export interface Feature {
   properties?: {
     [key: string | number]: string | boolean | number;
   };
-  links?:Link[]
+  links?: Link[];
 }
 export interface FeatureCollection {
   type: "FeatureCollection";

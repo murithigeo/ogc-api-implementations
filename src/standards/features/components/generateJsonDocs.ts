@@ -33,13 +33,16 @@ async function genFeatureCollection(
   count: number,
   allowed_f_values: F_AssociatedType[]
 ): Promise<FeatureCollection> {
+  //console.log(count)
   //In order to reduce complexity in generating links (rel=(next|prev)), just remove link obj where hasNextPage|prev=false
   let links = await genLinksAll(context, allowed_f_values, "Items");
   const { offset, limit } = await initCommonQueryParams(context);
   let hasNextPage: boolean, hasPrevPage: boolean;
 
-  hasPrevPage = offset < 1 || limit - offset <= 1 ? false : true;
-  hasNextPage = offset < 1 || offset - limit <= 1 ? false : true;
+  //hasPrevPage = offset < 1 || limit - offset <= 1 ? false : true;
+  hasNextPage = offset > 0 ? true : false;
+  //hasNextPage = offset < 1 ? false : true;
+  hasNextPage = offset + limit < count ? true : false;
 
   if (hasNextPage === false) {
     links = links.filter((obj) => obj.rel !== "next");
