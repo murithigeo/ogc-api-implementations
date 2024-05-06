@@ -41,7 +41,6 @@ async function coordParams_validate(context: ExegesisContext): Promise<{
 
   const reqCrs = await validate_crs_string(await crs_param_init(context));
 
-  //console.log(await validate_crs_string(await crs_param_init(context)))
 
   //Since crs is validated precontroller
   //crs_vArray.length > 1 &&

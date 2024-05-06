@@ -3,9 +3,8 @@ import { ExegesisContext } from "exegesis-express";
 import initCommonQueryParams from "../components/params";
 import { featuresOasDoc } from "..";
 
-exports.getServiceDoc = async function (context: ExegesisContext) {
+async function getServiceDoc(context: ExegesisContext) {
   const oasDoc = await featuresOasDoc;
-
 
   const scalarCode = `<!doctype html>
     <html>
@@ -42,12 +41,14 @@ exports.getServiceDoc = async function (context: ExegesisContext) {
     </body>
     </html>`;
   context.res.status(200).set(`Content-type`, "text/html").setBody(scalarCode);
-};
+}
 
-exports.getServiceDesc = async function (context: ExegesisContext) {
+async function getServiceDesc(context: ExegesisContext) {
   const oasDoc = await featuresOasDoc;
   context.res
     .status(200)
     .set("content-type", "application/vnd.oai.openapi+json;version=3.0")
     .setBody(oasDoc);
-};
+}
+
+export { getServiceDesc, getServiceDoc };

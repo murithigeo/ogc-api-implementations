@@ -68,8 +68,6 @@ createServer()
   .then((server) => {
     server.listen(PORT, () => {
       console.log("Server listening on: ", PORT, server.listening);
-      //console.log()
-      //console.log("Server is accessible @: ", servers[i].url);
     });
   })
   .catch((err) => {

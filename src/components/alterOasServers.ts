@@ -62,15 +62,16 @@ async function alterServers(
       process.exit(1);
     }
   }
+  if(servers.length<1){
+    throw new Error("At least 1 server must be defined")
+  }
+  
   //Log the baseurl of the new primary url
   const _firstServer = new URL(servers[0].url);
   console.log(
     `Primary URL is: ${_firstServer.protocol}//${_firstServer.hostname}`
   );
-  if(servers.length<1){
-    throw new Error("At least 1 server must be defined")
-  }
-  //console.log(new URL(servers[0].url).hostname)
+
   return servers;
 }
 

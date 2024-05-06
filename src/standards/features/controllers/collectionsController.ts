@@ -8,7 +8,7 @@ import initCommonQueryParams from "../components/params";
 import convertJsonToYAML from "../components/convertToYaml";
 import { F_AssociatedType } from "../../../types";
 
-exports.getCollectionsAll = async function (context: ExegesisContext) {
+async function getCollectionsAll(context: ExegesisContext) {
   //context.res.status(200).setBody();
   const _collectionsAll = await genCollectionsRootDoc(
     context,
@@ -31,10 +31,9 @@ exports.getCollectionsAll = async function (context: ExegesisContext) {
     default:
       context.res.status(400);
   }
-};
-exports.getCollectionOne = async function (context: ExegesisContext) {
+}
+async function getCollectionOne(context: ExegesisContext) {
   const { f } = await initCommonQueryParams(context);
-  console.log(context.params.path);
   const _collectionDoc = await genOneCollectionDoc(
     context,
     allowed_F_values,
@@ -63,4 +62,6 @@ exports.getCollectionOne = async function (context: ExegesisContext) {
         })
       );
   }
-};
+}
+
+export { getCollectionOne, getCollectionsAll };

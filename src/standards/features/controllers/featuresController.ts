@@ -16,7 +16,7 @@ import { Op, Sequelize } from "sequelize";
 import { crs84Uri, crs84hUri } from "../";
 import convertJsonToYAML from "../components/convertToYaml";
 
-exports.getItems = async function (context: ExegesisContext) {
+async function queryAllItems(context: ExegesisContext) {
   const { contentcrsHeader, f } = await initCommonQueryParams(context);
 
   const dbResponse = await dbQueryMountains(
@@ -63,9 +63,9 @@ exports.getItems = async function (context: ExegesisContext) {
         })
       );
   }
-};
+}
 
-exports.getItem = async function (context: ExegesisContext) {
+async function querySpecificItem(context: ExegesisContext) {
   const { f, contentcrsHeader } = await initCommonQueryParams(context);
   const _geojsonF_array = await dbQueryMountains(
     context,
@@ -111,7 +111,7 @@ exports.getItem = async function (context: ExegesisContext) {
         context.res.status(400).setBody("Unsupported content-type");
     }
   }
-};
+}
 async function dbQueryMountains(
   context: ExegesisContext,
   featureId: string,
@@ -129,7 +129,7 @@ async function dbQueryMountains(
   //bboxQuery
   const bboxQuery = context.params.query.bbox
     ? //reqBboxcrs.uri === crs84hUri  &&
-     context.params.query.bbox.length>4
+      context.params.query.bbox.length > 4
       ? Sequelize.where(
           Sequelize.fn(
             "ST_Intersects",
@@ -157,7 +157,8 @@ async function dbQueryMountains(
 
   //Height Query
   const heightQuery =
-    context.params.query["bbox-crs"] === crs84hUri && context.params.query.bbox.length>4
+    context.params.query["bbox-crs"] === crs84hUri &&
+    context.params.query.bbox.length > 4
       ? {
           [Op.and]: [
             Sequelize.where(
@@ -237,3 +238,5 @@ async function dbQueryMountains(
   });
   return await parseDbResToGeoJson(dbResponse, "geom", "name");
 }
+
+export { queryAllItems, querySpecificItem };

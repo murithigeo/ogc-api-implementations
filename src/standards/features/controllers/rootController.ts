@@ -5,7 +5,7 @@ import { genRootDoc } from "../components/generateJsonDocs";
 import convertJsonToYAML from "../components/convertToYaml";
 import { allowed_F_values } from "..";
 
-exports.getLandingPage = async function (context: ExegesisContext) {
+export default async function getFeaturesRoot(context: ExegesisContext) {
   const { f } = await initCommonQueryParams(context);
   const _jsonDoc = await genRootDoc(context, allowed_F_values);
 
@@ -23,6 +23,7 @@ exports.getLandingPage = async function (context: ExegesisContext) {
         .setBody(await convertJsonToYAML(_jsonDoc));
       break;
     default:
-      context.res.status(400).setBody('t')
+      context.res.status(400).setBody("t");
   }
-};
+}
+

@@ -1,11 +1,11 @@
 paths:
   '/':
-    x-exegesis-controller: rootController
+    x-exegesis-controller: featuresRootController
     get:
 
       tags:
         - Features
-      x-exegesis-operationId: getLandingPage
+      x-exegesis-operationId: getFeaturesRoot
       parameters:
         - $ref: '#/components/parameters/f'
       responses:
@@ -19,7 +19,7 @@ paths:
               schema: 
                 type: string
   '/conformance':
-    x-exegesis-controller: conformanceController
+    x-exegesis-controller: featuresConformanceController
     description: >
       Access the conformance classes of this server (endpoint root)
     get:
@@ -40,7 +40,7 @@ paths:
               schema:
                 type: string
   '/api':
-    x-exegesis-controller: apiController
+    x-exegesis-controller: featuresApiController
     get:
       tags:
         - Features
@@ -57,7 +57,7 @@ paths:
               schema:
                 type: object
   '/api.html':
-    x-exegesis-controller: apiController
+    x-exegesis-controller: featuresApiController
     get:
       tags:
         - Features
@@ -72,7 +72,7 @@ paths:
               schema:
                 type: string
   '/collections':
-    x-exegesis-controller: collectionsController
+    x-exegesis-controller: featuresCollectionsController
     get:
 
       tags:
@@ -101,7 +101,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/Collection'
   '/collections/{collectionId}':
-    x-exegesis-controller: collectionsController
+    x-exegesis-controller: featuresCollectionsController
     parameters:
       - $ref: '#/components/parameters/collectionId'
     get:
@@ -123,12 +123,12 @@ paths:
               schema:
                 type: string
   '/collections/{collectionId}/items':
-    x-exegesis-controller: featuresController
+    x-exegesis-controller: featuresItemsController
     get:
 
       tags:
         - Features
-      x-exegesis-operationId: getItems
+      x-exegesis-operationId: queryAllItems
       description: >
         Retrieve all items in a collection. Number returned is subject to query parameters invoked
       parameters:
@@ -151,12 +151,12 @@ paths:
               schema:
                 type: string
   '/collections/{collectionId}/items/{featureId}':
-    x-exegesis-controller: featuresController
+    x-exegesis-controller: featuresItemsController
     get:
 
       tags:
         - Features
-      x-exegesis-operationId: getItem
+      x-exegesis-operationId: querySpecificItem
       description: >
         Retrieve all items in a collection. Number returned is subject to query parameters invoked
       parameters:

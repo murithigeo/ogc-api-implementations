@@ -5,6 +5,18 @@ import { globalexegesisOptions } from "../../server";
 import validateRequestsPlugin from "./plugins/exegesis-plugin-validateRequests";
 import { F_AssociatedType } from "../../types";
 import { Crs_prop } from "../../types";
+import _getFeaturesRoot from "./controllers/rootController";
+import getConformance from "./controllers/conformanceController";
+import { getServiceDesc, getServiceDoc } from "./controllers/apiController";
+import {
+  queryAllItems,
+  querySpecificItem,
+} from "./controllers/featuresController";
+import getFeaturesRoot from "./controllers/rootController";
+import {
+  getCollectionOne,
+  getCollectionsAll,
+} from "./controllers/collectionsController";
 
 //The mandated defaults
 const crs84Uri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
@@ -98,8 +110,26 @@ export const featuresOasDoc = parseOasDoc(
 );
 
 async function featuresExegesisInstance() {
-  globalexegesisOptions.controllers = path.resolve(__dirname, "./controllers");
-  //console.log((await featuresOasDoc).servers)
+  globalexegesisOptions.controllers = {
+    featuresRootController: {
+      getFeaturesRoot,
+    },
+    featuresConformanceController: {
+      getConformance,
+    },
+    featuresApiController: {
+      getServiceDesc,
+      getServiceDoc,
+    },
+    featuresItemsController: {
+      querySpecificItem,
+      queryAllItems,
+    },
+    featuresCollectionsController: {
+      getCollectionOne,
+      getCollectionsAll,
+    },
+  };
   globalexegesisOptions.plugins = [
     validateRequestsPlugin(
       allowed_F_values.map((opt) => opt.f),

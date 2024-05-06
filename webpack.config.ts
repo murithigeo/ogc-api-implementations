@@ -1,12 +1,13 @@
 import path from "path";
 
 module.exports = {
-  entry: "./compile/src/server.js",
+  entry: "./src/server.ts",
   output: {
-    filename: "server.js",
+    //filename: `${new Date()}_server.js`,
+    filename: `server.js`,
     path: path.resolve(__dirname, "build"),
   },
-  mode: "production",
+  //mode: "production",
   optimization: {
     minimize: false,
   },
