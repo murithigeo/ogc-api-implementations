@@ -286,3 +286,4 @@
 ::ffff:192.168.150.103 - - [06/May/2024:20:40:15 +0000] "GET /helloworld HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ::ffff:192.168.150.103 - - [06/May/2024:20:43:45 +0000] "GET /helloworld HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ::ffff:192.168.150.103 - - [06/May/2024:20:45:28 +0000] "GET /helloworld HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+::ffff:192.168.150.103 - - [06/May/2024:20:47:55 +0000] "GET /features/collections/mountains/items?f=yaml HTTP/1.1" 200 - "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"

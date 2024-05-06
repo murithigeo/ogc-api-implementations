@@ -17,7 +17,7 @@ function makeExegesisPlugin(
       
       //console.log("before",req.headers)
       //req.protocol="https"
-      console.log("after",req.protocol)
+      //console.log("after",req.protocol)
     },
     postSecurity: async (pluginContext: ExegesisPluginContext) => {
 

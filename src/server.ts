@@ -35,13 +35,13 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
 async function createServer() {
   const app = express();
 
-  app.set("trust proxy", true);
-  
+  //app.set("trust proxy", true);
+
   app.use((req, res, next) => {
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
-    console.log("b4", req.headers["x-forwarded-proto"]);
-    req.headers["x-forwarded-proto"] = "https";
-    console.log("after_main", req.protocol);
+    //console.log("b4", req.headers["x-forwarded-proto"]);
+    //req.headers["x-forwarded-proto"] = "https";
+    //console.log("after_main", req.protocol);
     req.url = decodeURIComponent(req.url);
     next();
   });
