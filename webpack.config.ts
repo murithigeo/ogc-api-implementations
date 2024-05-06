@@ -7,10 +7,11 @@ module.exports = {
     filename: `server.js`,
     path: path.resolve(__dirname, "build"),
   },
-  //mode: "production",
+  mode: "production",
   optimization: {
     minimize: false,
   },
+  devtool:"source-map",
   target: "node",
   module: {
     rules: [

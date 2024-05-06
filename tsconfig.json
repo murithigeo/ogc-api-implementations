@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "jsx": "react-jsx",
+        "sourceMap": true,
         "allowImportingTsExtensions": false,
         "noEmit": false,
         "experimentalDecorators": true,
