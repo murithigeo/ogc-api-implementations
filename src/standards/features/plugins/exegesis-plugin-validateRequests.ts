@@ -13,6 +13,12 @@ function makeExegesisPlugin(
   listOfCollections: string[]
 ): ExegesisPluginInstance {
   return {
+    preRouting: ({req,res})=>{
+      
+      //console.log("before",req.headers)
+      //req.protocol="https"
+      console.log("after",req.protocol)
+    },
     postSecurity: async (pluginContext: ExegesisPluginContext) => {
 
       //Access documented params. Includes path & query params

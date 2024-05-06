@@ -26,7 +26,7 @@ async function alterServers(
     });
     if (ips !== 0) {
       servers.push({
-        url: `http://${ips}:${PORT}/${standard}`,
+        url: `https://${ips}:${PORT}/${standard}`,
         description: `This is the internal IP address of the localmachine`,
       });
     }
@@ -34,7 +34,7 @@ async function alterServers(
     //Only use localhost on development environment otherwise during tests, TeamEngine will throw error
     if (process.env.NODE_ENV === "development") {
       servers.push({
-        url: `http://localhost:${PORT}/${standard}`,
+        url: `https://localhost:${PORT}/${standard}`,
         description: "Localhost",
       });
     }
@@ -60,10 +60,12 @@ async function alterServers(
       console.log("Please provide standardized URLs");
       process.exit(1);
     }
+    /*
     serverObj.variables = {
       protocol: ["https", "http"],
       default: "https",
     };
+    */
   }
   if (servers.length < 1) {
     throw new Error("At least 1 server must be defined");
@@ -71,10 +73,10 @@ async function alterServers(
 
   //Log the baseurl of the new primary url
   const _firstServer = new URL(servers[0].url);
-  //console.log(
-    //`Primary URL is: ${_firstServer.protocol}//${_firstServer.hostname}`
-  //);
-  console.log(servers)
+  console.log(
+    `Primary URL is: ${_firstServer.protocol}//${_firstServer.hostname}`
+  );
+  //console.log(servers)
   return servers;
 }
 
