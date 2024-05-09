@@ -1,0 +1,738 @@
+paths:
+
+#Root
+  "/":
+    x-exegesis-controller: edrRootController
+    get:
+      summary: Get the landing/root page of this API
+      x-exegesis-operationId: edrGetRoot
+      parameters:
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  links:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/link"
+                  keywords:
+                    $ref: "#/components/schemas/keywords"
+                  provider:
+                    $ref: "#/components/schemas/provider"
+                  contact:
+                    $ref: "#/components/schemas/contact"
+            text/yaml:
+              type: string
+#Conformance
+  "/conformance":
+    x-exegesis-controller: edrConformanceController
+    get:
+      x-exegesis-operationId: edrGetConformance
+      parameters:
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - links
+                  - conformsTo
+                properties:
+                  conformsTo:
+                    type: array
+                    items:
+                      type: string
+                  links:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/link"
+            text/yaml:
+              type: string
+#Collections_Root----Get all collections
+  "/collections":
+    x-exegesis-controller: edrCollectionsController
+    get:
+      x-exegesis-operationId: edrQueryCollectionsRoot
+      parameters:
+        - $ref: "#/components/parameters/bbox"
+        - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/datetime"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - collections
+                  - links
+                properties:
+                  links:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/link"
+  
+#Collection----Specific
+  "/collections/{collectionId}":
+    x-exegesis-controller: edrCollectionsController
+    get:
+      x-exegesis-operationId: edrGetOneCollection
+
+#Get Items in a collection
+  "/collections/{collectionId}/items":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get: 
+      x-exegesis-operationId: edrItemsGet
+      parameters:
+        - $ref: "#/components/parameters/bbox" #4Item
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/limit"
+  "/collections/{collectionId}/items/{itemId}":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get: 
+      x-exegesis-operationId: edrItemsGetOne
+      parameters:
+        - $ref: "#/components/parameters/bbox" #4Item
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/limit"
+#Query Resources
+#Position @collectionId
+  "/collections/{collectionId}/position":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get:
+      x-exegesis-operationId: edrPositionGet
+      parameters: 
+        - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/coords"
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+  "/collections/{collectionId}/radius":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get: 
+      x-exegesis-operationId: edrRadiusGet
+      parameters:
+        - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/coords"
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"  
+        - $ref: "#/components/parameters/within"
+        - $ref: "#/components/parameters/within-units"
+  "/collections/{collectionId}/area":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get:
+      x-exegesis-operationId: edrAreaGet
+      parameters:
+        - $ref: "#/components/parameters/coords"
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+  "/collections/{collectionId}/cube":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get:
+      x-exegesis-operationId: edrCubeGet
+      parameters:
+        - $ref: "#/components/parameters/bbox" ##maxItems=4. Also required
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+
+  "/collections/{collectionId}/locations":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get:
+      x-exegesis-operationId: edrLocationsGet
+      parameters:
+        - in: query
+          name: locationId
+          required: false ###
+          schema: 
+            type: string
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+  "/collections/{collectionId}/trajectory":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get:
+      x-exegesis-operationId: edrTrajectoryGet
+      parameters:
+        - $ref: "#/components/parameters/coords" #Must be 2D
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+
+
+#Corridor
+  "/collections/{collectionId}/corridor":
+    x-exegesis-controller: edrResources_CollectionIdController
+    description: > 
+      A corridor returns data along and around the path defined by the coords param
+    get:
+      x-exegesis-operationId: edrCorridorGet
+      parameters:
+        - $ref: "#/components/parameters/coords" #Must be LineString/MultiLineString
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/resolution-x"
+        - $ref: "#/components/parameters/resolution-y"
+        - $ref: "#/components/parameters/resolution-z"
+        - $ref: "#/components/parameters/corridor-width"
+        - $ref: "#/components/parameters/width-units"
+        - $ref: "#/components/parameters/corridor-height"
+        - $ref: "#/components/parameters/height-units"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+#Get metadata on the instances(versions) of the collection
+  "/collections/{collectionId}/instances":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get:
+      x-exegesis-operationId: edr_getAllInstances
+      
+#Get data according to querypattern
+  "/collections/{collectionId}/{queryType}":
+    x-exegesis-controller: edrCollectionsController
+    get:
+      x-exegesis-operationId: edr_collection_queryType_get
+    post:
+      x-exegesis-operationId: edr_collection_queryType_post
+
+
+#Get the metadata of a specific Instance
+  "/collections/{collectionId}/instances/{instanceId}":
+    x-exegesis-controller: edrInstancesController
+    get:
+      x-exegesis-operationId: edr_getSpecificInstance
+
+#Get data from an instance according to a specific queryType
+  "/collections/{collectionId}/instances/{instanceId}/{queryType}":
+    x-exegesis-controller: edrInstancesController
+    get:
+      x-exegesis-operationId: edr_getSpecificInstanceQueryType
+    post:
+      x-exegesis-operationId: edr_postSpecificInstanceQueryType
+
+
+components:
+  schemas:
+    link:
+      type: object
+      required:
+        - href
+        - rel
+      properties:
+        href:
+          type: string
+          format: uri
+        rel:
+          type: string
+          examples: [self, alternate]
+        type:
+          description: The content-type of the linked resource
+          type: string
+          examples: [application/json, application/geo+json]
+        hreflang:
+          description: The language of the linked resource.
+          type: string
+          examples: [en, sw, ch]
+        title:
+          type: string
+        length:
+          description: The size of the resource. Preferrably in bytes
+          type: integer
+        templated:
+          description: >
+            Defines if the link href value is a template with values requiring replacement",
+          type: boolean
+    keywords:
+      type: array
+      items:
+        type: string
+      description: >
+        Key identifiers of the resources provided by this API
+      examples: [temperature, wind]
+    provider:
+      type: object
+      properties:
+        name:
+          description: >
+            Name of the org providing the info
+          type: string
+        url:
+          type: string
+          format: uri
+          description: >
+            Link to the provider's website
+    contact:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: >
+            email of the service provider
+        phone:
+          description: >
+            phone number of provider
+          type: string
+          format: phone
+        fax:
+          description: >
+            Fax number of service provider
+          type: string
+        hours:
+          type: string
+          description: Operating hours of the service provider
+        instructions: #Probably how to contact them?
+          type: string
+        address:
+          type: string
+          description: Alphanumeric code for physical address of the service provider. To be used in conjuction with? postalcode/city/province
+        city:
+          type: string
+          description: City of residence of service provider
+        stateorprovince:
+          type: string
+        country:
+          type: string
+          description: Can be a name, ISO2 or ISO3 code
+    collection:
+      type: object
+      required:
+        - links
+        - id
+        - extent
+        - data_queries
+        - parameter_names
+        - output_formats
+        - crs
+      properties:
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/link"
+        id:
+          type: string
+          description: Unique identifier of the collection
+        title:
+          type: string
+          description: Summary of the collection
+        description:
+          type: string
+          description: More detailed summary of the collection
+        keywords:
+          $ref: "#/components/schemas/keywords"
+        extent:
+          type: object
+          description: Spatial-temporal bounds of the collection and their metadata
+          required:
+            - spatial
+            - temporal
+          properties:
+            spatial:
+              type: object
+              description: Spatial bounds of the collection
+              required:
+                - bbox
+                - crs
+              properties:
+                bbox:
+                  $ref: "#/components/schemas/bbox"
+                crs:
+                  type: string
+                  format: uri
+                  description: Will use the schema http://www.opengis.net/def/crs/{authority}/{version}/{code}
+                name:
+                  description: |-
+                    Name of vertical coordinate system? ###
+                  type: string
+            temporal:
+              description: Temporal bounds of collection
+              type: object
+              required:
+                - interval
+                - trs
+              properties:
+                interval:
+                  $ref: "#/components/schemas/interval"
+                trs:
+                  type: string
+                  format: uri
+                values:
+                  description: >
+                    Provides information about the time intervals available in the collection \nas ISO8601 compliant dates, either as a time range specified \nas start time / end time  (e.g. 2017-11-14T09:00Z/2017-11-14T21:00Z)  or\nas number of repetitions / start time / interval (e.g. R4/2017-11-14T21:00Z/PT3H) \nor a list of time values (e.g.\n2017-11-14T09:00Z,2017-11-14T12:00Z,2017-11-14T15:00Z,2017-11-14T18:00Z,2017-11-14T21:00Z)
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                    minItems: 1
+                    items:
+                      type: string
+                      minItems: 1
+                      nullable: true
+                      format: date-time
+                      examples:
+                        [
+                          [2020-11-12T12:15Z],
+                          [
+                            2020-11-12T12:15Z,
+                            2020-11-12T12:30Z,
+                            2020-11-12T12:45Z,
+                          ],
+                          [R12/2022-01-14T09:00Z/2022-01-15T09:00Z],
+                          [R12/2022-01-14T09:00Z/PT1H],
+                          [
+                            R12/2022-01-14T09:00Z/PT1H,
+                            R4/2022-01-14T21:00Z/PT3H,
+                            R4/2022-01-14T21:00Z/PT6H,
+                          ],
+                        ]
+                name:
+                  description: Name of the trs
+                  type: string
+            vertical:
+              type: object
+              description: The vertical extent of information in the collection
+              required:
+                - interval
+                - vrs
+              properties:
+                interval:
+                  type: array
+                  description: In the Core only a single time interval is supported. Extensions may support\nmultiple intervals. If multiple intervals are provided, the union of the\nintervals describes the vertical extent.
+                  minItems: 1
+                  items:
+                    type: array
+                    description: minimum and maximum heights of the vertical interval. The values are in the\nvertical coordinate reference system specified in `vrs`. By default\nthis is the vertical coordinate reference system of the source information.
+                    minItems: 1
+                    items:
+                      type: string
+                      nullable: true
+                  example: [[number|null,number|nul]]
+                values:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                    nullable: true
+                    examples: [[2/100],[R50/1000/-50],[2,100,80,100]]
+                vrs:
+                  description: Coordinate reference system of the coordinates in the vertical extent\n(property `interval`). 
+                  type: string
+                  format: uri
+                name:
+                  description: Name of the Vertical ref system
+                  type: string
+        data_queries:
+          description: Detailed information about individual query types
+          type: object
+          properties:
+            position:   
+              type: object       
+              properties:
+                link:
+                  $ref: "#/components/schemas/link"
+                properties:
+                  type: object
+    instance:
+      description: An attribute (version, release, run) of a data collection. Can be day of observations
+    position:
+      description: Data type describing the point or geometry potentially occupied by object or person
+    radius:
+      description: Region with the range of geographic position. Must be circular/spheric
+    trajectory:
+      description: Path of a moving point described by a one-parameter set of points?
+    
+                  
+
+    bbox:
+      description: >-
+        `From OGC API- Features Doc`
+        Only features that have a geometry that intersects the bounding box are
+        selected.
+
+        The bounding box is provided as four or six numbers, depending on
+        whether the
+
+        coordinate reference system includes a vertical axis (height or depth):
+
+
+        * Lower left corner, coordinate axis 1
+
+        * Lower left corner, coordinate axis 2
+
+        * Minimum value, coordinate axis 3 (optional)
+
+        * Upper right corner, coordinate axis 1
+
+        * Upper right corner, coordinate axis 2
+
+        * Maximum value, coordinate axis 3 (optional)
+
+
+        If the value consists of four numbers, the coordinate reference system
+        is
+
+        WGS 84 longitude/latitude (http://www.opengis.net/def/crs/OGC/1.3/CRS84)
+
+        unless a different coordinate reference system is specified in the
+        parameter `bbox-crs`.
+
+
+        If the value consists of six numbers, the coordinate reference system is
+        WGS 84
+
+        longitude/latitude/ellipsoidal height
+        (http://www.opengis.net/def/crs/OGC/0/CRS84h)
+
+        unless a different coordinate reference system is specified in the
+        parameter `bbox-crs`.
+
+
+        The query parameter `bbox-crs` is specified in OGC API - Features - Part
+        2: Coordinate
+
+        Reference Systems by Reference.
+
+
+        For WGS 84 longitude/latitude the values are in most cases the sequence
+        of
+
+        minimum longitude, minimum latitude, maximum longitude and maximum
+        latitude.
+
+        However, in cases where the box spans the antimeridian the first value
+
+        (west-most box edge) is larger than the third value (east-most box
+        edge).
+
+
+        If the vertical axis is included, the third and the sixth number are the
+
+        bottom and the top of the 3-dimensional bounding box.
+
+
+        If a feature has multiple spatial geometry properties, it is the
+        decision of the
+
+        server whether only a single spatial geometry property is used to
+        determine
+
+        the extent or all relevant geometries.
+      summary: >
+        _collection_extent_bbox_crs 
+        ############################################################################
+        Projected Coordinate Systems (without height): [Xmin,Ymin,Xmax,Ymax][]
+        Geographic Coordinate Systems (wihout height): [Ymin,Xmin,Ymax,Xmax][]
+        --------------------------------------------------------------------
+        Projected Coordinate Systems (with height): [Xmin,Ymin,Zmin,Xmax,Ymax,Zmax][]
+        Geographic Coordinate Systems (with height): [Ymin,Xmin,Zmin,Ymin,Xmax,Zmax][]
+        #############################################################################
+        _parameter: bbox
+        When a bbox is specified and length===5, then Zmax is undefined?
+        When a bbox is specified and length ===6, then Zmin & Zmax are defined?
+      type: array
+      minItems: 1
+      items:
+        type:
+        oneOf:
+          - minItems: 4
+            maxItems: 4
+          - minItems: 6
+            maxItems: 6
+    interval:
+      type: array
+      minItems: 1
+      items:
+        type: array
+        minItems: 2
+        maxItems: 2
+        items:
+          type: string
+
+  parameters:
+    crs:
+      name: crs
+      description: >
+        The default CRS is http://www.opengis.net/def/crs/OGC/1.3/CRS84 which is
+        parsed as http://www.opengis.net/def/crs/EPSG/0/4326. All the coordinate
+        reference systems supported by PostGIS v3.4.0 are supported by this API.
+        They are all listed here and also otherible at the
+        {baseURL}/spatial_ref_sys endpoint.
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uri
+        default: http://www.opengis.net/def/crs/OGC/1.3/CRS84
+      style: form
+      explode: false
+    f:
+      name: f
+      in: query
+      required: false
+      schema:
+        type: string
+        default: json
+    bbox:
+      name: bbox
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/bbox"
+      style: form
+      explode: false
+    datetime:
+      name: datetime
+      in: query
+      description: >-
+        `From OGC API-Features`
+        Either a date-time or an interval. Date and time expressions adhere to
+        RFC 3339.
+
+        Intervals may be bounded or half-bounded (double-dots at start or end).
+
+
+        Examples:
+
+
+        * A date-time: "2018-02-12T23:20:50Z"
+
+        * A bounded interval: "2018-02-12T00:00:00Z/2018-03-18T12:31:12Z"
+
+        * Half-bounded intervals: "2018-02-12T00:00:00Z/.." or
+        "../2018-03-18T12:31:12Z"
+
+
+        Only features that have a temporal property that intersects the value of
+
+        `datetime` are selected.
+
+
+        If a feature has multiple temporal properties, it is the decision of the
+
+        server whether only a single temporal property is used to determine
+
+        the extent or all relevant temporal properties.
+
+
+        The only currently supported intervals are those provided as an example.
+        If they 
+
+        do not `..` for unbounded or / for bounded intervals, `error(500)` `as
+        of now`
+      required: false
+      schema:
+        type: string
+      style: form
+      explode: false
+    coords:
+      in: query
+      name: coords
+      required: true
+      schema:
+        type: string
+        format: wkt
+    z:
+      in: query
+      name: z
+      required: false
+      schema: 
+        type: string
+    parameter-name:
+      in: query
+      name: parameter-name
+      required: false
+      schema:
+        type: array
+        minItems: 1
+        items:
+          type: string
+    within:
+      in: query
+      required: true
+      name: within
+      schema:
+        type: string
+        format: number
+        examples: ["20","0.5","1000"]
+    within-units:
+      name: within-units
+      in: query
+      required: true
+      schema:
+        type: string
+        examples: [miles,kilometers]
+    resolution-x:
+      name: resolution-x
+      in: query
+      schema:
+        type: string
+      description: >
+        Used if a user requires data at a different resolution along x-axis
+      required: false
+    resolution-y:
+      name: resolution-y
+      in: query
+      schema:
+        type: string
+      description: >
+        Used if a user requires data at a different resolution along y-axis
+      required: false
+    resolution-z:
+      name: resolution-z
+      in: query
+      schema:
+        type: string
+      description: >
+        Used if a user requires data at a different resolution along z-axis
+      required: false
+    corridor-width:
+      name: corridor-width
+      in: query
+      required: true
+      schema:
+        type: string
+    width-units:
+      name: width-units
+      in: query
+      required: true
+      schema:
+        type: string
+    corridor-height:
+      name: corridor-height
+      in: query
+      required: true
+      schema:
+        type: string
+    height-units:
+      name: height-units
+      in: query
+      required: true
+      schema:
+        type: string   
+    queryType:
+      in: path
+      name: queryType
+      required: true
+      schema:
+        type: string
+        examples: [position,trajectory,items]
