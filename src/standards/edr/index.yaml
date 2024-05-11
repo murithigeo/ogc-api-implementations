@@ -28,7 +28,8 @@ paths:
                     $ref: "#/components/schemas/contact"
             text/yaml:
               type: string
-#Conformance
+  
+  
   "/conformance":
     x-exegesis-controller: edrConformanceController
     get:
@@ -56,7 +57,8 @@ paths:
                       $ref: "#/components/schemas/link"
             text/yaml:
               type: string
-#Collections_Root----Get all collections
+  
+# Collections get All Collections [All]
   "/collections":
     x-exegesis-controller: edrCollectionsController
     get:
@@ -80,34 +82,157 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/link"
+                  collections:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/collection"
+            text/yaml:
+              type: string
   
-#Collection----Specific
+# Collections Get Specific Collection [One]
   "/collections/{collectionId}":
     x-exegesis-controller: edrCollectionsController
     get:
       x-exegesis-operationId: edrGetOneCollection
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":
+          description: Ok.
+          content:  
+            application/json:
+              schema:
+                $ref: "#/components/schemas/collection"
+            text/yaml:
+              schema:
+                type: string
 
-#Get Items in a collection
+
+# Collection get Available Instances [All]
+  "/collections/{collectionId}/instances":
+    x-exegesis-controller: edrInstancesQueryController
+    get:
+      x-exegesis-operationId: getInstancesInCollection
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/instances"
+        
+
+# Collection get Specific Instance in Collection [One]
+  "/collections/{collectionId}/instances/{instanceId}":
+    x-exegesis-controller: edrInstancesQueryController
+    get:  
+      x-exegesis-operationId: getAnInstanceInCollection
+      parameter:  
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/instanceId"
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/collection"
+            
+
+# Collection With No Instances [Items][All]
   "/collections/{collectionId}/items":
     x-exegesis-controller: edrResources_CollectionIdController
     get: 
-      x-exegesis-operationId: edrItemsGet
+      x-exegesis-operationId: getItemsInCollection_NoInstance
       parameters:
         - $ref: "#/components/parameters/bbox" #4Item
         - $ref: "#/components/parameters/datetime"
         - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/f" ##Double check
+      responses:
+        "200":
+          description: Ok.
+          content: 
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeature"
+            text/yaml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeature"
+
+# Collection with No Instances [itemId][One]
   "/collections/{collectionId}/items/{itemId}":
     x-exegesis-controller: edrResources_CollectionIdController
     get: 
-      x-exegesis-operationId: edrItemsGetOne
+      x-exegesis-operationId: getAnItemInCollection_NoInstance
       parameters:
-        - $ref: "#/components/parameters/bbox" #4Item
+        - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/itemId"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeature"
+            text/yaml:
+              schema:
+                type: string
+
+# Collection with Instances [Instance=>Items]
+  "/collections/{collectionId}/instances/{instanceId}/items":
+    x-exegesis-controller: edrItemsQueryController
+    get:
+      x-exegesis-operationId: getItemsInInstance
+      parameters:
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/bbox"
+        - $ref: "#/components/parameters/instanceId"
         - $ref: "#/components/parameters/datetime"
-        - $ref: "#/components/parameters/limit"
-#Query Resources
-#Position @collectionId
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/geo+json:
+              schema: 
+                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
+            text/yaml:
+              schema: 
+                type: string
+          
+# Collection with Instances [Instance=>Items=>itemId]
+  "/collections/{collectionId}/instances/{instanceId}/items/{itemId}":
+    x-exegesis-controller: edrItemsQueryController
+    get:
+      x-exegesis-operationId: getAnItemInInstance
+      parameters:
+        - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/itemId"
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/instanceId"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeature"
+            text/yaml:
+              schema:
+                type: string
+
+# Collection=>CollectionId=>Position
   "/collections/{collectionId}/position":
-    x-exegesis-controller: edrResources_CollectionIdController
+    x-exegesis-controller: edrPositionQueryController
     get:
       x-exegesis-operationId: edrPositionGet
       parameters: 
@@ -117,6 +242,8 @@ paths:
         - $ref: "#/components/parameters/z"
         - $ref: "#/components/parameters/datetime"
         - $ref: "#/components/parameters/parameter-name"
+  
+  
   "/collections/{collectionId}/radius":
     x-exegesis-controller: edrResources_CollectionIdController
     get: 
@@ -130,43 +257,199 @@ paths:
         - $ref: "#/components/parameters/parameter-name"  
         - $ref: "#/components/parameters/within"
         - $ref: "#/components/parameters/within-units"
-  "/collections/{collectionId}/area":
-    x-exegesis-controller: edrResources_CollectionIdController
-    get:
-      x-exegesis-operationId: edrAreaGet
-      parameters:
-        - $ref: "#/components/parameters/coords"
-        - $ref: "#/components/parameters/z"
-        - $ref: "#/components/parameters/datetime"
-        - $ref: "#/components/parameters/parameter-name"
-        - $ref: "#/components/parameters/crs"
-        - $ref: "#/components/parameters/f"
-  "/collections/{collectionId}/cube":
-    x-exegesis-controller: edrResources_CollectionIdController
-    get:
-      x-exegesis-operationId: edrCubeGet
-      parameters:
-        - $ref: "#/components/parameters/bbox" ##maxItems=4. Also required
-        - $ref: "#/components/parameters/z"
-        - $ref: "#/components/parameters/datetime"
-        - $ref: "#/components/parameters/parameter-name"
-        - $ref: "#/components/parameters/crs"
-        - $ref: "#/components/parameters/f"
+  
 
-  "/collections/{collectionId}/locations":
-    x-exegesis-controller: edrResources_CollectionIdController
+##################################Area Queries
+
+# Collection=>CollectionId=>Area
+  "/collections/{collectionId}/area":
+    x-exegesis-controller: edrAreaQueryController
     get:
-      x-exegesis-operationId: edrLocationsGet
+      x-exegesis-operationId: getFeaturesWithArea_collection
       parameters:
-        - in: query
-          name: locationId
-          required: false ###
-          schema: 
-            type: string
+        - $ref: "#/components/parameters/areaCoords"
+        - $ref: "#/components/parameters/z"
         - $ref: "#/components/parameters/datetime"
         - $ref: "#/components/parameters/parameter-name"
         - $ref: "#/components/parameters/crs"
         - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/resolution-x"
+        - $ref: "#/components/parameters/resolution-y"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
+            application/vnd.cov+json:
+              schema:
+                $ref: "#/components/schemas/coverageJSON"
+
+# Collection=>CollectionId=>Instances=>InstanceId=>Area
+  "/collections/{collectionId}/instances/{instanceId}/area":
+    x-exegesis-controller: edrAreaQueryController
+    get:
+      x-exegesis-operationId: getFeaturesWithinArea_instance
+      parameters:
+        - $ref: "#/components/parameters/areaCoords"
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/instanceId"
+        - $ref: "#/components/parameters/resolution-x"
+        - $ref: "#/components/parameters/resolution-y"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
+            application/vnd.cov+json:
+              schema:
+                $ref: "#/components/schemas/coverageJSON"
+
+
+####################################Cube Queries
+
+# CollectionId=> Cube
+  "/collections/{collectionId}/cube":
+    x-exegesis-controller: edrCubeQueryController
+    get:
+      x-exegesis-operationId: getFeaturesWithinCube_collection
+      parameters:
+        - $ref: "#/components/parameters/bbox" 
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/cube-z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":  
+          description: Ok.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/component/schemas/edrGeoJSONFeatureCollection"
+            application/vnd.cov+json:
+              schema:
+                $ref: "#/components/schemas/coverageJSON"
+            text/yaml:
+              schema:
+                type: string
+
+# CollectionId=>InstanceId=> Cube
+  "/collections/{collectionId}/instances/{instanceId}/cube":
+    x-exegesis-controller: edrCubeQueryController
+    get:
+      x-exegesis-operationId: getFeaturesWithinCube_collection
+      parameters:
+        - $ref: "#/components/parameters/bbox" 
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/instanceId"
+        - $ref: "#/components/parameters/cube-z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":  
+          description: Ok.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/component/schemas/edrGeoJSONFeatureCollection"
+            application/vnd.cov+json:
+              schema:
+                $ref: "#/components/schemas/coverageJSON"
+            text/yaml:
+              schema:
+                type: string
+
+
+###########################Location Queries
+
+# CollectionId=>Locations
+  "/collections/{collectionId}/locations":
+    x-exegesis-controller: edrLocationsQueryController
+    get:
+      x-exegesis-operationId: getLocations_collection
+      parameters:
+        - $ref: "#/components/parameters/datetime"
+        #- $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/bbox"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
+            text/yaml:
+              schema:
+                type: string
+
+# CollectionId=>Locations=>LocationId
+  "/collections/{collectionId}/locations/{locationId}":
+    x-exegesis-controller: edrLocationsQueryController
+    get:
+      x-exegesis-operationId: getALocation_collection
+      parameters:
+        - $ref: "#/components/parameters/locationId"
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/vnd.cov+json:
+              schema: 
+                $ref: "#/components/schemas/coverageJSON"
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
+            text/yaml:
+              schema:
+                type: string
+
+# CollectionId=>InstanceId=>Locations
+  "/collections/{collectionId}/instances/{instanceId}/locations":
+    x-exegesis-controller: edrLocationsQueryController
+    get:
+      x-exegesis-operationId: getLocations_instance
+      parameters:
+        - $ref: "#/components/parameters/bbox"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/instanceId"
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
+            text/yaml:
+              schema:
+                type: string
+
+# CollectionId=>InstanceId=>LocationId
+  "/collections/{collectionId}/instances/{instanceId}/locations/{locationId}":
+  x-exegesis-controller: edrLocationsQueryController
+  get:
+    x-exegesis-operationId: getALocation_instance
+
+# CollectionId=>Locations
   "/collections/{collectionId}/trajectory":
     x-exegesis-controller: edrResources_CollectionIdController
     get:
@@ -180,7 +463,6 @@ paths:
         - $ref: "#/components/parameters/f"
 
 
-#Corridor
   "/collections/{collectionId}/corridor":
     x-exegesis-controller: edrResources_CollectionIdController
     description: > 
@@ -200,28 +482,7 @@ paths:
         - $ref: "#/components/parameters/corridor-height"
         - $ref: "#/components/parameters/height-units"
         - $ref: "#/components/parameters/crs"
-        - $ref: "#/components/parameters/f"
-#Get metadata on the instances(versions) of the collection
-  "/collections/{collectionId}/instances":
-    x-exegesis-controller: edrResources_CollectionIdController
-    get:
-      x-exegesis-operationId: edr_getAllInstances
-      
-#Get data according to querypattern
-  "/collections/{collectionId}/{queryType}":
-    x-exegesis-controller: edrCollectionsController
-    get:
-      x-exegesis-operationId: edr_collection_queryType_get
-    post:
-      x-exegesis-operationId: edr_collection_queryType_post
-
-
-#Get the metadata of a specific Instance
-  "/collections/{collectionId}/instances/{instanceId}":
-    x-exegesis-controller: edrInstancesController
-    get:
-      x-exegesis-operationId: edr_getSpecificInstance
-
+        - $ref: "#/components/parameters/f"#Get metadata on the instances(versions) of the collection
 #Get data from an instance according to a specific queryType
   "/collections/{collectionId}/instances/{instanceId}/{queryType}":
     x-exegesis-controller: edrInstancesController
@@ -451,18 +712,21 @@ components:
                 link:
                   $ref: "#/components/schemas/link"
                 properties:
-                  type: object
-    instance:
-      description: An attribute (version, release, run) of a data collection. Can be day of observations
-    position:
-      description: Data type describing the point or geometry potentially occupied by object or person
-    radius:
-      description: Region with the range of geographic position. Must be circular/spheric
-    trajectory:
-      description: Path of a moving point described by a one-parameter set of points?
-    
-                  
-
+                  type: object               
+    instances:
+      type: object
+      required:
+        - links
+        - instances
+      properties:
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/link"
+        instances:
+          type: array
+          items:
+            $ref: "#/components/schemas/collection"
     bbox:
       description: >-
         `From OGC API- Features Doc`
@@ -567,7 +831,283 @@ components:
         maxItems: 2
         items:
           type: string
+################Response Schemas
+    GeoJsonObject:
+      description: >
+        GeoJSon object
 
+        The coordinate reference system for all GeoJSON coordinates is a
+        geographic coordinate reference system, using the World Geodetic System
+        1984 (WGS 84) datum, with longitude and latitude units of decimal
+        degrees. This is equivalent to the coordinate reference system
+        identified by the Open Geospatial Consortium (OGC) URN An OPTIONAL
+        third-position element SHALL be the height in meters above or below the
+        WGS 84 reference ellipsoid. In the absence of elevation values,
+        applications sensitive to height or depth SHOULD interpret positions as
+        being at local ground or sea level.
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - Feature
+            - FeatureCollection
+            - Point
+            - MultiPoint
+            - LineString
+            - MultiLineString
+            - Polygon
+            - MultiPolygon
+            - GeometryCollection
+    Geometry:
+      description: >
+        Abstract type for all GeoJSon object except Feature and
+        FeatureCollection
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3
+      allOf:
+        - $ref: '#/components/schemas/GeoJsonObject'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - Point
+                - MultiPoint
+                - LineString
+                - MultiLineString
+                - Polygon
+                - MultiPolygon
+                - GeometryCollection
+          required:
+            - type
+          discriminator:
+            propertyName: type
+    GeometryElement:
+      description: >
+        Abstract type for all GeoJSon 'Geometry' object the type of which is not
+        'GeometryCollection'
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3
+      allOf:
+        - $ref: '#/components/schemas/Geometry'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - Point
+                - MultiPoint
+                - LineString
+                - MultiLineString
+                - Polygon
+                - MultiPolygon
+          required:
+            - type
+          discriminator:
+            propertyName: type
+    Feature:
+      description: GeoJSon 'Feature' object
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.2
+      allOf:
+        - $ref: '#/components/schemas/GeoJsonObject'
+        - type: object
+          required:
+            - geometry
+            - properties
+          properties:
+            geometry:
+              allOf:
+                - nullable: true
+                - $ref: '#/components/schemas/Geometry'
+            properties:
+              type: object
+              nullable: true
+            id:
+              oneOf:
+                - type: number
+                - type: string
+    FeatureCollection:
+      description: GeoJSon 'FeatureCollection' object
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.3
+      allOf:
+        - $ref: '#/components/schemas/GeoJsonObject'
+        - type: object
+          required:
+            - features
+          properties:
+            features:
+              type: array
+              items:
+                $ref: '#/components/schemas/Feature'
+    Position:
+      description: >
+        GeoJSon fundamental geometry construct.
+
+        A position is an array of numbers. There MUST be two or more elements.
+        The first two elements are longitude and latitude, or easting and
+        northing, precisely in that order and using decimal numbers. Altitude or
+        elevation MAY be included as an optional third element.
+
+        Implementations SHOULD NOT extend positions beyond three elements
+        because the semantics of extra elements are unspecified and ambiguous.
+        Historically, some implementations have used a fourth element to carry a
+        linear referencing measure (sometimes denoted as "M") or a numerical
+        timestamp, but in most situations a parser will not be able to properly
+        interpret these values. The interpretation and meaning of additional
+        elements is beyond the scope of this specification, and additional
+        elements MAY be ignored by parsers.
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.1
+      type: array
+      minItems: 2
+      maxItems: 3
+      items:
+        type: number
+    LineStringCoordinates:
+      description: |
+        GeoJSon fundamental geometry construct, array of two or more positions.
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.4
+      type: array
+      items:
+        $ref: '#/components/schemas/Position'
+      minItems: 2
+    LinearRing:
+      description: >
+        A linear ring is a closed LineString with four or more positions
+        The first and last positions are equivalent, and they MUST contain
+        identical values; their representation SHOULD also be identical.
+
+        A linear ring is the boundary of a surface or the boundary of a hole in
+        a surface.
+
+        A linear ring MUST follow the right-hand rule with respect to the area
+        it bounds, i.e., exterior rings are counterclockwise, and holes are
+        clockwise.
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.6
+      type: array
+      items:
+        $ref: '#/components/schemas/Position'
+      minItems: 4
+    Point:
+      description: GeoJSon geometry
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.2
+      allOf:
+        - $ref: '#/components/schemas/GeometryElement'
+        - type: object
+          required:
+            - type
+            - coordinates
+          properties:
+            type:
+              type: string
+              enum:
+                - Point
+            coordinates:
+              $ref: '#/components/schemas/Position'
+    MultiPoint:
+      description: GeoJSon geometry
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.3
+      allOf:
+        - $ref: '#/components/schemas/GeometryElement'
+        - type: object
+          required:
+            - coordinates
+          properties:
+            coordinates:
+              type: array
+              items:
+                $ref: '#/components/schemas/Position'
+    LineString:
+      description: GeoJSon geometry
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.4
+      allOf:
+        - $ref: '#/components/schemas/GeometryElement'
+        - type: object
+          required:
+            - coordinates
+          properties:
+            coordinates:
+              $ref: '#/components/schemas/LineStringCoordinates'
+    MultiLineString:
+      description: GeoJSon geometry
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.5
+      allOf:
+        - $ref: '#/components/schemas/GeometryElement'
+        - type: object
+          required:
+            - coordinates
+          properties:
+            coordinates:
+              type: array
+              items:
+                $ref: '#/components/schemas/LineStringCoordinates'
+    Polygon:
+      description: GeoJSon geometry
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.6
+      allOf:
+        - $ref: '#/components/schemas/GeometryElement'
+        - type: object
+          required:
+            - coordinates
+          properties:
+            coordinates:
+              type: array
+              items:
+                $ref: '#/components/schemas/LinearRing'
+    MultiPolygon:
+      description: GeoJSon geometry
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.7
+      allOf:
+        - $ref: '#/components/schemas/GeometryElement'
+        - type: object
+          required:
+            - coordinates
+          properties:
+            coordinates:
+              type: array
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LinearRing'
+    GeometryCollection:
+      type: object
+      description: >
+        GeoJSon geometry collection
+
+        GeometryCollections composed of a single part or a number of parts of a
+        single type SHOULD be avoided when that single part or a single object
+        of multipart type (MultiPoint, MultiLineString, or MultiPolygon) could
+        be used instead.
+      externalDocs:
+        url: https://tools.ietf.org/html/rfc7946#section-3.1.8
+      allOf:
+        - $ref: '#/components/schemas/Geometry'
+        - type: object
+          required:
+            - geometries
+          properties:
+            geometries:
+              type: array
+              items:
+                $ref: '#/components/schemas/GeometryElement'
+              minItems: 0
+       
+    coverageJSON:
+    edrGeoJSON:
+    featuresGeoJSON:
   parameters:
     crs:
       name: crs
@@ -644,28 +1184,165 @@ components:
         type: string
       style: form
       explode: false
-    coords:
+    areaCoords:
+      in: query
+      name: coords
+      description: |-
+        Only data that has a geometry that intersects the area defined by the polygon
+        are selected. 
+
+        The polygon is defined using a Well Known Text string following 
+
+        coords=POLYGON((x y,x1 y1,x2 y2,...,xn yn x y))
+
+        which are values in the coordinate system defined by the crs query parameter 
+        (if crs is not defined the values will be assumed to be WGS84 longitude/latitude coordinates).  
+
+        For instance a polygon that roughly describes an area that contains 
+        South West England in WGS84 would look like: 
+
+        coords=POLYGON((-6.1 50.3,-4.35 51.4,-2.6 51.6,-2.8 50.6,-5.3 49.9,-6.1,50.3))
+
+        see http://portal.opengeospatial.org/files/?artifact_id=25355 and 
+        https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
+
+        The coords parameter will only support 2D POLYGON definitions
+      required: true
+      schema:
+        type: string
+        format: wkt
+    trajectoryCoords:
       in: query
       name: coords
       required: true
       schema:
         type: string
         format: wkt
+      description: |-
+        Only data that has a geometry that intersects the area defined by the linestring
+        are selected. 
+
+        The trajectory is defined using a Well Known Text string following 
+
+        A 2D trajectory, on the surface of earth with no time or height dimensions: 
+            coords=LINESTRING(-2.87 51.14 , -2.98 51.36,-3.15 51.03 ,-3.48 50.74 ,-3.36 50.9 )
+
+        A 2D trajectory, on the surface of earth with all for the same time and no height dimension, time value defined in ISO8601 format by the `datetime` query parameter : 
+            coords=LINESTRING(-2.87 51.14 , -2.98 51.36 ,-3.15 51.03 ,-3.48 50.74 ,-3.36 50.9 )&time=2018-02-12T23:00:00Z 
+            
+        A 2D trajectory, on the surface of earth with no time value but at a fixed height level, height defined in the collection height units by the `z` query parameter : 
+            coords=LINESTRING(-2.87 51.14 , -2.98 51.36 ,-3.15 51.03 ,-3.48 50.74 ,-3.36 50.9 )&z=850 
+
+        A 2D trajectory, on the surface of earth with all for the same time and at a fixed height level, time value defined in ISO8601 format by the `datetime` query parameter and height defined in the collection height units by the `z` query parameter : 
+            coords=LINESTRING(-2.87 51.14 , -2.98 51.36 ,-3.15 51.03 ,-3.48 50.74 ,-3.36 50.9 )&time=2018-02-12T23:00:00Z&z=850 
+
+        A 3D trajectory, on the surface of the earth but over a time range with no height values:
+        coords=LINESTRINGM(-2.87 51.14  1560507000,-2.98 51.36  1560507600,-3.15 51.03  1560508200,-3.48 50.74  1560508500,-3.36 50.9  1560510240)
+
+        A 3D trajectory, on the surface of the earth but over a time range with a fixed height value, height defined in the collection height units by the `z` query parameter : 
+        coords=LINESTRINGM(-2.87 51.14  1560507000,-2.98 51.36  1560507600,-3.15 51.03  1560508200,-3.48 50.74  1560508500,-3.36 50.9  1560510240)&z=200
+
+
+        A 3D trajectory, through a 3D volume with height or depth, but no defined time:
+        coords=LINESTRINGZ(-2.87 51.14  0.1,-2.98 51.36  0.2,-3.15 51.03  0.3,-3.48 50.74  0.4,-3.36 50.9  0.5)
+
+        A 3D trajectory, through a 3D volume with height or depth, but a fixed time time value defined in ISO8601 format by the `datetime` query parameter:
+        coords=LINESTRINGZ(-2.87 51.14  0.1,-2.98 51.36  0.2,-3.15 51.03  0.3,-3.48 50.74  0.4,-3.36 50.9  0.5)&time=2018-02-12T23:00:00Z
+
+        A 4D trajectory, through a 3D volume but over a time range:
+        coords=LINESTRINGZM(-2.87 51.14 0.1 1560507000,-2.98 51.36 0.2 1560507600,-3.15 51.03 0.3 1560508200, -3.48 50.74 0.4 1560508500, -3.36 50.9 0.5 1560510240)
+        (using either the `time` or `z` parameters with a 4D trajectory wil generate an error response)
+
+        where Z in `LINESTRINGZ` and `LINESTRINGZM` refers to the height value.  
+        `If the specified CRS does not define the height units, the heights units will default to metres above mean sea level`
+
+        and the M in `LINESTRINGM` and `LINESTRINGZM` refers to the number of seconds that have elapsed since the Unix epoch, that is the time 00:00:00 UTC on 1 January 1970. See
+        https://en.wikipedia.org/wiki/Unix_time  
     z:
+      name: z
+      in: query
+      description: |+
+          Define the vertical level to return data from 
+          i.e. z=level
+
+          for instance if the 850hPa pressure level is being queried
+
+          z=850
+
+          or a range to return data for all levels between and including 2 defined levels
+          i.e. z=minimum value/maximum value
+
+          for instance if all values between and including 10m and 100m
+
+          z=10/100
+
+          finally a list of height values can be specified
+          i.e. z=value1,value2,value3
+
+          for instance if values at 2m, 10m and 80m are required
+
+          z=2,10,80
+
+          An Arithmetic sequence using Recurring height intervals, the difference is the number of recurrences is defined at the start 
+          and the amount to increment the height by is defined at the end
+
+          i.e. z=Rn/min height/height interval
+
+          so if the request was for 20 height levels 50m apart starting at 100m:
+
+          z=R20/100/50
+
+          When not specified data from all available heights SHOULD be returned
+      required: false
+      schema:
+        type: string
+      style: form
+      explode: false
+
+    Cube-z:
       in: query
       name: z
       required: false
+      description: |+
+        Define the vertical levels to return data from 
+        
+        The value will override any vertical values defined in the BBOX query parameter 
+        
+        A range to return data for all levels between and including 2 defined levels
+
+        i.e. z=minimum value/maximum value
+
+        for instance if all values between and including 10m and 100m
+
+        z=10/100
+
+        A list of height values can be specified
+        i.e. z=value1,value2,value3
+
+        for instance if values at 2m, 10m and 80m are required
+
+        z=2,10,80
+
+        An Arithmetic sequence using Recurring height intervals, the difference is the number of recurrences is defined at the start 
+        and the amount to increment the height by is defined at the end
+
+        i.e. z=Rn/min height/height interval
+
+        so if the request was for 20 height levels 50m apart starting at 100m:
+
+        z=R20/100/50
+
+        When not specified data from all available heights SHOULD be returned
       schema: 
         type: string
     parameter-name:
       in: query
       name: parameter-name
+      description: comma delimited list of parameters to retrieve data for.  Valid parameters are listed in the collections metadata
       required: false
       schema:
-        type: array
-        minItems: 1
-        items:
-          type: string
+        type: string
+      style: form
     within:
       in: query
       required: true
@@ -687,7 +1364,13 @@ components:
       schema:
         type: string
       description: >
-        Used if a user requires data at a different resolution along x-axis
+        Defined it the user requires data at a different resolution from the native resolution of the data along the x-axis
+
+        If this is a single value it denotes the number of intervals to retrieve data for along the x-axis
+        
+          i.e. resolution-x=10 
+        
+        would retrieve 10 values along the x-axis from the minimum x coordinate to maximum x coordinate (i.e. a value at both the minimum x and maximum x coordinates and 8 values between).
       required: false
     resolution-y:
       name: resolution-y
@@ -695,7 +1378,13 @@ components:
       schema:
         type: string
       description: >
-        Used if a user requires data at a different resolution along y-axis
+        Defined it the user requires data at a different resolution from the native resolution of the data along the y-axis
+
+        If this is a single value it denotes the number of intervals to retrieve data for along the y-axis
+    
+          i.e. resolution-y=10 
+    
+        would retrieve 10 values along the y-axis from the minimum y coordinate to maximum y coordinate (i.e. a value at both the minimum y and maximum y coordinates and 8 values between)
       required: false
     resolution-z:
       name: resolution-z
@@ -703,36 +1392,148 @@ components:
       schema:
         type: string
       description: >
-        Used if a user requires data at a different resolution along z-axis
+        Defined it the user requires data at a different resolution from the native resolution of the data along the z-axis
+
+        If this is a single value it denotes the number of intervals to retrieve data for along the z-axis
+    
+          i.e. resolution-z=10 
+    
+        would retrieve 10 values along the z-axis from the minimum z coordinate to maximum z  coordinate (i.e. a value at both the minimum z and maximum z coordinates and 8 values between).
       required: false
     corridor-width:
       name: corridor-width
       in: query
       required: true
+      description: |+
+        width of the corridor
+
+        The width value represents the whole width of the corridor where
+        the trajectory supplied in the `coords` query parameter is the centre
+        point of the corridor
+
+        `corridor-width={width}`
+
+        e.g.  corridor-width=100
+
+        Would be a request for a corridor 100 units wide with the coords parameter values being the centre point of the requested corridor, 
+        the request would be for data values 50 units either side of the trajectory coordinates defined in the coords parameter. 
+
+        The width units supported by the collection will be provided in the API metadata responses
       schema:
         type: string
     width-units:
       name: width-units
       in: query
       required: true
+      description: Distance units for the corridor-width parameter
       schema:
         type: string
     corridor-height:
       name: corridor-height
       in: query
       required: true
+      description: |+
+        height of the corridor
+
+        The height value represents the whole height of the corridor where
+        the trajectory supplied in the `coords` query parameter is the centre
+        point of the corridor
+
+        `corridor-height={height}`
+
+        e.g.  corridor-height=100
+
+        Would be a request for a corridor 100 units high with the coords parameter values being the centre point of the requested corridor, 
+        the request would be for data values 50 units either side of the trajectory coordinates defined in the coords parameter. 
+
+        The height units supported by the collection will be provided in the API metadata responses
       schema:
         type: string
     height-units:
       name: height-units
       in: query
+      description: Distance units for the corridor-height parameter
       required: true
       schema:
         type: string   
+
+    positionCoords:
+      name: coords
+      in: query
+      required: true
+      schema:
+        type: string
+        format: wkt
+      description: |+
+        location(s) to return data for, the coordinates are defined by a Well Known Text
+        (wkt) string. to retrieve a single location :
+
+        POINT(x y) i.e. POINT(0 51.48) for Greenwich, London
+
+        And for a list of locations
+
+        MULTIPOINT((x y),(x1 y1),(x2 y2),(x3 y3))
+
+        i.e.
+        MULTIPOINT((38.9 -77),(48.85 2.35),(39.92 116.38),(-35.29 149.1),(51.5 -0.1))
+
+        see http://portal.opengeospatial.org/files/?artifact_id=25355 and 
+        https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
+
+        the coordinate values will depend on the CRS parameter, if this is not defined
+        the values will be assumed to WGS84 values (i.e x=longitude and y=latitude)
+    radiusCoords:
+      name: coords
+      in: query
+      required: true
+      schema:
+        type: string
+        format: wkt
+      description: |+
+         location(s) to return data for, the coordinates are defined by a Well Known Text
+          (wkt) string. to retrieve a single location :
+
+          POINT(x y) i.e. POINT(0 51.48) for Greenwich, London
+
+          see http://portal.opengeospatial.org/files/?artifact_id=25355 and 
+          https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
+
+          the coordinate values will depend on the CRS parameter, if this is not defined
+          the values will be assumed to WGS84 values (i.e x=longitude and y=latitude)
+
+################ Path Params
+    instanceId:
+      name: instanceId
+      in: path
+      description: Identifier (id) of a specific instance of a collection
+      required: true
+      schema:
+        type: string
+    itemId:
+      in: path
+      name: itemId
+      required: true
+      schema:
+        type: string
     queryType:
       in: path
       name: queryType
       required: true
       schema:
         type: string
-        examples: [position,trajectory,items]
+        enum: [position,trajectory,items,corridor,cube,radius]
+
+    locationId:
+      in: path
+      name: locationId
+      required: true
+      schema:
+        type string
+
+    collectionId:
+      in: path
+      name: collectionId
+      required: true
+      schema:
+        type string
+    
