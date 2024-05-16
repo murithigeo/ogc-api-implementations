@@ -58,6 +58,30 @@ paths:
             text/yaml:
               type: string
   
+# Api
+  "/api":
+    x-exegesis-controller: edrApiController
+    get:
+      x-exegesis-operationId: edrServiceDescGet
+      responses:
+        "200":
+          description: Ok.
+          content:
+            application/vnd.oai.openapi+json;version=3.0:
+              schema:
+                type: object
+  "/api.html":
+    x-exegesis-controller: edrApiController
+    get:
+      x-exegesis-operationId: edrServiceDocGet
+      responses:
+        "200":
+          description: Ok.
+          content:
+            text/html:
+              schema:
+                type: sttring
+
 # Collections get All Collections [All]
   "/collections":
     x-exegesis-controller: edrCollectionsController
@@ -429,7 +453,7 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/cov+geojson"
-          
+
 # CollectionId=>Corridor
   "/collections/{collectionId}/{instances}/corridor":
     x-exegesis-controller: edrResources_CollectionIdController
@@ -1069,8 +1093,59 @@ components:
               minItems: 0
        
     coverageJSON:
-    edrGeoJSON:
-    featuresGeoJSON:
+    edrGeoJsonFeature:
+      type: object
+      properties:
+        geometry:
+          oneOf:
+            - $ref: "#/components/schemas/Point"
+            - $ref: "#/components/schemas/MultiPoint"
+            - $ref: "#/components/schemas/LineString"
+            - $ref: "#/components/schemas/MultiLineString"
+            - $ref: "#/components/schemas/Polygon"
+            - $ref: "#/components/schemas/MultiPolygon"
+            - $ref: "#/components/schemas/GeometryCollection"
+        id:
+          type:
+            oneOf:
+              - string
+              - number
+        properties:
+          datetime:
+            type: string
+          parameter-name:
+            type: array
+            items:
+              type: string
+              
+    edrGeoJsonFeatureCollection:
+      type: object
+      properties: 
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/edrGeoJsonFeature"
+        parameters:
+          type: array
+          items:
+            $ref: "#/components/schemas/parameter"
+        timeStamp:
+          type: string
+          format: date-time
+        numberMatched:
+          type: number
+          format: integer
+        numberReturned:
+          type: number
+          format: integer
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/link"
+
   parameters:
     crs:
       name: crs
@@ -1509,7 +1584,7 @@ components:
             $ref: "#/components/schemas/coverageJSON"
         application/geo+json:
           schema:
-            $ref: "#/components/schemas/edrGeoJSON"
+            $ref: "#/components/schemas/edrGeoJsonFeatureCollection"
         text/yaml:  
           schema:
             type: string
@@ -1519,7 +1594,7 @@ components:
       content:
         application/geo+json:
           schema:
-            $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
+            $ref: "#/components/schemas/edrGeoJsonFeatureCollection"
         text/yaml:
           schema:
             type: string
@@ -1529,7 +1604,7 @@ components:
       content:
         application/geo+json:
           schema:
-            $ref: "#/components/schemas/edrGeoJSONFeature"
+            $ref: "#/components/schemas/edrGeoJsonFeature"
         text/yaml:
           schema:
             type: string

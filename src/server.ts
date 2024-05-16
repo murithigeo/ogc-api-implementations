@@ -13,6 +13,7 @@ import { basicAuthenticator } from "./authentication/basicAuth";
 import featuresExegesisInstance from "./standards/features";
 import _rootInstance from "./root";
 import https from "https";
+import edrExegesisInstance from "./standards/edr";
 //This also assumes that the development occurs locally
 
 //let servers: oasDocServers[] = [];
@@ -64,8 +65,11 @@ async function createServer() {
   const _mainExInstance = await _rootInstance();
   app.use(_mainExInstance);
 
-  //Specific inst
+  //features
   app.use(await featuresExegesisInstance());
+
+//edr
+app.use(await edrExegesisInstance())
   const server = http.createServer(app);
 
   return server;
