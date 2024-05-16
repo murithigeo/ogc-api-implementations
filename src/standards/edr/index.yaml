@@ -156,18 +156,7 @@ paths:
         - $ref: "#/components/parameters/f" ##Double check
       responses:
         "200":
-          description: Ok.
-          content: 
-            application/geo+json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeature"
-            text/yaml:
-              schema:
-                type: string
-            application/json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeature"
-
+          $ref: "#/components/responses/geoJsonFeatureCollection"
 # Collection with No Instances [itemId][One]
   "/collections/{collectionId}/items/{itemId}":
     x-exegesis-controller: edrResources_CollectionIdController
@@ -179,14 +168,7 @@ paths:
         - $ref: "#/components/parameters/itemId"
       responses:
         "200":
-          description: Ok.
-          content:
-            application/geo+json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeature"
-            text/yaml:
-              schema:
-                type: string
+          $ref: "#/components/responses/geoJsonFeature"
 
 # Collection with Instances [Instance=>Items]
   "/collections/{collectionId}/instances/{instanceId}/items":
@@ -200,14 +182,7 @@ paths:
         - $ref: "#/components/parameters/datetime"
       responses:
         "200":
-          description: Ok.
-          content:
-            application/geo+json:
-              schema: 
-                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
-            text/yaml:
-              schema: 
-                type: string
+          $ref: "#/components/responses/geoJsonFeatureCollection"
           
 # Collection with Instances [Instance=>Items=>itemId]
   "/collections/{collectionId}/instances/{instanceId}/items/{itemId}":
@@ -221,14 +196,7 @@ paths:
         - $ref: "#/components/parameters/instanceId"
       responses:
         "200":
-          description: Ok.
-          content:
-            application/geo+json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeature"
-            text/yaml:
-              schema:
-                type: string
+          $ref: "#/components/responses/geoJsonFeature"
 
 # Collection=>CollectionId=>Position
   "/collections/{collectionId}/position":
@@ -238,12 +206,13 @@ paths:
       parameters: 
         - $ref: "#/components/parameters/f"
         - $ref: "#/components/parameters/crs"
-        - $ref: "#/components/parameters/coords"
+        - $ref: "#/components/parameters/positionCoords"
         - $ref: "#/components/parameters/z"
         - $ref: "#/components/parameters/datetime"
         - $ref: "#/components/parameters/parameter-name"
-  
-  
+      responses:
+        "200":
+          $ref: "#/components/responses/cov+geojson"
   "/collections/{collectionId}/radius":
     x-exegesis-controller: edrResources_CollectionIdController
     get: 
@@ -257,7 +226,9 @@ paths:
         - $ref: "#/components/parameters/parameter-name"  
         - $ref: "#/components/parameters/within"
         - $ref: "#/components/parameters/within-units"
-  
+      responses:
+        "200":
+          $ref: "#/components/responses/cov+geojson"
 
 ##################################Area Queries
 
@@ -278,14 +249,7 @@ paths:
         - $ref: "#/components/parameters/resolution-y"
       responses:
         "200":
-          description: Ok.
-          content:
-            application/geo+json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
-            application/vnd.cov+json:
-              schema:
-                $ref: "#/components/schemas/coverageJSON"
+          $ref: "#/components/responses/cov+geojson"
 
 # Collection=>CollectionId=>Instances=>InstanceId=>Area
   "/collections/{collectionId}/instances/{instanceId}/area":
@@ -305,14 +269,7 @@ paths:
         - $ref: "#/components/parameters/resolution-y"
       responses:
         "200":
-          description: Ok.
-          content:
-            application/geo+json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
-            application/vnd.cov+json:
-              schema:
-                $ref: "#/components/schemas/coverageJSON"
+          $ref: "#/components/responses/cov+geojson"
 
 
 ####################################Cube Queries
@@ -331,18 +288,8 @@ paths:
         - $ref: "#/components/parameters/crs"
         - $ref: "#/components/parameters/f"
       responses:
-        "200":  
-          description: Ok.
-          content:
-            application/geo+json:
-              schema:
-                $ref: "#/component/schemas/edrGeoJSONFeatureCollection"
-            application/vnd.cov+json:
-              schema:
-                $ref: "#/components/schemas/coverageJSON"
-            text/yaml:
-              schema:
-                type: string
+        "200":
+          $ref: "#/components/responses/cov+geojson"
 
 # CollectionId=>InstanceId=> Cube
   "/collections/{collectionId}/instances/{instanceId}/cube":
@@ -359,18 +306,8 @@ paths:
         - $ref: "#/components/parameters/crs"
         - $ref: "#/components/parameters/f"
       responses:
-        "200":  
-          description: Ok.
-          content:
-            application/geo+json:
-              schema:
-                $ref: "#/component/schemas/edrGeoJSONFeatureCollection"
-            application/vnd.cov+json:
-              schema:
-                $ref: "#/components/schemas/coverageJSON"
-            text/yaml:
-              schema:
-                type: string
+        "200":
+          $ref: "#/components/responses/cov+geojson"
 
 
 ###########################Location Queries
@@ -387,14 +324,7 @@ paths:
         - $ref: "#/components/parameters/bbox"
       responses:
         "200":
-          description: Ok.
-          content:
-            application/geo+json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
-            text/yaml:
-              schema:
-                type: string
+          $ref: "#/components/responses/cov+geojson"
 
 # CollectionId=>Locations=>LocationId
   "/collections/{collectionId}/locations/{locationId}":
@@ -410,17 +340,7 @@ paths:
         - $ref: "#/components/parameters/f"
       responses:
         "200":
-          description: Ok.
-          content:
-            application/vnd.cov+json:
-              schema: 
-                $ref: "#/components/schemas/coverageJSON"
-            application/geo+json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
-            text/yaml:
-              schema:
-                type: string
+          $ref: "#/components/responses/cov+geojson"
 
 # CollectionId=>InstanceId=>Locations
   "/collections/{collectionId}/instances/{instanceId}/locations":
@@ -434,22 +354,25 @@ paths:
         - $ref: "#/components/parameters/instanceId"
       responses:
         "200":
-          description: Ok.
-          content:
-            application/geo+json:
-              schema:
-                $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
-            text/yaml:
-              schema:
-                type: string
+          $ref: "#/components/responses/cov+geojson"
 
 # CollectionId=>InstanceId=>LocationId
   "/collections/{collectionId}/instances/{instanceId}/locations/{locationId}":
-  x-exegesis-controller: edrLocationsQueryController
-  get:
-    x-exegesis-operationId: getALocation_instance
+    x-exegesis-controller: edrLocationsQueryController
+    get:
+      x-exegesis-operationId: getALocation_instance
+      parameters: 
+        - $ref: "#/components/parameters/instanceId"
+        - $ref: "#/components/parameters/collectionId"
+        - $ref: "#/components/parameters/locationId"
+        - $ref: "#/components/parameters/f"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/datetime"
+      responses:
+        "200":
+          $ref: "#/components/responses/cov+geojson"
 
-# CollectionId=>Locations
+# CollectionId=>Trajectory
   "/collections/{collectionId}/trajectory":
     x-exegesis-controller: edrResources_CollectionIdController
     get:
@@ -461,8 +384,28 @@ paths:
         - $ref: "#/components/parameters/parameter-name"
         - $ref: "#/components/parameters/crs"
         - $ref: "#/components/parameters/f"
+      responses:
+        "200":
+          $ref: "#/components/responses/cov+geojson"
+
+# CollectionId=>Trajectory
+  "/collections/{collectionId}/instances/{instanceId}/trajectory":
+    x-exegesis-controller: edrResources_CollectionIdController
+    get:
+      x-exegesis-operationId: edrInstanceTrajectoryGet
+      parameters:
+        - $ref: "#/components/parameters/trajectoryCoords"
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f"
+      responses:
+        "200":
+          $ref: "#/components/responses/cov+geojson"
 
 
+# CollectionId=>Corridor
   "/collections/{collectionId}/corridor":
     x-exegesis-controller: edrResources_CollectionIdController
     description: > 
@@ -470,7 +413,7 @@ paths:
     get:
       x-exegesis-operationId: edrCorridorGet
       parameters:
-        - $ref: "#/components/parameters/coords" #Must be LineString/MultiLineString
+        - $ref: "#/components/parameters/trajectoryCoords" #Must be LineString/MultiLineString
         - $ref: "#/components/parameters/datetime"
         - $ref: "#/components/parameters/z"
         - $ref: "#/components/parameters/parameter-name"
@@ -482,15 +425,35 @@ paths:
         - $ref: "#/components/parameters/corridor-height"
         - $ref: "#/components/parameters/height-units"
         - $ref: "#/components/parameters/crs"
-        - $ref: "#/components/parameters/f"#Get metadata on the instances(versions) of the collection
-#Get data from an instance according to a specific queryType
-  "/collections/{collectionId}/instances/{instanceId}/{queryType}":
-    x-exegesis-controller: edrInstancesController
+        - $ref: "#/components/parameters/f" #Get metadata on the instances(versions) of the collection
+      responses:
+        "200":
+          $ref: "#/components/responses/cov+geojson"
+          
+# CollectionId=>Corridor
+  "/collections/{collectionId}/{instances}/corridor":
+    x-exegesis-controller: edrResources_CollectionIdController
+    description: > 
+      A corridor returns data along and around the path defined by the coords param
     get:
-      x-exegesis-operationId: edr_getSpecificInstanceQueryType
-    post:
-      x-exegesis-operationId: edr_postSpecificInstanceQueryType
-
+      x-exegesis-operationId: edrCorridorGet
+      parameters:
+        - $ref: "#/components/parameters/trajectoryCoords" #Must be LineString/MultiLineString
+        - $ref: "#/components/parameters/datetime"
+        - $ref: "#/components/parameters/z"
+        - $ref: "#/components/parameters/parameter-name"
+        - $ref: "#/components/parameters/resolution-x"
+        - $ref: "#/components/parameters/resolution-y"
+        - $ref: "#/components/parameters/resolution-z"
+        - $ref: "#/components/parameters/corridor-width"
+        - $ref: "#/components/parameters/width-units"
+        - $ref: "#/components/parameters/corridor-height"
+        - $ref: "#/components/parameters/height-units"
+        - $ref: "#/components/parameters/crs"
+        - $ref: "#/components/parameters/f" #Get metadata on the instances(versions) of the collection
+      responses:
+        "200":
+          $ref: "#/components/responses/cov+geojson"
 
 components:
   schemas:
@@ -1522,18 +1485,51 @@ components:
       schema:
         type: string
         enum: [position,trajectory,items,corridor,cube,radius]
-
     locationId:
       in: path
       name: locationId
       required: true
       schema:
         type string
-
     collectionId:
       in: path
       name: collectionId
       required: true
       schema:
         type string
-    
+
+# Describing Common Responses
+  responses:
+  #Responses with coverageJSON, edrGeoJSON, text/yaml
+    cov+geojson:
+      description: Ok.
+      content:
+        application/vnd.cov+json:
+          schema:
+            $ref: "#/components/schemas/coverageJSON"
+        application/geo+json:
+          schema:
+            $ref: "#/components/schemas/edrGeoJSON"
+        text/yaml:  
+          schema:
+            type: string
+  # Responses with only edrGeoJSON ~items & ~items/{itemId}
+    geoJsonFeatureCollection:
+      description: Ok.
+      content:
+        application/geo+json:
+          schema:
+            $ref: "#/components/schemas/edrGeoJSONFeatureCollection"
+        text/yaml:
+          schema:
+            type: string
+
+    geoJsonFeature:
+      description: Ok.
+      content:
+        application/geo+json:
+          schema:
+            $ref: "#/components/schemas/edrGeoJSONFeature"
+        text/yaml:
+          schema:
+            type: string
