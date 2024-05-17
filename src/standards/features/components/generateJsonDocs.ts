@@ -28,15 +28,15 @@ async function numMatchedInit(
 }
 
 async function genFeatureCollection(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   featuresArray: Feature[],
   count: number,
   allowed_f_values: F_AssociatedType[]
 ): Promise<FeatureCollection> {
   //console.log(count)
   //In order to reduce complexity in generating links (rel=(next|prev)), just remove link obj where hasNextPage|prev=false
-  let links = await genLinksAll(context, allowed_f_values, "Items");
-  const { offset, limit } = await initCommonQueryParams(context);
+  let links = await genLinksAll(ctx, allowed_f_values, "Items");
+  const { offset, limit } = await initCommonQueryParams(ctx);
   let hasNextPage: boolean, hasPrevPage: boolean;
 
   //hasPrevPage = offset < 1 || limit - offset <= 1 ? false : true;
@@ -62,22 +62,22 @@ async function genFeatureCollection(
 }
 
 async function genConformance(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   conformanceClasses: string[],
   allowed_f_values: F_AssociatedType[]
 ) {
   return {
     conformsTo: conformanceClasses,
-    links: await genLinksAll(context, allowed_f_values, "Conformance"),
+    links: await genLinksAll(ctx, allowed_f_values, "Conformance"),
   };
 }
 async function genRootDoc(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   allowed_f_values: F_AssociatedType[]
 ) {
   const doc = {
     title: "Root of the features implementation instance",
-    links: await genLinksAll(context, allowed_f_values, "Root"),
+    links: await genLinksAll(ctx, allowed_f_values, "Root"),
   };
   return doc;
 }
@@ -108,7 +108,7 @@ interface Collection {
   links: Link[];
 }
 async function genOneCollectionDoc(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   allowed_f_values: F_AssociatedType[],
   collectionOptions: CollectionConfig,
   mode: "root" | "specific"
@@ -165,9 +165,9 @@ async function genOneCollectionDoc(
     storageCrs: _extent_bbox[0].length > 4 ? crs84hUri : crs84hUri,
     links:
       mode === "specific"
-        ? await genLinksAll(context, allowed_f_values, "Collection")
+        ? await genLinksAll(ctx, allowed_f_values, "Collection")
         : await genLinksToColl_ItemsWhenAtRoot(
-            context,
+            ctx,
             collectionOptions.collectionId,
             allowed_f_values
           ),
@@ -183,7 +183,7 @@ interface AllCollections {
   collections: Collection[];
 }
 async function genCollectionsRootDoc(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   collections: CollectionConfig[],
   allowed_F_values: F_AssociatedType[]
 ): Promise<AllCollections> {
@@ -191,7 +191,7 @@ async function genCollectionsRootDoc(
   for (const collectionOption of collections) {
     _allCollections.push(
       await genOneCollectionDoc(
-        context,
+        ctx,
         allowed_F_values,
         collectionOption,
         "root"
@@ -202,16 +202,16 @@ async function genCollectionsRootDoc(
   return {
     title: "All collections",
     collections: _allCollections,
-    links: await genLinksAll(context, allowed_F_values, "collectionsRoot"),
+    links: await genLinksAll(ctx, allowed_F_values, "collectionsRoot"),
   };
 }
 
 async function genFeature(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   feature: Feature,
   allowed_f_values: F_AssociatedType[]
 ) {
-  feature.links = await genLinksAll(context, allowed_f_values, "Feature");
+  feature.links = await genLinksAll(ctx, allowed_f_values, "Feature");
   return feature;
 }
 export {

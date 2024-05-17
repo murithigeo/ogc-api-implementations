@@ -8,57 +8,57 @@ import initCommonQueryParams from "../components/params";
 import convertJsonToYAML from "../components/convertToYaml";
 import { F_AssociatedType } from "../../../types";
 
-async function getCollectionsAll(context: ExegesisContext) {
-  //context.res.status(200).setBody();
+async function getCollectionsAll(ctx: ExegesisContext) {
+  //ctx.res.status(200).setBody();
   const _collectionsAll = await genCollectionsRootDoc(
-    context,
+    ctx,
     collections_properties.collections,
     allowed_F_values
   );
-  switch ((await initCommonQueryParams(context)).f) {
+  switch ((await initCommonQueryParams(ctx)).f) {
     case "json":
-      context.res
+      ctx.res
         .status(200)
         .set("content-type", "application/json")
         .setBody(_collectionsAll);
       break;
     case "yaml":
-      context.res
+      ctx.res
         .status(200)
         .set("content-type", "text/yaml")
         .setBody(await convertJsonToYAML(_collectionsAll));
       break;
     default:
-      context.res.status(400);
+      ctx.res.status(400);
   }
 }
-async function getCollectionOne(context: ExegesisContext) {
-  const { f } = await initCommonQueryParams(context);
+async function getCollectionOne(ctx: ExegesisContext) {
+  const { f } = await initCommonQueryParams(ctx);
   const _collectionDoc = await genOneCollectionDoc(
-    context,
+    ctx,
     allowed_F_values,
     collections_properties.collections.find(
       (collection) =>
-        (collection.collectionId = context.params.path.collectionId)
+        (collection.collectionId = ctx.params.path.collectionId)
     ),
     "specific"
   );
   switch (f) {
     case "yaml":
-      context.res
+      ctx.res
         .status(200)
         .set("content-type", "text/yaml")
         .setBody(await convertJsonToYAML(_collectionDoc));
       break;
     case "json":
-      context.res.status(200).json(_collectionDoc);
+      ctx.res.status(200).json(_collectionDoc);
       break;
     default:
-      context.res.status(400).setBody(
-        context.makeValidationError("Invalid f param", {
+      ctx.res.status(400).setBody(
+        ctx.makeValidationError("Invalid f param", {
           in: "query",
           name: "f",
-          docPath: context.api.pathItemPtr,
+          docPath: ctx.api.pathItemPtr,
         })
       );
   }

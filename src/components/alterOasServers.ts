@@ -26,7 +26,7 @@ async function alterServers(
     });
     if (ips !== 0) {
       servers.push({
-        url: `https://${ips}:${PORT}/${standard}`,
+        url: `http://${ips}:${PORT}/${standard}`,
         description: `This is the internal IP address of the localmachine`,
       });
     }
@@ -34,7 +34,7 @@ async function alterServers(
     //Only use localhost on development environment otherwise during tests, TeamEngine will throw error
     if (process.env.NODE_ENV === "development") {
       servers.push({
-        url: `https://localhost:${PORT}/${standard}`,
+        url: `http://localhost:${PORT}/${standard}`,
         description: "Localhost",
       });
     }

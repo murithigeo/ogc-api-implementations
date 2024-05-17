@@ -3,7 +3,7 @@ import { ExegesisContext } from "exegesis-express";
 import initCommonQueryParams from "../components/params";
 import { featuresOasDoc } from "..";
 
-async function getServiceDoc(context: ExegesisContext) {
+async function getServiceDoc(ctx: ExegesisContext) {
   const oasDoc = await featuresOasDoc;
 
   const scalarCode = `<!doctype html>
@@ -40,12 +40,12 @@ async function getServiceDoc(context: ExegesisContext) {
     <script src=https://cdn.jsdelivr.net/npm/@scalar/api-reference></script>
     </body>
     </html>`;
-  context.res.status(200).set(`Content-type`, "text/html").setBody(scalarCode);
+  ctx.res.status(200).set(`Content-type`, "text/html").setBody(scalarCode);
 }
 
-async function getServiceDesc(context: ExegesisContext) {
+async function getServiceDesc(ctx: ExegesisContext) {
   const oasDoc = await featuresOasDoc;
-  context.res
+  ctx.res
     .status(200)
     .set("content-type", "application/vnd.oai.openapi+json;version=3.0")
     .setBody(oasDoc);

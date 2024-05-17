@@ -5,8 +5,8 @@ import initCommonQueryParams from "../components/params";
 import convertJsonToYAML from "../components/convertToYaml";
 import { allowed_F_values } from "..";
 
- export default async function getConformance (context: ExegesisContext) {
-  const { f } = await initCommonQueryParams(context);
+ export default async function getConformance (ctx: ExegesisContext) {
+  const { f } = await initCommonQueryParams(ctx);
   const conformanceClasses: string[] = [
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
@@ -15,21 +15,21 @@ import { allowed_F_values } from "..";
   ];
 
   const _jsonDoc = await genConformance(
-    context,
+    ctx,
     conformanceClasses,
     allowed_F_values
   );
   switch (f) {
     case "json":
-      context.res
+      ctx.res
       .status(200)
       .set("content-type","application/json")
       .setBody(_jsonDoc);
       break;
     case "yaml":
-      context.res.status(200).setBody(await convertJsonToYAML(_jsonDoc));
+      ctx.res.status(200).setBody(await convertJsonToYAML(_jsonDoc));
       break;
     default:
-      context.res.status(400).setBody("");
+      ctx.res.status(400).setBody("");
   }
 };

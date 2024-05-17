@@ -1,8 +1,8 @@
 import { ExegesisContext } from "exegesis-express";
 import convertJsonToYAML from "../../features/components/convertToYaml";
 
-async function edrGetRoot(context: ExegesisContext) {
-  context.res
+async function edrGetRoot(ctx: ExegesisContext) {
+  ctx.res
     .status(200)
     .set("content-type", "text/yaml")
     .setBody(await convertJsonToYAML({ message: "This is the landingpage for /edr" }));

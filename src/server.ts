@@ -1,5 +1,5 @@
 import express from "express";
-import cors from 'cors';
+import cors from "cors";
 //const express = require("express");
 import morgan from "morgan";
 //const morgan = require("morgan");
@@ -12,22 +12,52 @@ import { apiKeyAuthenticator } from "./authentication/apikeyAuth";
 import { basicAuthenticator } from "./authentication/basicAuth";
 import featuresExegesisInstance from "./standards/features";
 import _rootInstance from "./root";
-import https from "https";
 import edrExegesisInstance from "./standards/edr";
 //This also assumes that the development occurs locally
 
 //let servers: oasDocServers[] = [];
 
 //Environmental Variables
-const PORT: number = parseInt(<string>process.env.PORT) || 443; //Default port
+const PORT: number = parseInt(<string>process.env.PORT) || 3000; //Default port
 
 export { PORT };
+
+const onResponseValidationError: exegesisExpress.ResponseValidationCallback = ({
+  errors,
+  isDefault,
+  context,
+}) => {
+  const responseValidationStream = fs.createWriteStream(
+    path.join(process.cwd(), "./src/logs/responseValidation.log"),
+    { flags: "a" }
+  );
+
+  if (errors.length > 0) {
+    responseValidationStream.write(
+      `${new Date().toJSON()} | reqUrl: ${
+        context.req.url
+      } | errors: ${JSON.stringify(errors)}\n`
+    );
+  }
+  if (isDefault) {
+    responseValidationStream.write(
+      `${new Date().toString()} | defaultResponse Detected: ${
+        context.req.url
+      }\n`
+    );
+  }
+  responseValidationStream.write(
+    `${new Date().toISOString()} | ctxObject: ${JSON.stringify(context.res)}\n`
+  );
+};
 export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
   //controllers: path.join(__dirname, "./standards/features/controllers"), //Temporary measure
-  controllersPattern: "**/**/*.@(js|ts)",
-  allowMissingControllers: true,
+  //controllersPattern: "**/**/*.@(js|ts)",
+  allowMissingControllers: false,
   ignoreServers: false,
   autoHandleHttpErrors: true,
+  allErrors:true,
+  onResponseValidationError: onResponseValidationError,
   authenticators: {
     ApiKeyAuth: apiKeyAuthenticator,
     BasicAuth: basicAuthenticator,
@@ -42,9 +72,7 @@ async function createServer() {
   app.use(cors());
   app.use((req, res, next) => {
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
-    //console.log("b4", req.headers["x-forwarded-proto"]);
-    //req.headers["x-forwarded-proto"] = "https";
-    //console.log("after_main", req.protocol);
+
     req.url = decodeURIComponent(req.url);
     next();
   });
@@ -68,8 +96,8 @@ async function createServer() {
   //features
   app.use(await featuresExegesisInstance());
 
-//edr
-app.use(await edrExegesisInstance())
+  //edr
+  app.use(await edrExegesisInstance());
   const server = http.createServer(app);
 
   return server;

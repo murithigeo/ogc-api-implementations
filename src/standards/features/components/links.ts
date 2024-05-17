@@ -4,13 +4,13 @@ import { F_AssociatedType, Link } from "../../../types";
 import initCommonQueryParams from "./params";
 
 async function filter_f_types(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   allowed_f_values: F_AssociatedType[]
 ): Promise<{
   optionsForSelf: F_AssociatedType[];
   optionsForAlt: F_AssociatedType[];
 }> {
-  const { f } = await initCommonQueryParams(context);
+  const { f } = await initCommonQueryParams(ctx);
   /**
    * Given that a web resource can only have one Content-Type header, return only the first element of @optionsForSelf
    */
@@ -24,11 +24,11 @@ async function filter_f_types(
 
 /**
  *
- * @param context
+ * @param ctx
  * @param mode
  */
 async function genLinksAll(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   allowed_f_values: F_AssociatedType[],
   mode:
     | "Feature"
@@ -39,7 +39,7 @@ async function genLinksAll(
     | "Root"
 ) {
   //Link to current endpoint. It has query parameters
-  const { urlToThisEP } = await initCommonQueryParams(context);
+  const { urlToThisEP } = await initCommonQueryParams(ctx);
 
   /**
    * optionsforSelf &optionsforAlt
@@ -62,7 +62,7 @@ async function genLinksAll(
   })();
 
   const { optionsForSelf, optionsForAlt } = await filter_f_types(
-    context,
+    ctx,
     allowed_f_values
   );
 
@@ -178,7 +178,7 @@ async function genLinksAll(
       for (let option of optionsForSelf) {
         //uses the original link
         const { nextPageOffset, prevPageOffset } = await initCommonQueryParams(
-          context
+          ctx
         );
         option = await changeLinkTypeForNestLinks(
           option,
@@ -265,18 +265,18 @@ async function genLinksAll(
   for (let link of links) {
     //Let the openapi doc and interactive console be accessible to everybody
     if (link.rel !== "service-desc" && link.rel !== "service-doc") {
-      link = await addApiKeyToSearchParams(context, link);
+      link = await addApiKeyToSearchParams(ctx, link);
     }
   }
   return links;
 }
 
-async function addApiKeyToSearchParams(context: ExegesisContext, link: Link) {
-  if (context.security.ApiKeyAuth) {
-    if (context.user.apiKey) {
+async function addApiKeyToSearchParams(ctx: ExegesisContext, link: Link) {
+  if (ctx.security.ApiKeyAuth) {
+    if (ctx.user.apiKey) {
       //@ts-ignore
       var _tempLink = new URL(link.href);
-      _tempLink.searchParams.set("apiKey", context.user.apiKey);
+      _tempLink.searchParams.set("apiKey", ctx.user.apiKey);
       link.href = _tempLink.toString();
     }
   }
@@ -284,11 +284,11 @@ async function addApiKeyToSearchParams(context: ExegesisContext, link: Link) {
 }
 
 async function genLinksToColl_ItemsWhenAtRoot(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   collectionId: string | number,
   allowed_f_values: F_AssociatedType[]
 ): Promise<Link[]> {
-  const { urlToThisEP } = await initCommonQueryParams(context);
+  const { urlToThisEP } = await initCommonQueryParams(ctx);
 
   const links: Link[] = [];
 
@@ -328,7 +328,7 @@ async function genLinksToColl_ItemsWhenAtRoot(
     });
   }
   for (let link of links) {
-    link = await addApiKeyToSearchParams(context, link);
+    link = await addApiKeyToSearchParams(ctx, link);
   }
   return links;
 }

@@ -16,11 +16,11 @@ import { Op, Sequelize } from "sequelize";
 import { crs84Uri, crs84hUri } from "../";
 import convertJsonToYAML from "../components/convertToYaml";
 
-async function queryAllItems(context: ExegesisContext) {
-  const { contentcrsHeader, f } = await initCommonQueryParams(context);
+async function queryAllItems(ctx: ExegesisContext) {
+  const { contentcrsHeader, f } = await initCommonQueryParams(ctx);
 
   const dbResponse = await dbQueryMountains(
-    context,
+    ctx,
     "name",
     "mountains",
     "geom"
@@ -32,14 +32,14 @@ async function queryAllItems(context: ExegesisContext) {
   //This is also to increase type safety
 
   const _fcDoc = await genFeatureCollection(
-    context,
+    ctx,
     dbResponse.newFeaturesArray,
     dbResponse.count,
     allowed_F_values
   );
   switch (f) {
     case "json":
-      context.res
+      ctx.res
         .status(200)
         .set("content-type", "application/geo+json")
         .set("content-crs", contentcrsHeader)
@@ -47,7 +47,7 @@ async function queryAllItems(context: ExegesisContext) {
         .end();
       break;
     case "yaml":
-      context.res
+      ctx.res
         .status(200)
         .set("content-crs", contentcrsHeader)
         .set("content-type", "text/yaml")
@@ -55,52 +55,52 @@ async function queryAllItems(context: ExegesisContext) {
         .end();
       break;
     default:
-      context.res.status(400).setBody(
-        context.makeValidationError("Unsupported content-type", {
+      ctx.res.status(400).setBody(
+        ctx.makeValidationError("Unsupported content-type", {
           in: "query",
           name: "f",
-          docPath: context.api.pathItemptr,
+          docPath: ctx.api.pathItemptr,
         })
       );
   }
 }
 
-async function querySpecificItem(context: ExegesisContext) {
-  const { f, contentcrsHeader } = await initCommonQueryParams(context);
+async function querySpecificItem(ctx: ExegesisContext) {
+  const { f, contentcrsHeader } = await initCommonQueryParams(ctx);
   const _geojsonF_array = await dbQueryMountains(
-    context,
+    ctx,
     "name",
     "mountains",
     "geom"
   );
   if (_geojsonF_array.count < 1) {
-    context.res.status(404).json({
-      requested_featureId: context.params.path.featureId,
+    ctx.res.status(404).json({
+      requested_featureId: ctx.params.path.featureId,
       status: "Not found",
     });
   } else {
     switch (f) {
       case "json":
-        context.res
+        ctx.res
           .status(200)
           .set("content-crs", contentcrsHeader)
           .set("content-type", "application/geo+json")
           .setBody(
             await genFeature(
-              context,
+              ctx,
               _geojsonF_array.newFeaturesArray[0],
               allowed_F_values
             )
           );
         break;
       case "yaml":
-        context.res
+        ctx.res
           .status(200)
           .set("content-type", "text/yaml")
           .setBody(
             await convertJsonToYAML(
               await genFeature(
-                context,
+                ctx,
                 _geojsonF_array.newFeaturesArray[0],
                 allowed_F_values
               )
@@ -108,28 +108,28 @@ async function querySpecificItem(context: ExegesisContext) {
           );
         break;
       default:
-        context.res.status(400).setBody("Unsupported content-type");
+        ctx.res.status(400).setBody("Unsupported content-type");
     }
   }
 }
 async function dbQueryMountains(
-  context: ExegesisContext,
+  ctx: ExegesisContext,
   featureId: string,
   modelName: string,
   geomColumnName: string
 ) {
   //Initialize common parameters to be used
   const { reqCrs, reqBboxcrs, limit, offset, bboxArray } =
-    await initCommonQueryParams(context);
+    await initCommonQueryParams(ctx);
 
   //retrive a specific item
-  const featureIdQuery = context.params.path.featureId
-    ? { [featureId]: context.params.path.featureId }
+  const featureIdQuery = ctx.params.path.featureId
+    ? { [featureId]: ctx.params.path.featureId }
     : undefined;
   //bboxQuery
-  const bboxQuery = context.params.query.bbox
+  const bboxQuery = ctx.params.query.bbox
     ? //reqBboxcrs.uri === crs84hUri  &&
-      context.params.query.bbox.length > 4
+      ctx.params.query.bbox.length > 4
       ? Sequelize.where(
           Sequelize.fn(
             "ST_Intersects",
@@ -157,8 +157,8 @@ async function dbQueryMountains(
 
   //Height Query
   const heightQuery =
-    context.params.query["bbox-crs"] === crs84hUri &&
-    context.params.query.bbox.length > 4
+    ctx.params.query["bbox-crs"] === crs84hUri &&
+    ctx.params.query.bbox.length > 4
       ? {
           [Op.and]: [
             Sequelize.where(

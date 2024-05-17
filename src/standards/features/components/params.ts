@@ -7,18 +7,18 @@ export async function validate_crs_string(crsuri: string): Promise<Crs_prop> {
   return validCrs;
 }
 
-async function crs_param_init(context: ExegesisContext): Promise<string> {
-  const crsparamstring: string = context.params.query.crs
-    ? context.params.query.crs
+async function crs_param_init(ctx: ExegesisContext): Promise<string> {
+  const crsparamstring: string = ctx.params.query.crs
+    ? ctx.params.query.crs
     : _allCrsProperties
         .map((crs) => crs.uri)
         .filter((crsuri) => crsuri === (crs84Uri || crs84hUri));
   return crsparamstring;
 }
 
-async function bboxcrs_param_init(context: ExegesisContext): Promise<string> {
-  const bboxcrsstring: string = context.params.query["bbox-crs"]
-    ? context.params.query["bbox-crs"]
+async function bboxcrs_param_init(ctx: ExegesisContext): Promise<string> {
+  const bboxcrsstring: string = ctx.params.query["bbox-crs"]
+    ? ctx.params.query["bbox-crs"]
     : _allCrsProperties
         .map((crs) => crs.uri)
         .filter((crsuri) => crsuri === (crs84Uri || crs84hUri));
@@ -26,20 +26,20 @@ async function bboxcrs_param_init(context: ExegesisContext): Promise<string> {
 }
 
 /**
- * Validates the coordinate parameters in the given Exegesis context.
- * @param context - The Exegesis context.
+ * Validates the coordinate parameters in the given Exegesis ctx.
+ * @param ctx - The Exegesis ctx.
  * @returns A promise that resolves to an object containing the validated coordinate parameters.
  */
-async function coordParams_validate(context: ExegesisContext): Promise<{
+async function coordParams_validate(ctx: ExegesisContext): Promise<{
   //flipCoords: boolean;  Since IsGeographic===flipCoords,
   reqCrs: Crs_prop;
   reqBboxcrs: Crs_prop;
 }> {
   const reqBboxcrs = await validate_crs_string(
-    await bboxcrs_param_init(context)
+    await bboxcrs_param_init(ctx)
   );
 
-  const reqCrs = await validate_crs_string(await crs_param_init(context));
+  const reqCrs = await validate_crs_string(await crs_param_init(ctx));
 
 
   //Since crs is validated precontroller
@@ -52,17 +52,17 @@ type bbox_w_height = [number, number, number, number, number, number];
 type bbox_wo_height = [number, number, number, number];
 
 /**
- * Initializes the bbox parameter based on the context and validates the coordinate parameters.
- * @param context - The ExegesisContext object.
+ * Initializes the bbox parameter based on the ctx and validates the coordinate parameters.
+ * @param ctx - The ExegesisContext object.
  * @returns A Promise that resolves to either bbox_w_height or bbox_wo_height.
  */
 async function bbox_param_init(
-  context: ExegesisContext
+  ctx: ExegesisContext
 ): Promise<bbox_w_height | bbox_wo_height> {
-  const { reqBboxcrs } = await coordParams_validate(context);
+  const { reqBboxcrs } = await coordParams_validate(ctx);
   let bboxArray: bbox_w_height | bbox_wo_height;
-  if (context.params.query.bbox) {
-    const bboxParam = context.params.query.bbox;
+  if (ctx.params.query.bbox) {
+    const bboxParam = ctx.params.query.bbox;
     //Depreciated because invalid crs errors are controlled using the the invalid crs plugin
     //TODO: Each standard instance should have its own allowed crsArray
     // if (bboxcrs_vArray.length > 0) {
@@ -96,19 +96,19 @@ async function contentcrsheader_header_init(
   return contentcrsheader;
 }
 
-async function limitoffset_param_init(context: ExegesisContext): Promise<{
+async function limitoffset_param_init(ctx: ExegesisContext): Promise<{
   offset: number;
   limit: number;
   prevPageOffset: number;
   nextPageOffset: number;
 }> {
   const limit: number =
-    context.params.query.limit === undefined ? 100 : context.params.query.limit;
+    ctx.params.query.limit === undefined ? 100 : ctx.params.query.limit;
 
   const offset: number =
-    context.params.query.offset === undefined || context.params.query.offset < 0
+    ctx.params.query.offset === undefined || ctx.params.query.offset < 0
       ? 0
-      : context.params.query.offset;
+      : ctx.params.query.offset;
   const nextPageOffset = offset + limit;
   let prevPageOffset = offset - limit;
   if (prevPageOffset < 0) {
@@ -119,39 +119,39 @@ async function limitoffset_param_init(context: ExegesisContext): Promise<{
 /**
  * @function requestPathUrl generates the current url to the endpoint requested
  */
-async function requestPathUrl(context: ExegesisContext): Promise<URL> {
+async function requestPathUrl(ctx: ExegesisContext): Promise<URL> {
   /**
-   * @context.api.serverObject is the server against which the request was run
-   * @context.req.uri is the pathname
+   * @ctx.api.serverObject is the server against which the request was run
+   * @ctx.req.uri is the pathname
    */
   const urlString = new URL(
-    context.api.serverObject.url + context.req.url.replace("/features", "")
+    ctx.api.serverObject.url + ctx.req.url.replace("/features", "")
   );
   //console.log(urlString);
-  //console.log(context.api.serverObject.url)
-  //console.log(context.req.url)
+  //console.log(ctx.api.serverObject.url)
+  //console.log(ctx.req.url)
   //Remove query paramaters
   urlString.search = "";
 
   /**
-   * The query parameters listed in @var context.req.url pathname are incomplete. Since exegesis actually lists the defaults at @var context.params.query, then use that interface
+   * The query parameters listed in @var ctx.req.url pathname are incomplete. Since exegesis actually lists the defaults at @var ctx.params.query, then use that interface
    */
-  for (const [k, v] of Object.entries(context.params.query)) {
+  for (const [k, v] of Object.entries(ctx.params.query)) {
     if (v) {
       urlString.searchParams.set(k, v);
     }
   }
   return urlString;
 }
-async function f_param_init(context: ExegesisContext): Promise<CN_Value> {
-  const fparamstring: CN_Value = context.params.query.f
-    ? context.params.query.f
+async function f_param_init(ctx: ExegesisContext): Promise<CN_Value> {
+  const fparamstring: CN_Value = ctx.params.query.f
+    ? ctx.params.query.f
     : "json";
   return fparamstring;
 }
 
 export default async function initCommonQueryParams(
-  context: ExegesisContext
+  ctx: ExegesisContext
 ): Promise<{
   //unexpectedParamsRes: ExegesisResponse;
   contentcrsHeader?: string;
@@ -166,28 +166,28 @@ export default async function initCommonQueryParams(
   readonly urlToThisEP: URL;
   //invalidcrsbboxRes: ExegesisResponse;
 }> {
-  const reqCrs = context.params.query.crs
-    ? (await coordParams_validate(context)).reqCrs
+  const reqCrs = ctx.params.query.crs
+    ? (await coordParams_validate(ctx)).reqCrs
     : undefined;
-  const contentcrsHeader = context.params.query.crs
+  const contentcrsHeader = ctx.params.query.crs
     ? await contentcrsheader_header_init(reqCrs)
     : undefined;
 
-  const bboxArray = context.params.query.bbox
-    ? await bbox_param_init(context)
+  const bboxArray = ctx.params.query.bbox
+    ? await bbox_param_init(ctx)
     : undefined;
-  const reqBboxcrs = context.params.query["bbox-crs"]
-    ? (await coordParams_validate(context)).reqBboxcrs
+  const reqBboxcrs = ctx.params.query["bbox-crs"]
+    ? (await coordParams_validate(ctx)).reqBboxcrs
     : undefined;
 
   const { nextPageOffset, prevPageOffset, limit, offset } =
-    await limitoffset_param_init(context);
-  const f = await f_param_init(context);
-  const urlToThisEP = await requestPathUrl(context);
+    await limitoffset_param_init(ctx);
+  const f = await f_param_init(ctx);
+  const urlToThisEP = await requestPathUrl(ctx);
 
   //console.log(urlToThisEP)
-  //const unexpectedParamsRes = await validateQueryParams(context);
-  //const invalidcrsbboxRes = await invalCrsRes(context);
+  //const unexpectedParamsRes = await validateQueryParams(ctx);
+  //const invalidcrsbboxRes = await invalCrsRes(ctx);
   return {
     //invalidcrsbboxRes,
     //unexpectedParamsRes,
