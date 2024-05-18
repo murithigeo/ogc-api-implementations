@@ -387,6 +387,7 @@ paths:
   "/collections/{collectionId}/locations":
     x-exegesis-controller: edrLocationsEndpointController
     get:
+      description: List available location identifiers for the collection
       x-exegesis-operationId: edrQueryLocationsAtCollection_All
       parameters:
         - $ref: "#/components/parameters/collectionId"
@@ -396,7 +397,7 @@ paths:
         - $ref: "#/components/parameters/bbox"
       responses:
         "200":
-          $ref: "#/components/responses/covJson_edrGeoJson_yaml"
+          $ref: "#/components/responses/geoJsonFeatureCollection"
 
   # CollectionId=>Locations=>LocationId
   "/collections/{collectionId}/locations/{locationId}":

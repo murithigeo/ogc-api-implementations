@@ -48,6 +48,7 @@ import {
   edrQueryCorridorAtCollection,
   edrQueryCorridorAtInstance,
 } from "./controllers/edrCorridorEndpointController";
+import validateWktPlugin from "./plugins/exegesis-plugin-validateWkt";
 export const edrDocument = parseOasDoc("./src/standards/edr/index.yaml", "edr");
 
 export default async function edrExegesisInstance() {
@@ -293,6 +294,9 @@ export default async function edrExegesisInstance() {
       edrQueryCorridorAtInstance,
     },
   };
+  globalexegesisOptions.plugins=[
+    validateWktPlugin()
+  ]
   return await exegesisExpress.middleware(
     await edrDocument,
     globalexegesisOptions
