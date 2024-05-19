@@ -40,8 +40,12 @@ function makeExegesisPlugin(data: { apiDoc: any }): ExegesisPluginInstance {
 
       //Validate wkt strings
       if (_oasListedParams.query.coords) {
+        //Run hasZ and hasM checks beforehand
+
+        //Will add option to validate per crs
+        //Use eWKT functions to validate 3D/4D geometries
         const isValidWkt = await sequelize.query(
-          `select ST_GeomFromText('${_oasListedParams.query.coords}')`,
+          `select ST_IsValid('${_oasListedParams.query.coords}') as isValid`, 
           { type: QueryTypes.SELECT }
         );
         console.log(isValidWkt)
