@@ -8,6 +8,32 @@ type Crs_Details = {
   wkt: string;
 }[];
 
+
+
+/**
+ * @interface InstanceOrCollectionProps
+ */
+
+interface CollectionWithoutProps {
+  id:string;
+  modelName: string;
+  hasZ:boolean;
+  edrVariables: string[];
+  data_queries:{
+    position?:boolean;
+    instances?:boolean;
+    area?:boolean;
+    trajectory?:boolean;
+    corridor?:boolean;
+    locations?:boolean;
+    items?:boolean;
+    radiues?:boolean;
+  }
+  output_formats: string[]
+}
+interface InstanceOrCollectionProps {
+  id: string
+}
 interface Link {
   title: string; //Enable trace issues to specific resource
   href: string;

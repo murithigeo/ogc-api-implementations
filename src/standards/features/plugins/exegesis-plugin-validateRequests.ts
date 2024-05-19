@@ -7,8 +7,6 @@ import { URL } from "url";
 import { validate_crs_string } from "../components/params";
 import { crs84hUri } from "..";
 
-
-
 function makeExegesisPlugin(
   data: { apiDoc: any },
   allowed_F_values: string[],
@@ -16,17 +14,15 @@ function makeExegesisPlugin(
   listOfCollections: string[]
 ): ExegesisPluginInstance {
   return {
-    preRouting: ({req,res})=>{
-      
+    preRouting: ({ req, res }) => {
       //console.log("before",req.headers)
       //req.protocol="https"
       //console.log("after",req.protocol)
     },
     postSecurity: async (pluginContext: ExegesisPluginContext) => {
-pluginContext.isResponseFinished
       //Access documented params. Includes path & query params
       const _oasListedParams = await pluginContext.getParams();
-      //console.log('collid',_oasListedParams.path.collectionId);
+
       //Handle collections not existent or served by the server
       if (_oasListedParams.path.collectionId === "") {
         pluginContext.res.status(400).setBody(

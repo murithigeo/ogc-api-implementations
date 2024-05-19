@@ -295,7 +295,7 @@ export default async function edrExegesisInstance() {
     },
   };
   globalexegesisOptions.plugins=[
-    validateWktPlugin()
+    validateWktPlugin([]),
   ]
   return await exegesisExpress.middleware(
     await edrDocument,

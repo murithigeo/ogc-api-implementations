@@ -57,7 +57,7 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
   ignoreServers: false,
   autoHandleHttpErrors: true,
   allErrors:true,
-  onResponseValidationError: onResponseValidationError,
+  //onResponseValidationError: onResponseValidationError,
   authenticators: {
     ApiKeyAuth: apiKeyAuthenticator,
     BasicAuth: basicAuthenticator,

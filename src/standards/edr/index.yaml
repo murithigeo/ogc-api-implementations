@@ -2159,14 +2159,14 @@ components:
       required: true
       schema:
         type: string
-        format: wkt
+        
     trajectoryCoords:
       in: query
       name: coords
       required: true
       schema:
         type: string
-        format: wkt
+        
       description: |-
         Only data that has a geometry that intersects the area defined by the linestring
         are selected. 
@@ -2410,7 +2410,7 @@ components:
       required: true
       schema:
         type: string
-        format: wkt
+        
       description: |+
         location(s) to return data for, the coordinates are defined by a Well Known Text
         (wkt) string. to retrieve a single location :
@@ -2435,7 +2435,7 @@ components:
       required: true
       schema:
         type: string
-        format: wkt
+        
       description: |+
         location(s) to return data for, the coordinates are defined by a Well Known Text
          (wkt) string. to retrieve a single location :
