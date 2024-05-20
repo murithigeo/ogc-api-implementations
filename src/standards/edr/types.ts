@@ -1,4 +1,4 @@
-type CollectionId = string;
+export type CollectionId = string;
 type OutputFormats = string[];
 type default_output_format = string;
 type withinUnits = string[];
@@ -8,31 +8,31 @@ type Crs_Details = {
   wkt: string;
 }[];
 
-
-
 /**
  * @interface InstanceOrCollectionProps
  */
 
-interface CollectionWithoutProps {
-  id:string;
+export interface CollectionWithoutProps {
+  id: string;
   modelName: string;
-  hasZ:boolean;
+  hasZ: boolean;
   edrVariables: string[];
-  data_queries:{
-    position?:boolean;
-    instances?:boolean;
-    area?:boolean;
-    trajectory?:boolean;
-    corridor?:boolean;
-    locations?:boolean;
-    items?:boolean;
-    radiues?:boolean;
-  }
-  output_formats: string[]
-}
+  allSupportedCrs: string[];
+  data_queries: {
+    position?: boolean;
+    instances?: boolean;
+    area?: boolean;
+    trajectory?: boolean;
+    corridor?: boolean;
+    locations?: boolean;
+    items?: boolean;
+    radius?: boolean;
+  };
+  output_formats: string[];
+  default_output_format: string;
+} ``
 interface InstanceOrCollectionProps {
-  id: string
+  id: string;
 }
 interface Link {
   title: string; //Enable trace issues to specific resource
@@ -45,12 +45,13 @@ interface Link {
 }
 
 type Keywords = string[];
+
 interface Provider {
   name: string; //Name of provider
   url?: string; //Url to the provider's website
 }
 
-interface EDRLandingPage {
+export interface EDRLandingPage {
   title?: string;
   description?: string;
   links: Link[];
@@ -59,18 +60,18 @@ interface EDRLandingPage {
   contact?: ProviderContact;
 }
 interface ProviderContact {
-  email: string; //
-  phone: string;
-  fax: string;
-  hours: string;
-  instructions: string;
-  address: string;
-  city: string;
-  stateorprovince: string;
-  country: string; //Leaning towards ISO3
+  email?: string; //
+  phone?: string;
+  fax?: string;
+  hours?: string;
+  instructions?: string;
+  address?: string;
+  city?: string;
+  stateorprovince?: string;
+  country?: string; //Leaning towards ISO3
 }
 
-interface EDRConformancePage {
+export interface EDRConformancePage {
   conformsTo: string[];
   links?: Link[];
 }
@@ -80,6 +81,7 @@ type BBOXArray =
   | [number, number, number, number, number, number][];
 
 type IntervalArray = [string | null, string | null][];
+
 interface Extent {
   spatial: {
     bbox: BBOXArray;
@@ -103,7 +105,7 @@ interface CollectionsMany {
   collections: Collection[];
   links: Link[];
 }
-interface Collection {
+export  interface Collection {
   id: string;
   title?: string;
   description?: string;
@@ -327,7 +329,6 @@ type ValuesAxis =
 
 interface PrimitiveValuesAxis extends ValuesAxisBase {
   values: string[] | number[];
-  
 }
 
 interface PolygonValuesAxis {}

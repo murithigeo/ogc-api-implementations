@@ -15,5 +15,11 @@ fs.readdirSync(__dirname)
     sequelize.models[model.name] = model;
   });
 
-  
+  //Initialize the scopes
+  /*
+(async () => {
+  await edrModelScopes(sequelize);
+})();
+
+*/
 export default sequelize;

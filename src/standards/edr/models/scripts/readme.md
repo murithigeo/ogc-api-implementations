@@ -1,0 +1,1 @@
+These are common SQL queries which are not models and inclusion in base (models) folder will result in their execution everytime a model is used

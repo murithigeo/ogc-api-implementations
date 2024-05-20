@@ -1,5 +1,6 @@
 import { ExegesisContext } from "exegesis-express";
 import sequelize from "../models";
+import getPostGisVersion from "../models/scripts/postgis_version";
 
 /*
 (async () => {
@@ -11,6 +12,7 @@ import sequelize from "../models";
 })();
 */
 async function edrGetCollectionsRoot(ctx: ExegesisContext) {
+  console.log(3.5 < (await getPostGisVersion(sequelize)));
   ctx.res.status(200).setBody("This is the {root}/collections ep");
 }
 

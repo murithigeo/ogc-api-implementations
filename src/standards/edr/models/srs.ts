@@ -1,5 +1,4 @@
 import { DataTypes, Sequelize } from "sequelize";
-import sequelize from "../../../dbconnection";
 
 const SrsModel = (sequelize: Sequelize) => {
   const model = sequelize.define("spatial_ref_sys", {
