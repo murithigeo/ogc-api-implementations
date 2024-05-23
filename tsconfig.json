@@ -8,7 +8,7 @@
         "emitDecoratorMetadata": true,
         "allowUnreachableCode": false,
         "checkJs": false,
-        "allowJs": true,
+        "allowJs": false,
         "target": "ESNext",
         "isolatedModules": false,
         "pretty": true,

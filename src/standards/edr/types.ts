@@ -11,26 +11,48 @@ type Crs_Details = {
 /**
  * @interface InstanceOrCollectionProps
  */
-
+interface genericDataQueryItemConfig {
+  specificOutputFormats?: string[];
+  specificDefOutputFormat?: string[];
+}
+interface CorridorDataQueryItemConfig extends genericDataQueryItemConfig {
+  width_units: string[];
+  height_units: string[];
+}
+interface CubeDataQueryItemConfig extends genericDataQueryItemConfig {
+  height_units: string[];
+}
+interface RadiusDataQueryItemConfig extends GenericTransformStream {
+  within_units: string[];
+}
+export interface collectionConfigEdrVariable{
+  id:string;
+  dataType: "string"|"float"|"integer";
+  //description?: string;
+  name: "temperature"|"dewPointTemp"|"pressureMsl"
+  unit: "pressure"|"temperature"| "windspeed"|"windDirection"
+}
 export interface CollectionWithoutProps {
   id: string;
   modelName: string;
-  hasZ: boolean;
-  edrVariables: string[];
+  edrVariables: collectionConfigEdrVariable[];
   allSupportedCrs: string[];
-  data_queries: {
-    position?: boolean;
-    instances?: boolean;
-    area?: boolean;
-    trajectory?: boolean;
-    corridor?: boolean;
-    locations?: boolean;
-    items?: boolean;
-    radius?: boolean;
+  datetimeColumns: string[];
+  data_queries?: {
+    position?: genericDataQueryItemConfig;
+    instances?: genericDataQueryItemConfig;
+    area?: genericDataQueryItemConfig;
+    trajectory?: genericDataQueryItemConfig;
+    corridor?: CorridorDataQueryItemConfig;
+    locations?: genericDataQueryItemConfig;
+    items?: genericDataQueryItemConfig;
+    radius?: RadiusDataQueryItemConfig;
+    cube?: CubeDataQueryItemConfig;
   };
+
   output_formats: string[];
   default_output_format: string;
-} ``
+}
 interface InstanceOrCollectionProps {
   id: string;
 }
@@ -76,13 +98,12 @@ export interface EDRConformancePage {
   links?: Link[];
 }
 
-type BBOXArray =
-  | [number, number, number, number][]
-  | [number, number, number, number, number, number][];
+type BBOXArray = [number, number, number, number, number?, number?][];
+//| [number, number, number, number][];
 
 type IntervalArray = [string | null, string | null][];
 
-interface Extent {
+export interface Extent {
   spatial: {
     bbox: BBOXArray;
     crs: string;
@@ -94,59 +115,63 @@ interface Extent {
     values?: string[]; ////An array with >0 strings
     name?: string; //Name of the TRS
   };
-  vertical?: {
-    interval: [number | string, number | string][];
-    values?: string[][]; //Min of 1 item in main array
-    vrs: string; //crs of the vertical coords of data
-    name: string; ///Name of the vrs
-  };
+  vertical?: Extent_Vertical;
+}
+
+export interface Extent_Vertical {
+  interval: [number | string, number | string][];
+  values?: string[][]; //Min of 1 item in main array
+  vrs: string; //crs of the vertical coords of data
+  name: string; ///Name of the vrs
 }
 interface CollectionsMany {
   collections: Collection[];
   links: Link[];
 }
-export  interface Collection {
+
+export interface CollectionDataQueries {
+  position?: {
+    link: DataQueryLinkDefault;
+  };
+  radius?: {
+    link: DataQueryLinkDefault<{ within_units: string[] }>; //Add within_units interface
+  };
+  area?: {
+    link: DataQueryLinkDefault;
+  };
+  cube?: {
+    link: DataQueryLinkDefault<{ height_units: string[] }>;
+  };
+  trajectory?: {
+    link: DataQueryLinkDefault;
+  };
+  corridor?: {
+    link: DataQueryLinkDefault<{
+      width_units: string[];
+      height_units: string[];
+    }>;
+  };
+  items?: {
+    link: DataQueryLinkDefault;
+  };
+  locations?: {
+    link: DataQueryLinkDefault;
+  };
+  instances?: DataQueryLinkDefault;
+}
+export interface Collection {
   id: string;
   title?: string;
   description?: string;
   extent: Extent;
-  data_queries: {
-    position?: {
-      link: DataQueryLinkDefault;
-    };
-    radius?: {
-      link: DataQueryLinkDefault<{ within_units: string[] }>; //Add within_units interface
-    };
-    area?: {
-      link: DataQueryLinkDefault;
-    };
-    cube?: {
-      link: DataQueryLinkDefault<{ height_units: string[] }>;
-    };
-    trajectory?: {
-      link: DataQueryLinkDefault;
-    };
-    corridor?: {
-      link: DataQueryLinkDefault<{
-        width_units: string[];
-        height_units: string[];
-      }>;
-    };
-    items?: {
-      link: DataQueryLinkDefault;
-    };
-    locations?: {
-      link: DataQueryLinkDefault;
-    };
-    instances?: DataQueryLinkDefault;
-  };
+  data_queries: CollectionDataQueries;
   crs: string[];
   output_formats: string[];
-  parameter_names: {
-    [key: string]: ParameterNames;
-  };
+  parameter_names: Parameter_Names;
 }
-
+export interface Parameter_Names  {
+  [key: string]: ParameterNames;
+};
 type QueryType =
   | "instances"
   | "position"
@@ -162,6 +187,7 @@ interface DataQueryLinkDefault<T = {}> extends Link {
     title: string;
     description: string;
     query_type: QueryType;
+    output_formats: string[];
     default_output_format: default_output_format;
     crs_details: Crs_Details[];
   } & T;
@@ -188,7 +214,7 @@ const ParameterNamesExample: ParameterNames = {
     label: "Sea Ice Concentration",
   },
 };
-interface ParameterNames {
+export interface ParameterNames {
   type: "Parameter";
   description?: string;
   label?: string;
@@ -206,7 +232,7 @@ interface ParameterNames {
   };
 }
 
-interface Units {
+export interface Units {
   label: { [key: string]: string } | string; //Example: {label:{en:Kelvin}}
   symbol:
     | {
@@ -222,7 +248,7 @@ interface Units {
  * @example {id: http://vocab.nerc.ac.uk/standard_name/sea_ice_area_fraction/
   label: Sea Ice Concentration}
  */
-interface ObservedProperty {
+export interface ObservedProperty {
   /**
    * URI linking to an external registry which contains the definitive
       definition of
@@ -231,18 +257,16 @@ interface ObservedProperty {
   id?: string;
   label: string | object;
   description?: string;
-  categories?: [
-    {
-      /**
+  categories?: {
+    /**
    * URI linking to an external registry which contains the definitive
       definition of
       the observed property
       */
-      id: string;
-      label: string | object;
-      description?: string | { en: string };
-    }
-  ];
+    id: string;
+    label: string | object;
+    description?: string | { en: string };
+  }[];
 }
 interface CoverageJSON {
   type: "Coverage" | "CoverageCollection" | "Domain";
@@ -361,13 +385,16 @@ interface NumericValuesAxis extends ValuesAxisBase {
   values: number[];
   bounds: number[];
 }
-interface EdrGeoJSONFeatureCollection {
+export interface EdrGeoJSONFeatureCollection {
   type: "FeatureCollection";
   features: GeoJSONFeature[];
+  numberMatched: number;
+  numberReturned: number;
   parameters: EdrGeoJSONParameter[];
+  links?: Link[];
 }
 
-interface GeoJSONFeature {
+export interface GeoJSONFeature {
   type: "Feature";
   id: string | number;
   links?: Link[];

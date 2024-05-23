@@ -22,17 +22,24 @@ export default async function edrModelScopes(sequelize: Sequelize) {
    *
    */
 
-  sequelize.models.daily.addScope("bboxGen", {
+  sequelize.models.hourly2024.addScope("bboxGen", {
     attributes: {
       include: [
         [
           Sequelize.literal(
-            `SELECT ARRAY[ST_XMin(bbox),ST_Ymin(bbox),ST_ZMin(bbox),ST_Xmax(bbox),ST_Ymax(bbox),ST_Zmax(bbox)]
-            FROM (SELECT ST_3DExtent(geom) as bbox FROM ${sequelize.models.daily.tableName})`
+            `ARRAY[
+              ST_XMin(ST_3DExtent(geom)),
+              ST_YMin(ST_3DExtent(geom)),
+              ST_ZMin(ST_3DExtent(geom)),
+              ST_XMax(ST_3DExtent(geom)),
+              ST_YMax(ST_3DExtent(geom)),
+              ST_ZMax(ST_3DExtent(geom))
+            ]`
           ),
           "bbox",
-        ],
+        ]
       ],
+      exclude:["id","station","date","source","name","report_type","call_sign","quality_control","wnd","tmp","dew","slp","geom"]
     },
   });
   //model
