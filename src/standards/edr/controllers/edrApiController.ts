@@ -1,5 +1,5 @@
 import { ExegesisContext } from "exegesis-express";
-import convertJsonToYAML from "../../features/components/convertToYaml";
+import convertJsonToYAML from "../../components/convertToYaml";
 import { edrDocument } from "..";
 import genScalarUi from "../../components/scalarUi";
 import makeQueryValidationError from "../../components/makeValidationError";

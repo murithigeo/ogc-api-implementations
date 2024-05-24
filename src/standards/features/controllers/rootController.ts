@@ -2,7 +2,7 @@ import { ExegesisContext } from "exegesis-express";
 import initCommonQueryParams from "../components/params";
 import { CN_Value, F_AssociatedType } from "../../../types";
 import { genRootDoc } from "../components/generateJsonDocs";
-import convertJsonToYAML from "../components/convertToYaml";
+import convertJsonToYAML from "../../components/convertToYaml";
 import { allowed_F_values } from "..";
 
 export default async function getFeaturesRoot(ctx: ExegesisContext) {

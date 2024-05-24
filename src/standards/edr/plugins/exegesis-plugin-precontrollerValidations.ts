@@ -31,13 +31,14 @@ async function checkCoordsString_allowedGeometry(
 /**
  * @function makeExegesisPlugin create a new plugin to handle preController, postSecurity validation.
  * @description better to handle all validations in one file
- * @param data 
- * @param nonDocumentedParamsToIgnore 
- * @returns 
+ * @param data
+ * @param nonDocumentedParamsToIgnore
+ * @returns
  */
 function makeExegesisPlugin(
   data: { apiDoc: any },
-  nonDocumentedParamsToIgnore: string[]
+  nonDocumentedParamsToIgnore: string[],
+  collectionIds: string[]
 ): ExegesisPluginInstance {
   return {
     postSecurity: async (ctx: ExegesisPluginContext) => {
@@ -45,6 +46,30 @@ function makeExegesisPlugin(
       const _url = new URL(ctx.api.serverObject.url + ctx.req.url);
       //Initialize parameters
       const _oasListedParams = await ctx.getParams();
+
+      //Validate CollectionIds
+      if (_oasListedParams.path.collectionId) {
+        if (!collectionIds.includes(_oasListedParams.path.collectionId)) {
+          ctx.res
+            .status(404)
+            .json({
+              message: `Collection: ${_oasListedParams.path.collectionId} does not exist`,
+            })
+            .end();
+        }
+        if(_oasListedParams.path.collectionId===""||_oasListedParams.path.instanceId===""){
+          ctx.res.status(400).setBody(
+            ctx.makeValidationError(
+              "collectionId cannot be an empty string",
+              {
+                in: "path",
+                name: "collectionId",
+                docPath: ctx.api.pathItemPtr,
+              }
+            )
+          );
+        }
+      }
 
       //Access all params present on req.url
       const _allQueryParams = Array.from(
@@ -258,14 +283,19 @@ function makeExegesisPlugin(
  * @returns exegesisPlugin
  */
 function validateInitialRequests(
-  nonDocumentedParamsToIgnore: string[]
+  nonDocumentedParamsToIgnore: string[],
+  listofCollectionIds: string[]
 ): ExegesisPlugin {
   return {
     info: {
       name: "exegesis-plugin-ogcedrwktvalidator_postgis",
     },
     makeExegesisPlugin: (data: { apiDoc: any }) =>
-      makeExegesisPlugin(data, nonDocumentedParamsToIgnore),
+      makeExegesisPlugin(
+        data,
+        nonDocumentedParamsToIgnore,
+        listofCollectionIds
+      ),
   };
 }
 

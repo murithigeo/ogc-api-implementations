@@ -3,46 +3,43 @@ import sequelize from "../models";
 import getPostGisVersion from "../models/scripts/postgis_version";
 import * as types from "../types";
 import { genCollectionInfo } from "../components/genJsonDocs.ts/collections";
-import convertJsonToYAML from "../../features/components/convertToYaml";
+import convertJsonToYAML from "../../components/convertToYaml";
 import makeQueryValidationError from "../../components/makeValidationError";
-/*
-(async () => {
-  sequelize.models.spatial_ref_sys
-    .findAll({ raw: true, limit: 2 })
-    .then((dbRes) => {
-      console.log(dbRes);
-    });
-})();
-*/
+import { collectionsMetadata } from "..";
+
 async function edrGetCollectionsRoot(ctx: ExegesisContext) {
-  console.log(3.5 < (await getPostGisVersion(sequelize)));
-  ctx.res.status(200).setBody("This is the {root}/collections ep");
+  const collections: types.CollectionsRoot = {
+    collections: [],
+    links: [],
+  };
+  for (const collectionConfig of collectionsMetadata) {
+    collections.collections.push(
+      await genCollectionInfo(ctx, collectionConfig, collectionConfig.id)
+    );
+  }
+  switch (ctx.params.query.f) {
+    case "json":
+      ctx.res.status(200).json(collections);
+      break;
+    case "yaml":
+      ctx.res
+        .status(200)
+        .set("content-type", "text/yaml")
+        .setBody(await convertJsonToYAML(collections));
+      break;
+    default:
+      ctx.res.status(400).json(await makeQueryValidationError(ctx, "f"));
+  }
 }
 
 async function edrGetOneCollection(ctx: ExegesisContext) {
-  const collection: types.Collection = await genCollectionInfo(ctx, {
-    id: "hourly",
-    modelName: "hourly2024",
-    datetimeColumns: [],
-    edrVariables: [
-      {
-        id: "temperature",
-        dataType: "float",
-        name: "temperature",
-        unit: "temperature"
-      },
-      {
-        id: "pressure",
-        dataType: "float",
-        name:"pressureMsl",
-        unit: "pressure"
-      }
-    ],
-    allSupportedCrs: [],
-    output_formats: [],
-    default_output_format: "",
-    data_queries: {},
-  });
+  const collection: types.Collection = await genCollectionInfo(
+    ctx,
+    collectionsMetadata.find(
+      (collection) => collection.id === ctx.params.path.collectionId
+    ),
+    ctx.params.path.collectionId
+  );
 
   switch (ctx.params.query.f) {
     case "json":

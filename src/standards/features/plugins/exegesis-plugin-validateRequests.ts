@@ -5,7 +5,7 @@ import {
 } from "exegesis-express";
 import { URL } from "url";
 import { validate_crs_string } from "../components/params";
-import { crs84hUri } from "..";
+import * as crsDetails from "../../components/crsdetails"
 
 function makeExegesisPlugin(
   data: { apiDoc: any },

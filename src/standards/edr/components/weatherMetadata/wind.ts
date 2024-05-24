@@ -28,3 +28,5 @@ async function generateWindMetadata(windObservation: WindObservation) {
     type: windObservation[2],
   };
 }
+
+

@@ -1,5 +1,5 @@
 import { ExegesisContext } from "exegesis-express";
-import convertJsonToYAML from "../../standards/features/components/convertToYaml";
+import convertJsonToYAML from "../../standards/components/convertToYaml";
 
 export default async function helloWorld (ctx: ExegesisContext) {
   const response = { message: "Hello World! \n This is a test route \n Serviced by exegesis" };

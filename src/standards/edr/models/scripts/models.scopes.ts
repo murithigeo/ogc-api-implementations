@@ -11,7 +11,7 @@ export default async function edrModelScopes(sequelize: Sequelize) {
 
   let hasZflag: boolean = false,
     hasMflag: boolean = false,
-    hasZaxis: boolean= false;
+    hasZaxis: boolean = false;
   //postgisVersion<3.5?hasMflag=false && hasMflag=false:
   if (postgisVersion >= 3.5) {
     hasZflag = true;
@@ -23,11 +23,10 @@ export default async function edrModelScopes(sequelize: Sequelize) {
    */
 
   sequelize.models.hourly2024.addScope("bboxGen", {
-    attributes: {
-      include: [
-        [
-          Sequelize.literal(
-            `ARRAY[
+    attributes: [
+      [
+        Sequelize.literal(
+          `ARRAY[
               ST_XMin(ST_3DExtent(geom)),
               ST_YMin(ST_3DExtent(geom)),
               ST_ZMin(ST_3DExtent(geom)),
@@ -35,12 +34,11 @@ export default async function edrModelScopes(sequelize: Sequelize) {
               ST_YMax(ST_3DExtent(geom)),
               ST_ZMax(ST_3DExtent(geom))
             ]`
-          ),
-          "bbox",
-        ]
+        ),
+        "bbox",
       ],
-      exclude:["id","station","date","source","name","report_type","call_sign","quality_control","wnd","tmp","dew","slp","geom"]
-    },
+    ],
+    //exclude:["id","station","date","source","name","report_type","call_sign","quality_control","wnd","tmp","dew","slp","geom"]
   });
   //model
 

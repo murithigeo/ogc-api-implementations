@@ -3,16 +3,20 @@ import * as types from "../../types";
 import sequelize from "../../models";
 import return500InternalServerErr from "../../../components/makeInternalServerError";
 import { Op } from "sequelize";
-import * as units from '../weatherMetadata/units'
+import * as units from "../weatherMetadata/units";
+import * as observedProperties from "../weatherMetadata/observedProperty";
+import { instanceIdStation } from "../helperScripts";
+import * as DataQueries from "../links/queryTypes";
+import edrCommonParams from "../params";
 async function genExtentBbox(
   ctx: ExegesisContext,
-  modelName: string
+  modelName: string,
 ): Promise<[number, number, number, number, number?, number?]> {
   try {
     const res = (
       (await sequelize.models[modelName].scope("bboxGen").findOne({
         where: {
-          [Op.and]: [instanceIdQuery(ctx)],
+          [Op.and]: [instanceIdStation(ctx)],
         },
         //includeIgnoreAtri
         raw: true,
@@ -26,11 +30,6 @@ async function genExtentBbox(
   }
 }
 
-const instanceIdQuery = (ctx: ExegesisContext) =>
-  ctx.params.path.instanceId
-    ? { station: ctx.params.path.instanceId }
-    : undefined;
-
 async function genExtentTempInterval(
   ctx: ExegesisContext,
   modelName: string,
@@ -43,9 +42,11 @@ async function genExtentTempInterval(
   if (datetimeColumns.length > 0) {
     for (const column of datetimeColumns) {
       let min = await sequelize.models[modelName].min(column, {
-        where: { [Op.and]: [instanceIdQuery(ctx)] },
+        where: { [Op.and]: [instanceIdStation(ctx)] },
       });
-      let max = await sequelize.models[modelName].max(column);
+      let max = await sequelize.models[modelName].max(column, {
+        where: { [Op.and]: [instanceIdStation(ctx)] },
+      });
       intervals.push([min as string, max as string]);
     }
   } else {
@@ -56,11 +57,20 @@ async function genExtentTempInterval(
   return intervals;
 }
 
-
 async function genCollectionInfo(
   ctx: ExegesisContext,
-  collectionConfig: types.CollectionWithoutProps
+  collectionConfig: types.CollectionWithoutProps,
+  collectionOrInstanceId: string
 ): Promise<types.Collection> {
+  //Alter the value of instanceId if provided collectionId is not equal to the configuration value
+  //Implies that we are querying instances
+
+  /*
+  if (collectionConfig.id !== collectionOrInstanceId) {
+    ctx.params.path.instanceId = collectionOrInstanceId;
+  }
+  */
+
   //Instantiate extent_bbox
   let _extent_bbox: [number, number, number, number, number?, number?][];
   try {
@@ -88,6 +98,14 @@ async function genCollectionInfo(
   _extent_bbox[0].splice(4, 1); //Remove zmax
 
   const data_queries: types.CollectionDataQueries = {};
+  if (collectionConfig.data_queries.radius) {
+    data_queries.radius = await DataQueries.radius(
+      ctx,
+      collectionConfig.id === collectionOrInstanceId
+        ? collectionConfig.id
+        : collectionOrInstanceId
+    );
+  }
 
   let parameterNames: types.Parameter_Names = {};
 
@@ -95,19 +113,20 @@ async function genCollectionInfo(
     parameterNames[parameter.id] = {
       type: "Parameter",
       id: parameter.id,
-      description: parameter.id + "parameter",
+      description: parameter.id + " parameter",
       "data-type": parameter.dataType,
       unit: units[parameter.unit],
-      observedProperty: units[parameter.name]
+      observedProperty: observedProperties[parameter.name],
     };
-
   }
-  //Instantiate parameterNames
-  console.log(parameterNames)
+
+  //collectionId
+  //Scenarios: {root}/collections | {root}/collections/{collectionId} | {root}/collections
+
   return {
-    id: collectionConfig.id,
-    crs: [],
-    output_formats: [],
+    id: collectionOrInstanceId, //new URL(ctx.api.serverObject.uri+ctx.req.url).pathname.endsWith("instances")||ctx.params.path.instanceId?,
+    crs: collectionConfig.allSupportedCrs,
+    output_formats: collectionConfig.output_formats,
     title: collectionConfig.id + " collection",
     data_queries,
     extent: {
@@ -124,7 +143,7 @@ async function genCollectionInfo(
           ? {
               name: "CRS84h",
               interval: [[zMin, zMax]],
-              vrs: "Ellipsoidal height",
+              vrs: "ellipsoidal height",
             }
           : undefined,
     },

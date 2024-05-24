@@ -2,7 +2,7 @@ import { ExegesisContext } from "exegesis-express";
 import { genConformance } from "../components/generateJsonDocs";
 import { F_AssociatedType } from "../../../types";
 import initCommonQueryParams from "../components/params";
-import convertJsonToYAML from "../components/convertToYaml";
+import convertJsonToYAML from "../../components/convertToYaml";
 import { allowed_F_values } from "..";
 
  export default async function getConformance (ctx: ExegesisContext) {

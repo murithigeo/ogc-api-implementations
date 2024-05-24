@@ -48,9 +48,64 @@ import {
   edrQueryCorridorAtCollection,
   edrQueryCorridorAtInstance,
 } from "./controllers/edrCorridorEndpointController";
-import validateWktPlugin from "./plugins/exegesis-plugin-validateWkt";
-export const edrDocument = parseOasDoc("./src/standards/edr/index.yaml", "edr");
+import validationsPlugin from "./plugins/exegesis-plugin-precontrollerValidations";
 
+import * as types from "./types";
+export const edrDocument = parseOasDoc("./src/standards/edr/index.yaml", "edr");
+//instances & collections config
+
+const collectionsMetadata: types.CollectionWithoutProps[] = [
+  {
+    id: "hourly",
+    modelName: "hourly2024",
+    edrVariables: [
+      {
+        id: "temperature",
+        dataType: "float",
+        name: "temperature",
+        unit: "temperature",
+      },
+      {
+        id: "pressure",
+        dataType: "float",
+        name: "pressure",
+        unit: "pressure",
+      },
+      {
+        id: "windDirection",
+        dataType: "integer",
+        name: "windDirection",
+        unit: "windDirection",
+      },
+      {
+        id: "windType",
+        dataType: "string",
+        name: "windType",
+        unit: "windType",
+      },
+    ],
+    datetimeColumns: ["date"],
+    allSupportedCrs: ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
+    output_formats: ["covjson", "edrGeoJSON"],
+    default_output_format: "edrGeoJSON",
+    data_queries: {
+      instances: {},
+      cube: { height_units: ["m"] },
+      radius: { within_units: ["km"] },
+      position: {},
+      trajectory: {},
+      corridor: { width_units: ["km", "m"], height_units: ["km", "m"] },
+      area: {},
+    },
+  },
+];
+for (const collectionConfig of collectionsMetadata) {
+  collectionConfig.parameter_names = collectionConfig.edrVariables.map(
+    (variable) => variable.id
+  );
+}
+
+export { collectionsMetadata };
 export default async function edrExegesisInstance() {
   globalexegesisOptions.controllers = {
     /**
@@ -294,9 +349,12 @@ export default async function edrExegesisInstance() {
       edrQueryCorridorAtInstance,
     },
   };
-  globalexegesisOptions.plugins=[
-    validateWktPlugin([]),
-  ]
+  globalexegesisOptions.plugins = [
+    validationsPlugin(
+      [],
+      collectionsMetadata.map((collection) => collection.id)
+    ),
+  ];
   return await exegesisExpress.middleware(
     await edrDocument,
     globalexegesisOptions

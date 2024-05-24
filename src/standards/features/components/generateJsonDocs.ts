@@ -11,9 +11,9 @@ import {
 } from "../../../types";
 import { genLinksAll, genLinksToColl_ItemsWhenAtRoot } from "./links";
 import initCommonQueryParams from "./params";
-import { CollectionsConfig, _allsupportedcrsUris } from "..";
+import { CollectionsConfig,CollectionConfig } from "..";
 import { querySpatialExtent, queryTemporalIntervals } from "./db_queries";
-import { crs84Uri, crs84hUri, CollectionConfig, trs } from "../";
+import * as crsDetails from "../../components/crsdetails"
 
 async function numMatchedInit(
   count: number,
@@ -136,33 +136,33 @@ async function genOneCollectionDoc(
     extent: {
       spatial: {
         bbox: _extent_bbox,
-        crs: _extent_bbox[0].length === 4 ? crs84Uri : crs84hUri, //crs84Uri : crs84hUri,
+        crs: _extent_bbox[0].length === 4 ? crsDetails.crs84Uri : crsDetails.crs84hUri, //crs84Uri : crs84hUri,
       },
       temporal: {
         interval: _extent_interval,
-        trs: trs,
+        trs: crsDetails.trs,
       },
     },
     crs:
       _extent_bbox[0].length === 4
         ? [
-            crs84Uri,
-            crs84hUri,
-            ..._allsupportedcrsUris.filter(
-              (string) => string !== crs84Uri && string !== crs84hUri
+          crsDetails.crs84Uri,
+          crsDetails.crs84hUri,
+            ...crsDetails._allsupportedcrsUris.filter(
+              (string) => string !== crsDetails.crs84Uri && string !== crsDetails.crs84hUri
             ),
           ]
         : [
             //Remove CRS84h from list of allowed CRS because it does not allow 6-element bbox queries
-            crs84Uri,
-            crs84hUri,
-            ..._allsupportedcrsUris.filter(
-              (string) => string !== crs84hUri && string !== crs84Uri
+            crsDetails.crs84Uri,
+            crsDetails.crs84hUri,
+            ...crsDetails._allsupportedcrsUris.filter(
+              (string) => string !== crsDetails.crs84hUri && string !== crsDetails.crs84Uri
             ),
           ],
     itemType: "feature",
     //Alter the ternary operator to achieve get CRS84 no matter what
-    storageCrs: _extent_bbox[0].length > 4 ? crs84hUri : crs84hUri,
+    storageCrs: _extent_bbox[0].length > 4 ? crsDetails.crs84hUri : crsDetails.crs84hUri,
     links:
       mode === "specific"
         ? await genLinksAll(ctx, allowed_f_values, "Collection")

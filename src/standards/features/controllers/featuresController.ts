@@ -1,6 +1,5 @@
 import { ExegesisContext } from "exegesis-express";
 import sequelize from "../models";
-import { httpMessages } from "../../../httpMessages";
 import parseDbResToGeoJson from "../components/parsedbResToGeoJson";
 import { F_AssociatedType, RawGeoDataResult } from "../../../types";
 
@@ -10,11 +9,10 @@ import {
   genFeatureCollection,
 } from "../components/generateJsonDocs";
 import { allowed_F_values } from "..";
-import { genLinksAll } from "../components/links";
-import { ReadableStream } from "stream/web";
+
 import { Op, Sequelize } from "sequelize";
-import { crs84Uri, crs84hUri } from "../";
-import convertJsonToYAML from "../components/convertToYaml";
+import * as crsDetails from "../../components/crsdetails"
+import convertJsonToYAML from "../../components/convertToYaml";
 
 async function queryAllItems(ctx: ExegesisContext) {
   const { contentcrsHeader, f } = await initCommonQueryParams(ctx);
@@ -157,7 +155,7 @@ async function dbQueryMountains(
 
   //Height Query
   const heightQuery =
-    ctx.params.query["bbox-crs"] === crs84hUri &&
+    ctx.params.query["bbox-crs"] === crsDetails.crs84hUri &&
     ctx.params.query.bbox.length > 4
       ? {
           [Op.and]: [
@@ -187,7 +185,7 @@ async function dbQueryMountains(
          * @param reqCrs.uri === CRS84h is intended for collections with z-axis
          * If CRS84, return as is
          */
-        reqCrs.uri === crs84hUri
+        reqCrs.uri === crsDetails.crs84hUri
           ? [Sequelize.col(geomColumnName), geomColumnName]
           : //Otherwise if its not crs84h, start the next conditional checks
           reqCrs.isGeographic === true

@@ -1,6 +1,6 @@
 export type CollectionId = string;
 type OutputFormats = string[];
-type default_output_format = string;
+export type default_output_format = string;
 type withinUnits = string[];
 
 type Crs_Details = {
@@ -22,15 +22,20 @@ interface CorridorDataQueryItemConfig extends genericDataQueryItemConfig {
 interface CubeDataQueryItemConfig extends genericDataQueryItemConfig {
   height_units: string[];
 }
-interface RadiusDataQueryItemConfig extends GenericTransformStream {
+interface RadiusDataQueryItemConfig extends genericDataQueryItemConfig {
   within_units: string[];
 }
-export interface collectionConfigEdrVariable{
-  id:string;
-  dataType: "string"|"float"|"integer";
+export interface collectionConfigEdrVariable {
+  id: string;
+  dataType: "string" | "float" | "integer";
   //description?: string;
-  name: "temperature"|"dewPointTemp"|"pressureMsl"
-  unit: "pressure"|"temperature"| "windspeed"|"windDirection"
+  name:
+    | "temperature"
+    | "dewPointTemp"
+    | "pressure"
+    | "windDirection"
+    | "windType";
+  unit: "pressure" | "temperature" | "windspeed" | "windDirection" | "windType";
 }
 export interface CollectionWithoutProps {
   id: string;
@@ -49,13 +54,11 @@ export interface CollectionWithoutProps {
     radius?: RadiusDataQueryItemConfig;
     cube?: CubeDataQueryItemConfig;
   };
-
-  output_formats: string[];
+  parameter_names?:string[];
+  output_formats: OutputFormats;
   default_output_format: string;
 }
-interface InstanceOrCollectionProps {
-  id: string;
-}
+
 interface Link {
   title: string; //Enable trace issues to specific resource
   href: string;
@@ -124,18 +127,22 @@ export interface Extent_Vertical {
   vrs: string; //crs of the vertical coords of data
   name: string; ///Name of the vrs
 }
-interface CollectionsMany {
+export interface CollectionsRoot {
   collections: Collection[];
   links: Link[];
 }
+
+export interface InstancesRoot {
+  instances: Collection[];
+  links: Link[];
+}
+
 
 export interface CollectionDataQueries {
   position?: {
     link: DataQueryLinkDefault;
   };
-  radius?: {
-    link: DataQueryLinkDefault<{ within_units: string[] }>; //Add within_units interface
-  };
+  radius?: RadiusDataQuery;
   area?: {
     link: DataQueryLinkDefault;
   };
@@ -159,6 +166,11 @@ export interface CollectionDataQueries {
   };
   instances?: DataQueryLinkDefault;
 }
+
+export interface RadiusDataQuery {
+  link: DataQueryLinkDefault<{ within_units: string[] }>; //Add within_units interface
+}
+
 export interface Collection {
   id: string;
   title?: string;
@@ -166,13 +178,13 @@ export interface Collection {
   extent: Extent;
   data_queries: CollectionDataQueries;
   crs: string[];
-  output_formats: string[];
+  output_formats: OutputFormats;
   parameter_names: Parameter_Names;
 }
-export interface Parameter_Names  {
+export interface Parameter_Names {
   [key: string]: ParameterNames;
-};
-type QueryType =
+}
+export type QueryType =
   | "instances"
   | "position"
   | "corridor"
@@ -187,7 +199,7 @@ interface DataQueryLinkDefault<T = {}> extends Link {
     title: string;
     description: string;
     query_type: QueryType;
-    output_formats: string[];
+    output_formats:OutputFormats;
     default_output_format: default_output_format;
     crs_details: Crs_Details[];
   } & T;

@@ -5,7 +5,7 @@ import {
   genOneCollectionDoc,
 } from "../components/generateJsonDocs";
 import initCommonQueryParams from "../components/params";
-import convertJsonToYAML from "../components/convertToYaml";
+import convertJsonToYAML from "../../components/convertToYaml";
 import { F_AssociatedType } from "../../../types";
 
 async function getCollectionsAll(ctx: ExegesisContext) {

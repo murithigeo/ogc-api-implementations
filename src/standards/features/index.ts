@@ -17,52 +17,7 @@ import {
   getCollectionOne,
   getCollectionsAll,
 } from "./controllers/collectionsController";
-
-//The mandated defaults
-const crs84Uri = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
-const crs84hUri = "http://www.opengis.net/def/crs/OGC/0/CRS84h";
-
-const _allCrsProperties: Crs_prop[] = [
-  {
-    authority: "OGC",
-    version: 1.3,
-    code: "CRS84",
-    srid: 4326,
-    //auth_name: 'OGC',
-    isGeographic: false,
-    //uri: `http://www.opengis.net/def/crs/${authority}/${version}/${code}`
-  },
-  {
-    code: 4326,
-    version: 0,
-    srid: 4326,
-    authority: "EPSG",
-    isGeographic: true,
-  },
-  {
-    authority: "OGC",
-    srid: 4326,
-    version: 0,
-    isGeographic: false,
-    code: "CRS84h",
-  },
-];
-
-//Create uris pointing to the schema
-for (const crsObject of _allCrsProperties) {
-  crsObject.uri = `http://www.opengis.net/def/crs/${crsObject.authority}/${crsObject.version}/${crsObject.code}`;
-}
-
-/**
- * Generate a string[] for the above CRS comprised of the uri attribute.
- */
-const _allsupportedcrsUris = _allCrsProperties.map(
-  (crsObject) => crsObject.uri
-);
-
-//Temporal Reference System Identifier
-const trs = "http://www.opengis.net/def/uom/ISO-8601/0/Gregorian";
-
+import * as crsDetails from '../components/crsdetails';
 //All possible content-negotiation values
 const allowed_F_values: F_AssociatedType[] = [
   {
@@ -91,7 +46,7 @@ interface CollectionsConfig {
   collections: CollectionConfig[];
 }
 const collections_properties: CollectionsConfig = {
-  fallbackCrs: [crs84Uri],
+  fallbackCrs: [crsDetails.crs84Uri],
   collections: [
     {
       collectionId: "mountains",
@@ -147,14 +102,9 @@ async function featuresExegesisInstance() {
   //return exegesisInstance;
 }
 export {
-  _allCrsProperties,
-  _allsupportedcrsUris,
   collections_properties,
   CollectionsConfig,
   CollectionConfig,
   allowed_F_values,
-  crs84Uri,
-  crs84hUri,
-  trs,
 };
 export default featuresExegesisInstance;
