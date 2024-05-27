@@ -13,8 +13,9 @@ async function edrGetCollectionsRoot(ctx: ExegesisContext) {
     links: [],
   };
   for (const collectionConfig of collectionsMetadata) {
+    ctx.params.path.collectionId = collectionConfig.id;
     collections.collections.push(
-      await genCollectionInfo(ctx, collectionConfig, collectionConfig.id)
+      await genCollectionInfo(ctx, collectionConfig)
     );
   }
   switch (ctx.params.query.f) {
@@ -37,8 +38,7 @@ async function edrGetOneCollection(ctx: ExegesisContext) {
     ctx,
     collectionsMetadata.find(
       (collection) => collection.id === ctx.params.path.collectionId
-    ),
-    ctx.params.path.collectionId
+    )
   );
 
   switch (ctx.params.query.f) {

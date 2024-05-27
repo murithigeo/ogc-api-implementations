@@ -11,21 +11,11 @@ import {
 } from "../../../types";
 import { genLinksAll, genLinksToColl_ItemsWhenAtRoot } from "./links";
 import initCommonQueryParams from "./params";
-import { CollectionsConfig,CollectionConfig } from "..";
+import { CollectionsConfig, CollectionConfig } from "..";
 import { querySpatialExtent, queryTemporalIntervals } from "./db_queries";
-import * as crsDetails from "../../components/crsdetails"
-
-async function numMatchedInit(
-  count: number,
-  offset: number,
-  limit: number
-): Promise<number> {
-  let numberMatched: number = 0;
-  const startIndex = Math.min(offset, count);
-  const endIndex = Math.min(startIndex + limit, count);
-  numberMatched += endIndex - startIndex;
-  return numberMatched;
-}
+import * as crsDetails from "../../components/crsdetails";
+import numMatchedInit from "../../components/numberMatched";
+import deletePrevNextLinks from "../../components/deletePrevNextLinks";
 
 async function genFeatureCollection(
   ctx: ExegesisContext,
@@ -37,25 +27,14 @@ async function genFeatureCollection(
   //In order to reduce complexity in generating links (rel=(next|prev)), just remove link obj where hasNextPage|prev=false
   let links = await genLinksAll(ctx, allowed_f_values, "Items");
   const { offset, limit } = await initCommonQueryParams(ctx);
-  let hasNextPage: boolean, hasPrevPage: boolean;
 
-  //hasPrevPage = offset < 1 || limit - offset <= 1 ? false : true;
-  hasNextPage = offset > 0 ? true : false;
-  //hasNextPage = offset < 1 ? false : true;
-  hasNextPage = offset + limit < count ? true : false;
-
-  if (hasNextPage === false) {
-    links = links.filter((obj) => obj.rel !== "next");
-  }
-  if (hasPrevPage === false) {
-    links = links.filter((obj) => obj.rel !== "prev");
-  }
+  links = await deletePrevNextLinks(ctx, links, count);
 
   return {
     type: "FeatureCollection",
     timeStamp: new Date().toJSON(),
     numberReturned: featuresArray.length,
-    numberMatched: await numMatchedInit(count, offset, limit),
+    numberMatched: await numMatchedInit(ctx,count,),
     features: featuresArray,
     links: links,
   };
@@ -136,7 +115,10 @@ async function genOneCollectionDoc(
     extent: {
       spatial: {
         bbox: _extent_bbox,
-        crs: _extent_bbox[0].length === 4 ? crsDetails.crs84Uri : crsDetails.crs84hUri, //crs84Uri : crs84hUri,
+        crs:
+          _extent_bbox[0].length === 4
+            ? crsDetails.crs84Uri
+            : crsDetails.crs84hUri, //crs84Uri : crs84hUri,
       },
       temporal: {
         interval: _extent_interval,
@@ -146,10 +128,12 @@ async function genOneCollectionDoc(
     crs:
       _extent_bbox[0].length === 4
         ? [
-          crsDetails.crs84Uri,
-          crsDetails.crs84hUri,
+            crsDetails.crs84Uri,
+            crsDetails.crs84hUri,
             ...crsDetails._allsupportedcrsUris.filter(
-              (string) => string !== crsDetails.crs84Uri && string !== crsDetails.crs84hUri
+              (string) =>
+                string !== crsDetails.crs84Uri &&
+                string !== crsDetails.crs84hUri
             ),
           ]
         : [
@@ -157,12 +141,15 @@ async function genOneCollectionDoc(
             crsDetails.crs84Uri,
             crsDetails.crs84hUri,
             ...crsDetails._allsupportedcrsUris.filter(
-              (string) => string !== crsDetails.crs84hUri && string !== crsDetails.crs84Uri
+              (string) =>
+                string !== crsDetails.crs84hUri &&
+                string !== crsDetails.crs84Uri
             ),
           ],
     itemType: "feature",
     //Alter the ternary operator to achieve get CRS84 no matter what
-    storageCrs: _extent_bbox[0].length > 4 ? crsDetails.crs84hUri : crsDetails.crs84hUri,
+    storageCrs:
+      _extent_bbox[0].length > 4 ? crsDetails.crs84hUri : crsDetails.crs84hUri,
     links:
       mode === "specific"
         ? await genLinksAll(ctx, allowed_f_values, "Collection")
@@ -190,12 +177,7 @@ async function genCollectionsRootDoc(
   const _allCollections: Collection[] = [];
   for (const collectionOption of collections) {
     _allCollections.push(
-      await genOneCollectionDoc(
-        ctx,
-        allowed_F_values,
-        collectionOption,
-        "root"
-      )
+      await genOneCollectionDoc(ctx, allowed_F_values, collectionOption, "root")
     );
   }
 

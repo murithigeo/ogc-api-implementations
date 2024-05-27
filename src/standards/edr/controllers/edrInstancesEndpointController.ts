@@ -3,22 +3,28 @@ import { genCollectionInfo } from "../components/genJsonDocs.ts/collections";
 import * as types from "../types";
 import sequelize from "../models";
 import { Op, Sequelize } from "sequelize";
-import return500InternalServerErr from "../../components/makeInternalServerError";
 import { collectionsMetadata } from "..";
-import { instanceIdStation } from "../components/helperScripts";
+import * as helperScripts from "../components/helperScripts";
+import convertJsonToYAML from "../../components/convertToYaml";
+import makeQueryValidationError from "../../components/makeValidationError";
 
 async function checkIfCollHasInstances(
   ctx: ExegesisContext,
-  modelName: string,
-  instanceColumn: string
+  modelName: string
 ) {
   const rows = await sequelize.models[modelName].findAll({
     attributes: [
-      [Sequelize.fn("DISTINCT", Sequelize.col(instanceColumn)), "column"],
+      [
+        Sequelize.fn("DISTINCT", Sequelize.col(ctx.params.query.instancemode)),
+        "column",
+      ],
     ],
     where: {
-      [Op.and]: [instanceIdStation(ctx)],
+      [ctx.params.query.instancemode as string]: {
+        [Op.ne]: null || "",
+      },
     },
+
     raw: true,
 
     //@ts-expect-error
@@ -26,6 +32,7 @@ async function checkIfCollHasInstances(
   });
   return rows.map((row: any) => row.column) as Array<string>;
 }
+
 async function edrGetAllInstancesInCollection(ctx: ExegesisContext) {
   const matchedCollection = collectionsMetadata.find(
     (collection) => collection.id === ctx.params.path.collectionId
@@ -33,8 +40,7 @@ async function edrGetAllInstancesInCollection(ctx: ExegesisContext) {
 
   const foundInstances = await checkIfCollHasInstances(
     ctx,
-    matchedCollection.modelName,
-    "station"
+    matchedCollection.modelName
   );
   if (!matchedCollection.data_queries.instances || foundInstances.length < 1) {
     ctx.res
@@ -43,17 +49,31 @@ async function edrGetAllInstancesInCollection(ctx: ExegesisContext) {
         message: `collection ${ctx.params.path.collectionId} has no instances`,
       })
       .end();
+    return;
   }
   let instances: types.InstancesRoot = {
     instances: [],
     links: [],
   };
+
   for (const inst of foundInstances) {
-    instances.instances.push(
-      await genCollectionInfo(ctx, matchedCollection, inst)
-    );
+    ctx.params.path.instanceId = inst;
+    instances.instances.push(await genCollectionInfo(ctx, matchedCollection));
   }
-  ctx.res.status(200).json(instances);
+  switch (ctx.params.query.f) {
+    case "json":
+      ctx.res.status(200).json(instances).end();
+      break;
+    case "yaml":
+      ctx.res
+        .status(200)
+        .set("content-type", "text/yaml")
+        .setBody(await convertJsonToYAML(instances))
+        .end();
+      break;
+    default:
+      ctx.res.status(400).json(await makeQueryValidationError(ctx, "f"));
+  }
 }
 
 async function edrGetOneInstanceInCollection(ctx: ExegesisContext) {
@@ -63,26 +83,46 @@ async function edrGetOneInstanceInCollection(ctx: ExegesisContext) {
 
   const foundInstances = await checkIfCollHasInstances(
     ctx,
-    matchedCollection.modelName,
-    "station"
+    matchedCollection.modelName
   );
-  if (
-    !matchedCollection.data_queries.instances ||
-    !foundInstances.includes(ctx.params.path.instanceId)
-  ) {
+  if (!matchedCollection.data_queries.instances) {
     ctx.res
-      .status(404)
-      .json({
-        message: `collection ${ctx.params.path.collectionId} has no instances`,
-      })
+      .status(400)
+      .json(
+        ctx.makeValidationError(
+          `The collection ${ctx.params.path.collectionId} has no instances available. Check its metadata for correct requests`,
+          {
+            in: "path",
+            name: "instanceId",
+            docPath: ctx.api.pathItemPtr,
+          }
+        )
+      )
       .end();
+    return;
   }
-  const instance = await genCollectionInfo(
-    ctx,
-    matchedCollection,
-    foundInstances[0]
-  );
-  ctx.res.status(200).json(instance);
+  if (!foundInstances.includes(ctx.params.path.instanceId)) {
+    console.log(foundInstances);
+    ctx.res.status(404).json({
+      message: `collection ${ctx.params.path.collectionId} has no instances`,
+    });
+    return;
+  }
+
+  const instance = await genCollectionInfo(ctx, matchedCollection);
+  switch (ctx.params.query.f) {
+    case "json":
+      ctx.res.status(200).setBody(instance); //.end();
+      break;
+    case "yaml":
+      ctx.res
+        .status(200)
+        .set("content-type", "text/yaml")
+        .setBody(await convertJsonToYAML(instance));
+      break;
+    default:
+      ctx.res.status(400).json(await makeQueryValidationError(ctx, "f"));
+  }
 }
 
 export { edrGetOneInstanceInCollection, edrGetAllInstancesInCollection };

@@ -5,10 +5,11 @@ import {
   ExegesisPluginContext,
 } from "exegesis-express";
 import sequelize from "../../../dbconnection";
-import { DatabaseError, QueryTypes, Sequelize } from "sequelize";
-import { error } from "console";
+import { QueryTypes } from "sequelize";
+import * as crsDetails from "../../components/crsdetails";
 import makeQueryValidationError from "../../components/makeValidationError";
 import return500InternalServerErr from "../../components/makeInternalServerError";
+import * as edrIndex from "../index";
 
 type GeometryTypes =
   | "POINT"
@@ -47,6 +48,10 @@ function makeExegesisPlugin(
       //Initialize parameters
       const _oasListedParams = await ctx.getParams();
 
+      //Force definition of bbox on certain paths.
+      if(!_oasListedParams.query.bbox&&_url.pathname.endsWith("cube")){
+        ctx.res.status(400).json(await makeQueryValidationError(ctx,"bbox","bbox param must not be empty on this route"))
+      }
       //Validate CollectionIds
       if (_oasListedParams.path.collectionId) {
         if (!collectionIds.includes(_oasListedParams.path.collectionId)) {
@@ -57,17 +62,52 @@ function makeExegesisPlugin(
             })
             .end();
         }
-        if(_oasListedParams.path.collectionId===""||_oasListedParams.path.instanceId===""){
+
+        if (
+          _oasListedParams.path.collectionId === "" ||
+          _oasListedParams.path.instanceId === ""
+        ) {
           ctx.res.status(400).setBody(
-            ctx.makeValidationError(
-              "collectionId cannot be an empty string",
-              {
-                in: "path",
-                name: "collectionId",
-                docPath: ctx.api.pathItemPtr,
-              }
-            )
+            ctx.makeValidationError("collectionId cannot be an empty string", {
+              in: "path",
+              name: "collectionId",
+              docPath: ctx.api.pathItemPtr,
+            })
           );
+        }
+
+        /**
+         * If parameter-names are requested and are not defined in the requested collections metadata
+         */
+
+        if (_oasListedParams.query["parameter-name"]) {
+          const unlistedParamNames = (
+            _oasListedParams.query["parameter-name"] as string
+          )
+            .split(",")
+            .filter(
+              (pName) =>
+                !edrIndex.collectionsMetadata
+                  .find(
+                    (collection) =>
+                      collection.id === _oasListedParams.path.collectionId
+                  )
+                  .parameter_names.includes(pName)
+            );
+          if (unlistedParamNames.length > 0) {
+            ctx.res
+              .status(400)
+              .json(
+                await makeQueryValidationError(
+                  ctx,
+                  "param-name",
+                  "The following query params are not listed in the collections metadata thus are INVALID: " +
+                    unlistedParamNames.join(",")
+                )
+              )
+              .end();
+            return;
+          }
         }
       }
 
@@ -274,8 +314,50 @@ function makeExegesisPlugin(
           }
         }
       }
+      if (_oasListedParams.query.crs) {
+        if (
+          !URL.canParse(_oasListedParams.query.crs) ||
+          !crsDetails._allsupportedcrsUris.includes(_oasListedParams.query.crs)
+        ) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "crs",
+                !URL.canParse(_oasListedParams.query.crs)
+                  ? "CRS must be in the uri syntax http://www.opengis.net/def/crs/{authority}/{version}/{code} to reduce complexity"
+                  : "The CRS requested is not currently supported by this server"
+              )
+            );
+          return;
+        }
+      }
+      if (_oasListedParams.query["bbox-crs"]) {
+        if (
+          !URL.canParse(_oasListedParams.query["bbox.crs"]) ||
+          !crsDetails._allsupportedcrsUris.includes(
+            _oasListedParams.query["bbox-crs"]
+          )
+        ) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "bbox-crs",
+                !URL.canParse(_oasListedParams.query["bbox-crs"])
+                  ? "CRS must be in the uri syntax http://www.opengis.net/def/crs/{authority}/{version}/{code} to reduce complexity"
+                  : "The CRS requested is not currently supported by this server"
+              )
+            );
+          return;
+        }
+      }
     },
   };
+
+  //Validate parameter-names
 }
 
 /**

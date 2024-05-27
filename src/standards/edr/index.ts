@@ -58,30 +58,49 @@ const collectionsMetadata: types.CollectionWithoutProps[] = [
   {
     id: "hourly",
     modelName: "hourly2024",
+    geomColumnName: "geom",
     edrVariables: [
+      {
+        columnDerivedFrom: "dew",
+        id: "dewPointTemperature",
+        name: "dewPointTemp",
+        unit: "temperature",
+        dataType: "float"
+      },
       {
         id: "temperature",
         dataType: "float",
         name: "temperature",
         unit: "temperature",
+        columnDerivedFrom: "temperature"
       },
       {
+        columnDerivedFrom: "slp",
         id: "pressure",
         dataType: "float",
         name: "pressure",
         unit: "pressure",
       },
       {
+        columnDerivedFrom: "wind",
         id: "windDirection",
         dataType: "integer",
         name: "windDirection",
         unit: "windDirection",
       },
       {
+        columnDerivedFrom: "wind",
         id: "windType",
         dataType: "string",
         name: "windType",
         unit: "windType",
+      },
+      {
+        columnDerivedFrom: "wind",
+        id: "windSpeed",
+        dataType: "float",
+        name: "windSpeed",
+        unit: "windSpeed",
       },
     ],
     datetimeColumns: ["date"],
@@ -99,13 +118,17 @@ const collectionsMetadata: types.CollectionWithoutProps[] = [
     },
   },
 ];
+const contentNegotiationValues: { f: string; contentType: string }[] = [];
+
+const allowedFValues = contentNegotiationValues.map((negValue) => negValue.f);
+
 for (const collectionConfig of collectionsMetadata) {
   collectionConfig.parameter_names = collectionConfig.edrVariables.map(
     (variable) => variable.id
   );
 }
 
-export { collectionsMetadata };
+export { collectionsMetadata, allowedFValues };
 export default async function edrExegesisInstance() {
   globalexegesisOptions.controllers = {
     /**

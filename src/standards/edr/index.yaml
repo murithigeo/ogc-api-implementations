@@ -145,6 +145,7 @@ paths:
     get:
       x-exegesis-operationId: edrGetAllInstancesInCollection
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/f"
       responses:
@@ -161,6 +162,7 @@ paths:
     get:
       x-exegesis-operationId: edrGetOneInstanceInCollection
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/instanceId"
         - $ref: "#/components/parameters/f"
@@ -207,6 +209,7 @@ paths:
     get:
       x-exegesis-operationId: edrGetAllItemsInInstance
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/bbox"
         - $ref: "#/components/parameters/instanceId"
@@ -221,6 +224,7 @@ paths:
     get:
       x-exegesis-operationId: edrGetOneItemInInstance
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/f"
         - $ref: "#/components/parameters/itemId"
         - $ref: "#/components/parameters/collectionId"
@@ -253,6 +257,7 @@ paths:
     get:
       x-exegesis-operationId: edrQueryPositionAtInstance
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/instanceId"
         - $ref: "#/components/parameters/f"
@@ -292,6 +297,7 @@ paths:
     get:
       x-exegesis-operationId: edrQueryRadiusAtInstance
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/f"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/crs"
@@ -333,6 +339,7 @@ paths:
     get:
       x-exegesis-operationId: edrQueryAreaAtCollection
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/areaCoords"
         - $ref: "#/components/parameters/z"
         - $ref: "#/components/parameters/datetime"
@@ -372,6 +379,7 @@ paths:
     get:
       x-exegesis-operationId: edrQueryCubeAtInstance
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/bbox"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/instanceId"
@@ -424,6 +432,7 @@ paths:
     get:
       x-exegesis-operationId: edrQueryLocationsAtInstance_All
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/bbox"
         - $ref: "#/components/parameters/datetime"
         - $ref: "#/components/parameters/collectionId"
@@ -438,6 +447,7 @@ paths:
     get:
       x-exegesis-operationId: edrQueryLocationsAtInstance_One
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/instanceId"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/locationId"
@@ -471,6 +481,7 @@ paths:
     get:
       x-exegesis-operationId: edrQueryTrajectoryAtInstance
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/trajectoryCoords"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/instanceId"
@@ -517,6 +528,7 @@ paths:
     get:
       x-exegesis-operationId: edrQueryCorridorAtInstance
       parameters:
+        - $ref: "#/components/parameters/instanceMode"
         - $ref: "#/components/parameters/trajectoryCoords" #Must be LineString/MultiLineString
         - $ref: "#/components/parameters/datetime"
         - $ref: "#/components/parameters/z"
@@ -2483,7 +2495,17 @@ components:
       required: true
       schema:
         type: string
-
+    instanceMode:
+      in: query
+      name: instancemode
+      required: true
+      description: Define how instances are determined. Get Instances by subregion i.e Eastern Africa or by country i.e KEN => Kenya
+      schema:
+        type: string
+        default: subregion
+        enum:
+          - subregion
+          - adm0
   # Describing Common Responses
   responses:
     #Responses with coverageJSON, edrGeoJSON, text/yaml

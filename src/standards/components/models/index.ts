@@ -1,9 +1,6 @@
 import fs from "fs";
 import sequelize from "../../../dbconnection";
-
-//import models
 import path from "path";
-import edrModelScopes from "./scripts/models.scopes";
 
 //Init models
 fs.readdirSync(__dirname)
@@ -14,9 +11,6 @@ fs.readdirSync(__dirname)
     const model = require(path.join(__dirname, file)).default(sequelize);
     sequelize.models[model.name] = model;
     
-    if(sequelize.models.hourly2024){
-      //sequelize.models.hourly2024.sync({alter:true})
-    }
     
     /*
     if(model.name==="hourly2024"){
@@ -26,10 +20,4 @@ fs.readdirSync(__dirname)
   });
 
 //Initialize the scopes
-
-(async () => {
-  await edrModelScopes(sequelize);
-})();
-
-
 export default sequelize;

@@ -17,7 +17,7 @@ const SrsModel = (sequelize: Sequelize) => {
     paranoid: true,
     freezeTableName: true
   });
-  model.sync({ alter: false, force: false });
+  //model.sync({ alter: false, force: false });
   return model;
 };
 

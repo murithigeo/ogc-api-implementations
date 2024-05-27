@@ -114,7 +114,8 @@ export interface Crs_prop {
   /**
    * @type uri formed by computing `http://www.opengis.net/def/crs/{authority}/{version}/{code}
    */
-  uri?: string;
+  crs?: string;
+  wkt?: string;
   version: number;
   code: string | number;
   srid: number;

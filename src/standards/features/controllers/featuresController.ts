@@ -185,7 +185,7 @@ async function dbQueryMountains(
          * @param reqCrs.uri === CRS84h is intended for collections with z-axis
          * If CRS84, return as is
          */
-        reqCrs.uri === crsDetails.crs84hUri
+        reqCrs.crs === crsDetails.crs84hUri
           ? [Sequelize.col(geomColumnName), geomColumnName]
           : //Otherwise if its not crs84h, start the next conditional checks
           reqCrs.isGeographic === true

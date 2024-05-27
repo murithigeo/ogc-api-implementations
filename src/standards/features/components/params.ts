@@ -3,7 +3,7 @@ import * as crsDetails from "../../components/crsdetails"
 import { CN_Value, Crs_prop, F_AssociatedType } from "../../../types";
 
 export async function validate_crs_string(crsuri: string): Promise<Crs_prop> {
-  const validCrs = crsDetails._allCrsProperties.find((crsProp) => crsProp.uri === crsuri);
+  const validCrs = crsDetails._allCrsProperties.find((crsProp) => crsProp.crs === crsuri);
   return validCrs;
 }
 
@@ -11,7 +11,7 @@ async function crs_param_init(ctx: ExegesisContext): Promise<string> {
   const crsparamstring: string = ctx.params.query.crs
     ? ctx.params.query.crs
     : crsDetails._allCrsProperties
-        .map((crs) => crs.uri)
+        .map((crs) => crs.crs)
         .filter((crsuri) => crsuri === (crsDetails.crs84Uri || crsDetails.crs84hUri));
   return crsparamstring;
 }
@@ -20,7 +20,7 @@ async function bboxcrs_param_init(ctx: ExegesisContext): Promise<string> {
   const bboxcrsstring: string = ctx.params.query["bbox-crs"]
     ? ctx.params.query["bbox-crs"]
     : crsDetails._allCrsProperties
-        .map((crs) => crs.uri)
+        .map((crs) => crs.crs)
         .filter((crsuri) => crsuri === (crsDetails.crs84Uri || crsDetails.crs84hUri));
   return bboxcrsstring;
 }
@@ -66,7 +66,7 @@ async function bbox_param_init(
     //Depreciated because invalid crs errors are controlled using the the invalid crs plugin
     //TODO: Each standard instance should have its own allowed crsArray
     // if (bboxcrs_vArray.length > 0) {
-    if (reqBboxcrs.uri === crsDetails.crs84hUri && bboxParam.length > 4) {
+    if (reqBboxcrs.crs === crsDetails.crs84hUri && bboxParam.length > 4) {
       bboxArray = [
         bboxParam[0], //xmin
         bboxParam[1], //ymin
@@ -92,7 +92,7 @@ async function contentcrsheader_header_init(
   const contentcrsheader =
     //Since crs is validated before controller
     //crs_vArray.length > 0 ?
-    `<${crs_vArray.uri}>`;
+    `<${crs_vArray.crs}>`;
   return contentcrsheader;
 }
 

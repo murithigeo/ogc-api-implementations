@@ -3,20 +3,23 @@ import * as types from "../../types";
 import sequelize from "../../models";
 import return500InternalServerErr from "../../../components/makeInternalServerError";
 import { Op } from "sequelize";
-import * as units from "../weatherMetadata/units";
-import * as observedProperties from "../weatherMetadata/observedProperty";
-import { instanceIdStation } from "../helperScripts";
+import * as helperScripts from "../helperScripts";
 import * as DataQueries from "../links/queryTypes";
-import edrCommonParams from "../params";
+import * as crsDetails from "../../../components/crsdetails";
+import genParamNameObj from "../collection_instanceParamNamesObject";
+
+
+
+
 async function genExtentBbox(
   ctx: ExegesisContext,
-  modelName: string,
+  modelName: string
 ): Promise<[number, number, number, number, number?, number?]> {
   try {
     const res = (
       (await sequelize.models[modelName].scope("bboxGen").findOne({
         where: {
-          [Op.and]: [instanceIdStation(ctx)],
+          [Op.and]: [helperScripts.instanceIdColumnQuery(ctx)],
         },
         //includeIgnoreAtri
         raw: true,
@@ -42,10 +45,10 @@ async function genExtentTempInterval(
   if (datetimeColumns.length > 0) {
     for (const column of datetimeColumns) {
       let min = await sequelize.models[modelName].min(column, {
-        where: { [Op.and]: [instanceIdStation(ctx)] },
+        where: { [Op.and]: [helperScripts.instanceIdColumnQuery(ctx)] },
       });
       let max = await sequelize.models[modelName].max(column, {
-        where: { [Op.and]: [instanceIdStation(ctx)] },
+        where: { [Op.and]: [helperScripts.instanceIdColumnQuery(ctx)] },
       });
       intervals.push([min as string, max as string]);
     }
@@ -59,8 +62,7 @@ async function genExtentTempInterval(
 
 async function genCollectionInfo(
   ctx: ExegesisContext,
-  collectionConfig: types.CollectionWithoutProps,
-  collectionOrInstanceId: string
+  collectionConfig: types.CollectionWithoutProps
 ): Promise<types.Collection> {
   //Alter the value of instanceId if provided collectionId is not equal to the configuration value
   //Implies that we are querying instances
@@ -98,37 +100,39 @@ async function genCollectionInfo(
   _extent_bbox[0].splice(4, 1); //Remove zmax
 
   const data_queries: types.CollectionDataQueries = {};
-  if (collectionConfig.data_queries.radius) {
-    data_queries.radius = await DataQueries.radius(
-      ctx,
-      collectionConfig.id === collectionOrInstanceId
-        ? collectionConfig.id
-        : collectionOrInstanceId
-    );
+
+  for (const [k, v] of Object.entries(collectionConfig.data_queries)) {
+    if (v) {
+      data_queries[k] = await DataQueries.default({
+        ctx: ctx,
+        query_type: k as types.QueryType,
+        crsStrings: !v.specificCrs
+          ? collectionConfig.allSupportedCrs
+          : v.specificCrs,
+        default_output_format: !v.specificDefOutputFormat
+          ? collectionConfig.default_output_format
+          : v.specificDefOutputFormat,
+        output_formats: !v.specificOutputFormats
+          ? collectionConfig.output_formats
+          : v.specificOutputFormats,
+        width_units: v.width_units,
+        height_units: v.height_units,
+        within_units: v.within_units,
+      });
+    }
   }
 
-  let parameterNames: types.Parameter_Names = {};
-
-  for (const parameter of collectionConfig.edrVariables) {
-    parameterNames[parameter.id] = {
-      type: "Parameter",
-      id: parameter.id,
-      description: parameter.id + " parameter",
-      "data-type": parameter.dataType,
-      unit: units[parameter.unit],
-      observedProperty: observedProperties[parameter.name],
-    };
+  if (ctx.params.path.instanceId && data_queries.instances) {
+    delete data_queries.instances;
   }
-
-  //collectionId
-  //Scenarios: {root}/collections | {root}/collections/{collectionId} | {root}/collections
 
   return {
-    id: collectionOrInstanceId, //new URL(ctx.api.serverObject.uri+ctx.req.url).pathname.endsWith("instances")||ctx.params.path.instanceId?,
+    id: !ctx.params.path.instanceId
+      ? ctx.params.path.collectionId
+      : ctx.params.path.instanceId, //new URL(ctx.api.serverObject.uri+ctx.req.url).pathname.endsWith("instances")||ctx.params.path.instanceId?,
     crs: collectionConfig.allSupportedCrs,
     output_formats: collectionConfig.output_formats,
     title: collectionConfig.id + " collection",
-    data_queries,
     extent: {
       spatial: {
         bbox: _extent_bbox,
@@ -136,18 +140,19 @@ async function genCollectionInfo(
       },
       temporal: {
         interval: tempInterval,
-        trs: isUTC ? "UTC" : "Gregorian",
+        trs: isUTC ? "UTC" : crsDetails.trs,
       },
       vertical:
         zMin !== 0 && zMax !== 0
           ? {
-              name: "CRS84h",
+              name: crsDetails.crs84hUri,
               interval: [[zMin, zMax]],
               vrs: "ellipsoidal height",
             }
           : undefined,
     },
-    parameter_names: parameterNames,
+    parameter_names: await genParamNameObj(collectionConfig.edrVariables),
+    data_queries,
     //If extent[2] && extent[5] =0, then no vertical
   };
 }

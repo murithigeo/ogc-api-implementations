@@ -1,4 +1,6 @@
 import * as crsDetails from "../../components/crsdetails";
+import makeQueryValidationError from "../../components/makeValidationError";
+import * as index from "../index";
 /**
  * @path .../trajectory
  * @throws Error if @param coords is @type LINESTRINGZ as well as @param z
@@ -21,20 +23,44 @@ import { ExegesisContext } from "exegesis-express";
  */
 
 const edrCommonParams = async (ctx: ExegesisContext) => {
+  const bboxVals = await validateBboxParam(ctx);
   return {
-    bbox: await validateBboxParam(ctx),
+    xyAxisBbox: bboxVals.xyAxisBbox,
+    zAxisBbox: bboxVals.zAxisBbox,
     crs: await validateCrsParam(ctx),
     _url: await reqUriGen(ctx),
     limit: await limitParamInit(ctx),
     offset: await offsetParamInit(ctx),
     bboxcrs: await validateBboxCrs(ctx),
-    parameter_names: await parameter_namesParamInit(ctx)
+    parameter_names: await parameter_namesParamInit(ctx),
+    coords: await coordsParamInit(ctx),
+    instanceId: await instanceIdParamInit(ctx),
+    instanceMode: await instanceModeParamInit(ctx),
+    collectionId: await collectionIdParamInit(ctx),
+    locationId: await locationIdParamInit(ctx),
+    itemId: await itemIdParamInit(ctx),
+    height_units: await heightUnitsParamInit(ctx),
+    corridor_height: await corridorHeightParamInit(ctx),
+    width_units: await widthUnitsParamInit(ctx),
+    corridor_width: await corridorWidthParamInit(ctx),
+    resolutionX: await resolutionXParamInit(ctx),
+    resolutionY: await resolutionYParamInit(ctx),
+    resolutionZ: await resolutionZParamInit(ctx),
+    within_units: await withinUnitsParamInit(ctx),
+    within: await withinParamInit(ctx),
+    cubeZ: await cubeZParamInit(ctx),
+    z: await zParamInit(ctx),
+    datetime: await datetimeParamInit(ctx),
+    //f: await fParamInit(ctx),
   };
 };
 export default edrCommonParams;
 
-const validateCrsUri = async (uri: string) =>
-  crsDetails._allCrsProperties.find((crsDet) => crsDet.uri === uri);
+const coordsParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query.coords ?? undefined;
+
+export const validateCrsUri = async (uri: string) =>
+  crsDetails._allCrsProperties.find((crsDet) => crsDet.crs === uri);
 
 const crsParamInit = async (ctx: ExegesisContext) =>
   ctx.params.query.crs
@@ -58,55 +84,57 @@ const bboxParamInit = async (ctx: ExegesisContext) =>
 const validateBboxParam = async (ctx: ExegesisContext) => {
   const unsortedBbboxArray = await bboxParamInit(ctx);
   const bboxCrs = await validateBboxCrs(ctx);
-  let sortedBboxArray:
-    | [number, number, number, number, number?, number?]
-    | undefined;
+  let xyAxisBbox: [number, number, number, number] | undefined;
+  let zAxisBbox: [number, number] | undefined;
   if (unsortedBbboxArray === undefined) {
-    sortedBboxArray = undefined;
+    xyAxisBbox = undefined;
     return;
   } else {
     if (bboxCrs.isGeographic === true) {
       if (unsortedBbboxArray.length > 4) {
-        sortedBboxArray = [
+        xyAxisBbox = [
           unsortedBbboxArray[1],
           unsortedBbboxArray[0],
-          unsortedBbboxArray[2], //minz
           unsortedBbboxArray[4],
           unsortedBbboxArray[3],
-          unsortedBbboxArray[5], //maxz
+          //maxz
         ];
+        zAxisBbox = [unsortedBbboxArray[2], unsortedBbboxArray[5]]; //minz
+      } else {
+        xyAxisBbox = [
+          unsortedBbboxArray[1],
+          unsortedBbboxArray[0],
+          unsortedBbboxArray[3],
+          unsortedBbboxArray[2],
+        ];
+        zAxisBbox = undefined;
       }
-      sortedBboxArray = [
-        unsortedBbboxArray[1],
-        unsortedBbboxArray[0],
-        unsortedBbboxArray[3],
-        unsortedBbboxArray[2],
-      ];
     } else {
       if (unsortedBbboxArray.length > 4) {
-        sortedBboxArray = [
+        xyAxisBbox = [
           unsortedBbboxArray[0],
           unsortedBbboxArray[1],
-          unsortedBbboxArray[2], //minz
           unsortedBbboxArray[3],
           unsortedBbboxArray[4],
-          unsortedBbboxArray[5], //maxz
+          //maxz
+        ];
+        zAxisBbox = [unsortedBbboxArray[2], unsortedBbboxArray[5]]; //minz
+      } else {
+        xyAxisBbox = [
+          unsortedBbboxArray[0],
+          unsortedBbboxArray[1],
+          unsortedBbboxArray[2],
+          unsortedBbboxArray[3],
         ];
       }
-      sortedBboxArray = sortedBboxArray = [
-        unsortedBbboxArray[0],
-        unsortedBbboxArray[1],
-        unsortedBbboxArray[2],
-        unsortedBbboxArray[3],
-      ];
     }
   }
-  return sortedBboxArray;
+  return { xyAxisBbox, zAxisBbox };
 };
 
-const parameter_namesParamInit= async (ctx: ExegesisContext) =>
-  ctx.params.query.parameter_name !== undefined
-    ? ctx.params.query.parameter_name.split(",") as Array<string>
+const parameter_namesParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["parameter-name"] !== undefined
+    ? (ctx.params.query["parameter-name"].split(",") as Array<string>)
     : undefined;
 
 const reqUriGen = async (ctx: ExegesisContext) => {
@@ -138,3 +166,117 @@ const offsetParamInit = async (ctx: ExegesisContext) =>
   ctx.params.query.limit || ctx.params.query.offset === 0
     ? ctx.params.query.offset
     : 0;
+
+/**
+ * @function instanceModeParamInit not really necessary considering its required by exegesis and it has a default
+ */
+const instanceModeParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query.instancemode ?? "subregion";
+
+const collectionIdParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.path.collectionId as string;
+
+const instanceIdParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.path.instanceId as string;
+
+const locationIdParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.path.locationId as string;
+
+const itemIdParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.path.itemId as string;
+
+const heightUnitsParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["height-units"]
+    ? (ctx.params.query["height-units"] as string)
+    : undefined;
+
+const corridorHeightParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["corridor-height"]
+    ? (ctx.params.query["corridor-height"] as number)
+    : undefined;
+
+const widthUnitsParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["width-units"]
+    ? (ctx.params.query["width-units"] as string)
+    : undefined;
+
+const corridorWidthParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["corridor-width"]
+    ? (ctx.params.query["corridor-width"] as number)
+    : undefined;
+
+const resolutionZParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["resolution-z"]
+    ? (ctx.params.query["resolution-z"] as number)
+    : undefined;
+
+const resolutionXParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["resolution-x"]
+    ? (ctx.params.query["resolution-x"] as number)
+    : undefined;
+
+const resolutionYParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["resolution-y"]
+    ? (ctx.params.query["resolution-y"] as number)
+    : undefined;
+
+const withinUnitsParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["within-units"]
+    ? (ctx.params.query["within-units"] as string)
+    : undefined;
+
+const withinParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query.within ? (ctx.params.query.within as number) : undefined;
+
+const cubeZParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query["cube-z"]
+    ? (ctx.params.query["cube-z"] as string)
+    : undefined;
+
+const zParamInit = async (ctx: ExegesisContext) => {
+  const z = ctx.params.query.z as string;
+
+  if (z) {
+    let separator: "/" | "," | "none";
+    if (z.includes("/")) {
+      separator = "/";
+    } else if (z.includes(",")) {
+      separator = ",";
+    }
+    separator = "none";
+    return {
+      zValues: z.split("/" || ","),
+      separator,
+    };
+  }
+  return undefined;
+};
+
+//TO DO
+const datetimeParamInit = async (ctx: ExegesisContext) => {
+  const param = ctx.params.query["datetime"];
+  if (param) {
+  }
+};
+
+/** */
+/*
+const fParamInit = async (ctx: ExegesisContext) => {
+  if (ctx.params.query.f) {
+    if (
+      index.allowedFValues.length > 0 &&
+      !index.allowedFValues.includes(ctx.params.query.f)
+    ) {
+      ctx.res
+        .status(400)
+        .json(await makeQueryValidationError(ctx, "f"))
+        .end();
+      return;
+    }
+  }
+
+  return ctx.params.query.f as string | undefined;
+  
+};
+
+*/

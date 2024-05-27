@@ -1,4 +1,4 @@
-import * as types from "../../types";
+import * as types from "../types";
 
 export const windSpeed: types.ObservedProperty = {
   description: "Wind speed rate in m/s",

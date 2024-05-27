@@ -1,44 +1,54 @@
 export type CollectionId = string;
-type OutputFormats = string[];
-export type default_output_format = string;
-type withinUnits = string[];
-
-type Crs_Details = {
+export type OutputFormats = string[];
+export type Default_output_format = string;
+export type WithinUnits = string[];
+export type HeightUnits = string[];
+interface Crs_Detail {
   crs: string;
+  uri?: string;
   wkt: string;
-}[];
+}
+export type WidthUnits = string[];
+export type Crs_Details = Crs_Detail[];
 
 /**
  * @interface InstanceOrCollectionProps
  */
 interface genericDataQueryItemConfig {
   specificOutputFormats?: string[];
-  specificDefOutputFormat?: string[];
+  specificDefOutputFormat?: string;
+  specificCrs?: string[];
+  width_units?: WidthUnits;
+  height_units?: HeightUnits;
+  within_units?: WithinUnits;
 }
 interface CorridorDataQueryItemConfig extends genericDataQueryItemConfig {
-  width_units: string[];
-  height_units: string[];
+  width_units: WidthUnits;
+  height_units: HeightUnits;
 }
 interface CubeDataQueryItemConfig extends genericDataQueryItemConfig {
-  height_units: string[];
+  height_units: HeightUnits;
 }
 interface RadiusDataQueryItemConfig extends genericDataQueryItemConfig {
-  within_units: string[];
+  within_units: WithinUnits;
 }
 export interface collectionConfigEdrVariable {
   id: string;
   dataType: "string" | "float" | "integer";
+  columnDerivedFrom: string;
   //description?: string;
   name:
     | "temperature"
     | "dewPointTemp"
     | "pressure"
     | "windDirection"
-    | "windType";
-  unit: "pressure" | "temperature" | "windspeed" | "windDirection" | "windType";
+    | "windType"
+    | "windSpeed";
+  unit: "pressure" | "temperature" | "windSpeed" | "windDirection" | "windType";
 }
 export interface CollectionWithoutProps {
   id: string;
+  geomColumnName: string;
   modelName: string;
   edrVariables: collectionConfigEdrVariable[];
   allSupportedCrs: string[];
@@ -54,7 +64,7 @@ export interface CollectionWithoutProps {
     radius?: RadiusDataQueryItemConfig;
     cube?: CubeDataQueryItemConfig;
   };
-  parameter_names?:string[];
+  parameter_names?: string[];
   output_formats: OutputFormats;
   default_output_format: string;
 }
@@ -137,40 +147,48 @@ export interface InstancesRoot {
   links: Link[];
 }
 
-
 export interface CollectionDataQueries {
-  position?: {
-    link: DataQueryLinkDefault;
-  };
+  position?: PositionDataQuery;
   radius?: RadiusDataQuery;
-  area?: {
-    link: DataQueryLinkDefault;
-  };
-  cube?: {
-    link: DataQueryLinkDefault<{ height_units: string[] }>;
-  };
-  trajectory?: {
-    link: DataQueryLinkDefault;
-  };
-  corridor?: {
-    link: DataQueryLinkDefault<{
-      width_units: string[];
-      height_units: string[];
-    }>;
-  };
-  items?: {
-    link: DataQueryLinkDefault;
-  };
-  locations?: {
-    link: DataQueryLinkDefault;
-  };
-  instances?: DataQueryLinkDefault;
+  area?: AreaDataQuery;
+  cube?: CubeDataQuery;
+  trajectory?: TrajectoryDataQuery;
+  corridor?: CorridorDataQuery;
+  items?: ItemsDataQuery;
+  locations?: LocationsDataQuery;
+  instances?: InstancesDataQuery;
 }
-
+export interface PositionDataQuery {
+  link: DataQueryLinkDefault;
+}
+export interface AreaDataQuery {
+  link: DataQueryLinkDefault;
+}
 export interface RadiusDataQuery {
-  link: DataQueryLinkDefault<{ within_units: string[] }>; //Add within_units interface
+  link: DataQueryLinkDefault<{ within_units: WithinUnits }>; //Add within_units interface
+}
+export interface CubeDataQuery {
+  link: DataQueryLinkDefault<{ height_units: HeightUnits }>;
 }
 
+export interface TrajectoryDataQuery {
+  link: DataQueryLinkDefault;
+}
+export interface LocationsDataQuery {
+  link: DataQueryLinkDefault;
+}
+export interface ItemsDataQuery {
+  link: DataQueryLinkDefault;
+}
+export interface CorridorDataQuery {
+  link: DataQueryLinkDefault<{
+    width_units: WidthUnits;
+    height_units: HeightUnits;
+  }>;
+}
+export interface InstancesDataQuery {
+  link: DataQueryLinkDefault;
+}
 export interface Collection {
   id: string;
   title?: string;
@@ -199,9 +217,9 @@ interface DataQueryLinkDefault<T = {}> extends Link {
     title: string;
     description: string;
     query_type: QueryType;
-    output_formats:OutputFormats;
-    default_output_format: default_output_format;
-    crs_details: Crs_Details[];
+    output_formats: OutputFormats;
+    default_output_format: Default_output_format;
+    crs_details: Crs_Details;
   } & T;
 }
 
@@ -228,33 +246,36 @@ const ParameterNamesExample: ParameterNames = {
 };
 export interface ParameterNames {
   type: "Parameter";
-  description?: string;
+  description?: string | i18N;
+  id?: string; //Unique id of the parameter
   label?: string;
   "data-type"?: "integer" | "float" | "string";
-  unit?: Units;
+  unit?: Unit;
   observedProperty: ObservedProperty;
   categoryEncoding?: {
     [key: string]: number | number[];
   };
   extent?: Extent;
-  id?: string; //Unique id of the parameter
   measurementType?: {
     method: string; //Example: mean
     duration?: string; //Not required for instantenous measurements; Example: PT10M
   };
 }
 
-export interface Units {
-  label: { [key: string]: string } | string; //Example: {label:{en:Kelvin}}
-  symbol:
-    | {
-        value: string; //Representation of the units symbol
-        type: string; //uri pointing to detailed description of the unit
-      }
-    | string; //{symbol:{value:K,type:http://www.opengis.net/def/uom/UCUM/ }}
-  id?: string;
-}
-
+export type Unit =
+  | {
+      id?: string;
+      label: i18N | string; //Example: {label:{en:Kelvin}}
+      symbol: Symbol;
+    }
+  | {
+      /**
+       * @label or @symbol must be defined
+       */
+      id?: string;
+      label?: i18N | string;
+      symbol?: string | { type?: string; value?: string };
+    };
 /**
  * @interface ObservedProperty
  * @example {id: http://vocab.nerc.ac.uk/standard_name/sea_ice_area_fraction/
@@ -267,8 +288,8 @@ export interface ObservedProperty {
       the observed property
    */
   id?: string;
-  label: string | object;
-  description?: string;
+  label: string | i18N;
+  description?: string | i18N;
   categories?: {
     /**
    * URI linking to an external registry which contains the definitive
@@ -276,8 +297,8 @@ export interface ObservedProperty {
       the observed property
       */
     id: string;
-    label: string | object;
-    description?: string | { en: string };
+    label: string | i18N;
+    description?: string | i18N;
   }[];
 }
 interface CoverageJSON {
@@ -399,14 +420,15 @@ interface NumericValuesAxis extends ValuesAxisBase {
 }
 export interface EdrGeoJSONFeatureCollection {
   type: "FeatureCollection";
-  features: GeoJSONFeature[];
+  features: EdrGeoJSONFeature[];
+  timeStamp: string;
   numberMatched: number;
   numberReturned: number;
-  parameters: EdrGeoJSONParameter[];
+  parameters: EdrGeoJSONParameter[]; //ParameterNames[]
   links?: Link[];
 }
 
-export interface GeoJSONFeature {
+export interface EdrGeoJSONFeature {
   type: "Feature";
   id: string | number;
   links?: Link[];
@@ -414,32 +436,43 @@ export interface GeoJSONFeature {
   properties: edrGeoJSONProperties;
 }
 interface EdrGeoJSONParameter {
-  id?: string;
   type: "Parameter";
-  description?: i18N;
-  observedProperty: {
-    id?: string;
-    label: i18N;
-    description?: i18N;
-    categories?: {
-      id: string;
-      label: i18N;
-      description?: i18N;
-    };
-  };
-  unit?: {
-    /**
-     * @label or @symbol must be defined
-     */
-    id?: string;
-    label?: i18N;
-    symbol?: string | { type?: string; value?: string };
-  };
+  id?: string;
+  description?: i18N | string;
+  observedProperty: ObservedProperty;
+  unit?: Unit;
   categoryEncoding?: {
     [key: string]: number | number[];
   };
 }
+type Symbol =
+  | {
+      value: string; //Representation of the units symbol
+      type: string; //uri pointing to detailed description of the unit
+    }
+  | string; //{symbol:{value:K,type:http://www.opengis.net/def/uom/UCUM/ }}
 
+const exampleEdrGeoJSONFeatureCollection: EdrGeoJSONFeatureCollection = {
+  type: "FeatureCollection",
+  features: [
+    {
+      type: "Feature",
+      geometry: { coordinates: [1, 2], type: "Point" },
+      id: 1,
+      properties: {
+        "parameter-name": [], //The ones requested
+        label: "StationX",
+        edrqueryendpoint: "http:///link to the current object",
+        datetime: "",
+      },
+    },
+  ],
+  parameters: [],
+  numberMatched: 2,
+  numberReturned: 2,
+  timeStamp: "",
+  links: [],
+};
 /**
  * @interface i18N
  * @description Object representing an internationalised string.
@@ -480,6 +513,7 @@ interface edrGeoJSONProperties {
   "parameter-name": string[];
   label: string;
   edrqueryendpoint: string; //Is an URL
+  [key: string]: string | number | boolean | string[];
 }
 
 /**
