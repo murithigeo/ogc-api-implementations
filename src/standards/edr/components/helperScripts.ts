@@ -55,12 +55,19 @@ export const zAxisBboxQuery = async (
     ? {
         [Op.and]: [
           Sequelize.where(
-            Sequelize.fn("ST_Z", Sequelize.col(geomColumnName)),
+            Sequelize.fn(
+              "ST_Z",
+              Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857)
+            ),
             Op.gte,
             (await edrCommonParams(ctx)).zAxisBbox[0]
           ),
           Sequelize.where(
-            Sequelize.fn("ST_Z", Sequelize.col(geomColumnName)),
+            Sequelize.fn(
+              "ST_Z",
+              Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName)),
+              3857
+            ),
             Op.lte,
             (await edrCommonParams(ctx)).zAxisBbox[1]
           ),
@@ -165,8 +172,12 @@ export const radiusCoordsQuery = async (
     ? Sequelize.where(
         Sequelize.fn(
           "ST_DistanceSphere",
-          Sequelize.col(geomColumnName),
-          Sequelize.fn("ST_GeomFromText", coords, crs.srid)
+          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
+          Sequelize.fn(
+            "ST_Transform",
+            Sequelize.fn("ST_GeomFromText", coords, crs.srid),
+            3857
+          )
         ),
         "<=",
         unitConverter(within, within_units).to("meter")
@@ -183,13 +194,59 @@ export const positionCoordsQuery = async (
   return ctx.params.query.coords && _url.pathname.endsWith("position")
     ? Sequelize.where(
         Sequelize.fn(
-          "ST_DWithin",
-          Sequelize.col(geomColumnName),
-          Sequelize.fn("ST_GeomFromText", coords, crs.srid),
+          "ST_3dDWithin",
+          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
+          Sequelize.fn(
+            "ST_Transform",
+            Sequelize.fn("ST_GeomFromText", coords, crs.srid),
+            3857
+          ),
           coordsSearchPrecision
         ),
         true
       )
+    : undefined;
+};
+
+const corridorCoordsQuery = async (
+  ctx: ExegesisContext,
+  geomColumnName: string
+) => {
+  const {
+    coords,
+    _url,
+    crs,
+    width_units,
+    corridor_height,
+    height_units,
+    corridor_width,
+  } = await edrCommonParams(ctx);
+  return coords && _url.pathname.endsWith("corridor")
+    ? {
+        [Op.and]: [
+          Sequelize.where(
+            Sequelize.fn(
+              "ST_3dDwithin",
+              Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
+              Sequelize.fn(
+                "ST_Transform",
+                Sequelize.fn("ST_GeomFromText", coords, crs.srid),
+                3857
+              ),
+              unitConverter(corridor_width, width_units).to("m")
+            ),
+            true
+          ),
+          Sequelize.where(
+            Sequelize.fn(
+              "ST_Z",
+              Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857)
+            ),
+            Op.lte,
+            unitConverter(corridor_height, height_units).to("meter")
+          ),
+        ],
+      }
     : undefined;
 };
 
@@ -202,8 +259,12 @@ const areaCoordsQuery = async (
     ? Sequelize.where(
         Sequelize.fn(
           "ST_Intersects",
-          Sequelize.col(geomColumnName),
-          Sequelize.fn("ST_GeomFromText", coords, crs.srid)
+          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
+          Sequelize.fn(
+            "ST_Transform",
+            Sequelize.fn("ST_GeomFromText", coords, crs.srid),
+            3857
+          )
         ),
         true
       )
@@ -216,13 +277,18 @@ const trajectoryCoordsQuery = async (
   withinDistance?: number
 ) => {
   const { _url, coords, crs } = await edrCommonParams(ctx);
+
   return coords && _url.pathname.endsWith("trajectory")
     ? Sequelize.where(
         Sequelize.fn(
           "ST_3DDWithin",
-          Sequelize.col(geomColumnName),
-          Sequelize.fn("ST_GeomFromText", coords, crs.srid),
-          withinDistance ?? 10000
+          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
+          Sequelize.fn(
+            "ST_Transform",
+            Sequelize.fn("ST_GeomFromText", coords, crs.srid),
+            3857
+          ),
+          withinDistance ?? 30
         ),
         true
       )
@@ -283,6 +349,7 @@ const allWhereQueries = async (
       await dateTimeQuery(ctx, datetimeColumns),
       await areaCoordsQuery(ctx, geomColumnName),
       await trajectoryCoordsQuery(ctx, geomColumnName),
+      await corridorCoordsQuery(ctx, geomColumnName),
       //await cubeZQuery(ctx),
       //await includeColumnsToRetrieve(ctx, edrVariables),
       //await transformToCrsOrForce2DQuery(ctx, geomColumnName, resultWithZAxis),

@@ -21,15 +21,6 @@ type GeometryTypes =
   | "LINESTRINGZM"
   | "POLYGON"
   | "LINESTRINGZ";
-/**
- * @function checkIfGeometryType
- */
-async function checkCoordsString_allowedGeometry(
-  coords: string,
-  allowedGeometryTypes: GeometryTypes[]
-) {
-  return allowedGeometryTypes.some((type) => coords.startsWith(type));
-}
 
 /**
  * @function makeExegesisPlugin create a new plugin to handle preController, postSecurity validation.
@@ -238,17 +229,6 @@ function makeExegesisPlugin(
         //Convert the coords string to uppercase for better handling
         _oasListedParams.query.coords =
           _oasListedParams.query.coords.toUpperCase();
-        //TODO: //Run hasZ and hasM checks beforehand
-        //Check that the provided wkt actually matches wkt pattern
-
-        //Will add option to validate per crs
-        //Use eWKT functions to validate 3D/4D geometries
-
-        /**
-         * Check that the coords string starts with @type GeometryType
-         * If @boolean false status=400
-         * else, continue
-         */
 
         let allowedGeometryTypes: GeometryTypes[];
         switch (
@@ -296,13 +276,22 @@ function makeExegesisPlugin(
         /**
          * @description Trigger 400 error if the provided geometry is not in endpoint' allowed GeometryType
          */
+        if (allowedGeometryTypes.length < 1) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "coords",
+                "Ensure that the coords is valid i.e. Doesn't have space like LINESTRING Z etc"
+              )
+            );
+        }
         if (
-          !(await checkCoordsString_allowedGeometry(
-            _oasListedParams.query.coords,
-            allowedGeometryTypes
-          ))
+          !allowedGeometryTypes.includes(
+            _oasListedParams.query.coords.split("(")[0].trim()
+          )
         ) {
-          //console.log("This");
           ctx.res
             .status(400)
             .json(
@@ -318,6 +307,53 @@ function makeExegesisPlugin(
           return;
         }
 
+        if (
+          (_oasListedParams.query.coords as string).startsWith(
+            "LINESTRINGZM"
+          ) &&
+          (_oasListedParams.query.z || _oasListedParams.query.datetime)
+        ) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "coords|" + _oasListedParams.query.z ? "z" : "datetime",
+                "A LINESTRINGZM wkt & datetime | z cannot be defined at the same time"
+              )
+            );
+          return;
+        }
+        if (
+          (_oasListedParams.query.coords as string).startsWith("LINESTRINGZ") &&
+          _oasListedParams.query.z
+        ) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "coords|z",
+                "A LINESTRINGZ wkt & z cannot be defined at the same time"
+              )
+            );
+        }
+
+        if (
+          (_oasListedParams.query.coords as string).startsWith("LINESTRINGM") &&
+          _oasListedParams.query.datetime
+        ) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "coords|datime",
+                "A LINESTRINGM wkt & datetime cannot be defined at the same time"
+              )
+            );
+        }
+
         try {
           const isValidWkt: any = await sequelize.query(
             `select ST_IsValidReason('${_oasListedParams.query.coords}'::geometry) as isvalid`,
@@ -325,20 +361,18 @@ function makeExegesisPlugin(
               type: QueryTypes.SELECT,
             }
           );
-          if (isValidWkt) {
-            if (isValidWkt[0].isvalid !== "Valid Geometry") {
-              ctx.res
-                .status(400)
-                .json(
-                  makeQueryValidationError(
-                    ctx,
-                    "coords",
-                    "Invalid Geometry: " + isValidWkt[0].isvalid
-                  )
+          if (isValidWkt && isValidWkt[0].isvalid !== "Valid Geometry") {
+            ctx.res
+              .status(400)
+              .json(
+                makeQueryValidationError(
+                  ctx,
+                  "coords",
+                  "Invalid Geometry: " + isValidWkt[0].isvalid
                 )
-                .end();
-              return;
-            }
+              )
+              .end();
+            return;
           }
         } catch (err) {
           /**
