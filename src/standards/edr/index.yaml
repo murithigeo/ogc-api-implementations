@@ -437,6 +437,7 @@ paths:
         - $ref: "#/components/parameters/datetime"
         - $ref: "#/components/parameters/collectionId"
         - $ref: "#/components/parameters/instanceId"
+        - $ref: "#/components/parameters/f"
       responses:
         "200":
           $ref: "#/components/responses/covJson_edrGeoJson_yaml"

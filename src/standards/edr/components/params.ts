@@ -1,3 +1,4 @@
+import { Length } from "convert";
 import * as crsDetails from "../../components/crsdetails";
 import makeQueryValidationError from "../../components/makeValidationError";
 import * as index from "../index";
@@ -25,8 +26,11 @@ import { ExegesisContext } from "exegesis-express";
 const edrCommonParams = async (ctx: ExegesisContext) => {
   const bboxVals = await validateBboxParam(ctx);
   return {
-    xyAxisBbox: bboxVals.xyAxisBbox,
-    zAxisBbox: bboxVals.zAxisBbox,
+    xyAxisBbox: ctx.params.query.bbox ? bboxVals.xyAxisBbox : undefined,
+    zAxisBbox:
+      ctx.params.query.bbox && ctx.params.query.bbox.length > 4
+        ? bboxVals.zAxisBbox
+        : undefined,
     crs: await validateCrsParam(ctx),
     _url: await reqUriGen(ctx),
     limit: await limitParamInit(ctx),
@@ -51,6 +55,8 @@ const edrCommonParams = async (ctx: ExegesisContext) => {
     cubeZ: await cubeZParamInit(ctx),
     z: await zParamInit(ctx),
     datetime: await datetimeParamInit(ctx),
+
+    //datetime: await datetimeParamInit(ctx),
     //f: await fParamInit(ctx),
   };
 };
@@ -129,9 +135,10 @@ const validateBboxParam = async (ctx: ExegesisContext) => {
       }
     }
   }
-  return { xyAxisBbox, zAxisBbox };
+  return { xyAxisBbox, zAxisBbox } || undefined;
 };
 
+//const functionToUseForItemsInBoundingBox=async(ctx:ExegesisContext)=>{}
 const parameter_namesParamInit = async (ctx: ExegesisContext) =>
   ctx.params.query["parameter-name"] !== undefined
     ? (ctx.params.query["parameter-name"].split(",") as Array<string>)
@@ -187,7 +194,7 @@ const itemIdParamInit = async (ctx: ExegesisContext) =>
 
 const heightUnitsParamInit = async (ctx: ExegesisContext) =>
   ctx.params.query["height-units"]
-    ? (ctx.params.query["height-units"] as string)
+    ? (ctx.params.query["height-units"] as Length)
     : undefined;
 
 const corridorHeightParamInit = async (ctx: ExegesisContext) =>
@@ -197,7 +204,7 @@ const corridorHeightParamInit = async (ctx: ExegesisContext) =>
 
 const widthUnitsParamInit = async (ctx: ExegesisContext) =>
   ctx.params.query["width-units"]
-    ? (ctx.params.query["width-units"] as string)
+    ? (ctx.params.query["width-units"] as Length)
     : undefined;
 
 const corridorWidthParamInit = async (ctx: ExegesisContext) =>
@@ -222,7 +229,7 @@ const resolutionYParamInit = async (ctx: ExegesisContext) =>
 
 const withinUnitsParamInit = async (ctx: ExegesisContext) =>
   ctx.params.query["within-units"]
-    ? (ctx.params.query["within-units"] as string)
+    ? (ctx.params.query["within-units"] as Length)
     : undefined;
 
 const withinParamInit = async (ctx: ExegesisContext) =>
@@ -254,9 +261,13 @@ const zParamInit = async (ctx: ExegesisContext) => {
 
 //TO DO
 const datetimeParamInit = async (ctx: ExegesisContext) => {
-  const param = ctx.params.query["datetime"];
-  if (param) {
-  }
+  return ctx.params.query.datetime
+    ? (ctx.params.query.datetime as {
+        start: string | undefined;
+        end: string | undefined;
+        one: string | undefined;
+      })
+    : undefined;
 };
 
 /** */

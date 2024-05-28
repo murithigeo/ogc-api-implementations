@@ -1,5 +1,5 @@
 import { ExegesisContext } from "exegesis-express";
-import * as helperScripts from "../helperScripts";
+import allWhereQueries, * as helperScripts from "../helperScripts";
 import sequelize from "../../models";
 import * as types from "../../types";
 import { Op } from "sequelize";
@@ -14,7 +14,7 @@ const collectionHourly2024_QueryInterface = async (
     //Use this syntax instead of attributes:{include:[]} because the other will get columns that are not in exclude array
     attributes: [
       //Shape the geometry of returned geojson
-      await helperScripts.nonJoinTableCrsProcessing(
+      await helperScripts.transformToCrsOrForce2DQuery(
         ctx,
         matchedCollection.geomColumnName,
         true
@@ -30,25 +30,14 @@ const collectionHourly2024_QueryInterface = async (
         matchedCollection.edrVariables
       )),
     ],
-    where: {
-      [Op.and]: [
-        {
-          [matchedCollection.geomColumnName]: {
-            [Op.ne]: null,
-          },
-        },
-        helperScripts.instanceIdColumnQuery(ctx),
-        await helperScripts.xyBboxQuery(ctx, matchedCollection.geomColumnName),
-        await helperScripts.zAxisBboxQuery(
-          ctx,
-          matchedCollection.geomColumnName
-        ),
-      ],
-    },
+    where: await allWhereQueries(ctx, matchedCollection.geomColumnName,matchedCollection.datetimeColumns),
     offset: params.offset ? params.offset : undefined,
     limit: params.limit ? params.limit : undefined,
     raw: true,
-    order: [["name", "ASC"],["date","ASC"]],
+    order: [
+      ["name", "ASC"],
+      ["date", "ASC"],
+    ],
     //@ts-expect-error
     includeIgnoreAttributes: false,
   });

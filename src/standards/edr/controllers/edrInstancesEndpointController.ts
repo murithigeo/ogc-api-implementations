@@ -38,11 +38,13 @@ async function edrGetAllInstancesInCollection(ctx: ExegesisContext) {
     (collection) => collection.id === ctx.params.path.collectionId
   );
 
+
   const foundInstances = await checkIfCollHasInstances(
     ctx,
     matchedCollection.modelName
   );
-  if (!matchedCollection.data_queries.instances || foundInstances.length < 1) {
+
+  if (foundInstances.length < 1) {
     ctx.res
       .status(404)
       .json({
@@ -102,7 +104,6 @@ async function edrGetOneInstanceInCollection(ctx: ExegesisContext) {
     return;
   }
   if (!foundInstances.includes(ctx.params.path.instanceId)) {
-    console.log(foundInstances);
     ctx.res.status(404).json({
       message: `collection ${ctx.params.path.collectionId} has no instances`,
     });

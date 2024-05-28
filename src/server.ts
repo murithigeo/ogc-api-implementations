@@ -13,6 +13,7 @@ import { basicAuthenticator } from "./authentication/basicAuth";
 import featuresExegesisInstance from "./standards/features";
 import _rootInstance from "./root";
 import edrExegesisInstance from "./standards/edr";
+
 //This also assumes that the development occurs locally
 
 //let servers: oasDocServers[] = [];
@@ -56,7 +57,7 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
   allowMissingControllers: false,
   ignoreServers: false,
   autoHandleHttpErrors: true,
-  allErrors:true,
+  allErrors: true,
   //onResponseValidationError: onResponseValidationError,
   authenticators: {
     ApiKeyAuth: apiKeyAuthenticator,
@@ -73,7 +74,9 @@ async function createServer() {
   app.use((req, res, next) => {
     //Decode the url because exegesis may fail to decode some. Especially the bbox parameter
 
+    //Decode bbox only
     req.url = decodeURIComponent(req.url);
+
     next();
   });
   // Configure access log

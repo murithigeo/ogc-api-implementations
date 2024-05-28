@@ -22,7 +22,6 @@ const parseDbResToEdrFeature = async (
       const windObservations = others.wind
         ? await observationParsers.parseWind(others.wind, 1, 10)
         : undefined;
-
       features.push({
         type: "Feature",
         id,
@@ -47,7 +46,7 @@ const parseDbResToEdrFeature = async (
           windSpeed: pNames.includes("windSpeed")
             ? windObservations.windSpeed
             : undefined,
-          windDirection: pNames.includes("windType")
+          windDirection: pNames.includes("windDirection")
             ? windObservations.windDirection
             : undefined,
           dewPointTemperature: pNames.includes("dewPointTemperature")

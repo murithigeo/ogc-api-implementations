@@ -1,9 +1,11 @@
 import {
   ExegesisPlugin,
-  ExegesisContext,
   ExegesisPluginInstance,
   ExegesisPluginContext,
+  HttpIncomingMessage,
 } from "exegesis-express";
+import Ajv from "ajv";
+import addFormats from "ajv-formats";
 import sequelize from "../../../dbconnection";
 import { QueryTypes } from "sequelize";
 import * as crsDetails from "../../components/crsdetails";
@@ -36,12 +38,13 @@ async function checkCoordsString_allowedGeometry(
  * @param nonDocumentedParamsToIgnore
  * @returns
  */
+
 function makeExegesisPlugin(
   data: { apiDoc: any },
-  nonDocumentedParamsToIgnore: string[],
-  collectionIds: string[]
+  nonDocumentedParamsToIgnore: string[]
 ): ExegesisPluginInstance {
   return {
+    preRouting: ({ req, res }: { req: HttpIncomingMessage; res: any }) => {},
     postSecurity: async (ctx: ExegesisPluginContext) => {
       //Construct url
       const _url = new URL(ctx.api.serverObject.url + ctx.req.url);
@@ -49,12 +52,47 @@ function makeExegesisPlugin(
       const _oasListedParams = await ctx.getParams();
 
       //Force definition of bbox on certain paths.
-      if(!_oasListedParams.query.bbox&&_url.pathname.endsWith("cube")){
-        ctx.res.status(400).json(await makeQueryValidationError(ctx,"bbox","bbox param must not be empty on this route"))
+
+      if (
+        _oasListedParams.path.collectionId === "" ||
+        _oasListedParams.path.instanceId === ""
+      ) {
+        ctx.res
+          .status(400)
+          .json(
+            ctx.makeValidationError(
+              "collectionId or instanceId cannot be an empty string",
+              {
+                in: "path",
+                name: _oasListedParams.path.instanceId
+                  ? "instanceId"
+                  : "collectionId",
+                docPath: ctx.api.pathItemPtr,
+              }
+            )
+          )
+          .end();
+        return;
       }
+
+      const allowedQueryTypes: string[] = [
+        "instances",
+        "locations",
+        "items",
+        "radius",
+        "position",
+        "area",
+        "trajectory",
+        "corridor",
+        "cube",
+      ];
       //Validate CollectionIds
       if (_oasListedParams.path.collectionId) {
-        if (!collectionIds.includes(_oasListedParams.path.collectionId)) {
+        if (
+          !edrIndex.collectionsMetadata
+            .map((collection) => collection.id)
+            .includes(_oasListedParams.path.collectionId)
+        ) {
           ctx.res
             .status(404)
             .json({
@@ -63,36 +101,85 @@ function makeExegesisPlugin(
             .end();
         }
 
-        if (
-          _oasListedParams.path.collectionId === "" ||
-          _oasListedParams.path.instanceId === ""
-        ) {
-          ctx.res.status(400).setBody(
-            ctx.makeValidationError("collectionId cannot be an empty string", {
-              in: "path",
-              name: "collectionId",
-              docPath: ctx.api.pathItemPtr,
-            })
-          );
+        const matchedCollection = edrIndex.collectionsMetadata.find(
+          (collection) => collection.id === _oasListedParams.path.collectionId
+        );
+        const dQuery = allowedQueryTypes.find(
+          (queryType) =>
+            _url.pathname.endsWith(queryType) ||
+            _url.pathname.includes(queryType)
+        );
+        if (!matchedCollection.data_queries[dQuery]) {
+          ctx.res
+            .status(400)
+            .json(
+              ctx.makeValidationError(
+                `${matchedCollection.id} does not server via this endpoint`,
+                { in: "path", name: dQuery, docPath: ctx.api.pathItemPtr }
+              )
+            );
+          return;
         }
 
-        /**
-         * If parameter-names are requested and are not defined in the requested collections metadata
-         */
+        if (
+          _url.pathname.endsWith("corridor") &&
+          !matchedCollection.data_queries.corridor.height_units.includes(
+            _oasListedParams.query["height-units"]
+          )
+        ) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "height-units",
+                "The unit provided is not currently supported by this collection"
+              )
+            );
+        }
 
+        if (
+          _url.pathname.endsWith("corridor") &&
+          !matchedCollection.data_queries.corridor.width_units.includes(
+            _oasListedParams.query["width-units"]
+          )
+        ) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "width-units",
+                "The unit provided is not currently supported by this collection"
+              )
+            );
+        }
+        if (_url.pathname.endsWith("radius")) {
+          if (
+            !matchedCollection.data_queries.radius.within_units.includes(
+              _oasListedParams.query["within-units"]
+            )
+          ) {
+            ctx.res
+              .status(400)
+              .json(
+                await makeQueryValidationError(
+                  ctx,
+                  "within-units",
+                  "Units provided not supported by this endpoint"
+                )
+              )
+              .end();
+            return;
+          }
+        }
         if (_oasListedParams.query["parameter-name"]) {
           const unlistedParamNames = (
             _oasListedParams.query["parameter-name"] as string
           )
             .split(",")
             .filter(
-              (pName) =>
-                !edrIndex.collectionsMetadata
-                  .find(
-                    (collection) =>
-                      collection.id === _oasListedParams.path.collectionId
-                  )
-                  .parameter_names.includes(pName)
+              (pName) => !matchedCollection.parameter_names.includes(pName)
             );
           if (unlistedParamNames.length > 0) {
             ctx.res
@@ -110,6 +197,8 @@ function makeExegesisPlugin(
           }
         }
       }
+
+      //Validate units
 
       //Access all params present on req.url
       const _allQueryParams = Array.from(
@@ -144,32 +233,6 @@ function makeExegesisPlugin(
         return;
       }
 
-      /**
-       * @param "parameter-name" validation
-       */
-
-      //Rules
-      /**
-       * @coords Radius
-       * @supports 3D
-       * @geometry Point(x,y)|MultiPoint((x,y),(x1,y2),(xn,yn))
-       */
-      /**
-       * @description Full maturity of this validation will only be reached when postgis 3.5 is released
-       * @function hasZ returns boolean based on presence of Z axis
-       * @function hasM returns boolean based on presence of M axis
-       *
-       */
-
-      //TrajectoryCoords
-
-      /**
-       * @property coords
-       * @geometries Point
-       * @Error 400 if:
-       *
-       */
-
       //Validate wkt strings
       if (_oasListedParams.query.coords) {
         //Convert the coords string to uppercase for better handling
@@ -186,18 +249,6 @@ function makeExegesisPlugin(
          * If @boolean false status=400
          * else, continue
          */
-
-        const allowedQueryTypes: string[] = [
-          "instances",
-          "locations",
-          "items",
-          "radius",
-          "position",
-          "area",
-          "trajectory",
-          "corridor",
-          "cube",
-        ];
 
         let allowedGeometryTypes: GeometryTypes[];
         switch (
@@ -314,6 +365,7 @@ function makeExegesisPlugin(
           }
         }
       }
+
       if (_oasListedParams.query.crs) {
         if (
           !URL.canParse(_oasListedParams.query.crs) ||
@@ -333,6 +385,7 @@ function makeExegesisPlugin(
           return;
         }
       }
+
       if (_oasListedParams.query["bbox-crs"]) {
         if (
           !URL.canParse(_oasListedParams.query["bbox.crs"]) ||
@@ -354,9 +407,66 @@ function makeExegesisPlugin(
           return;
         }
       }
+
+      if (_url.pathname.endsWith("cube")) {
+        if (!_oasListedParams.query.bbox) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "bbox",
+                "bbox must be provided"
+              )
+            )
+            .end();
+          return;
+        }
+      }
+
+      //Validate datetime
+      if (_oasListedParams.query.datetime) {
+        const ajv = new Ajv();
+        addFormats(ajv);
+        const dateTimeValidator = ajv.compile({
+          type: "string",
+          format: "date-time",
+        });
+        let result: {
+          start: string | undefined;
+          end: string | undefined;
+          one: string | undefined;
+        } = {
+          start: undefined,
+          end: undefined,
+          one: undefined,
+        };
+        if (_oasListedParams.query.datetime.includes("/")) {
+          if (_oasListedParams.query.datetime.startsWith("../")) {
+            result.end = _oasListedParams.query.datetime.split("/")[1];
+          } else if (_oasListedParams.query.datetime.endsWith("/..")) {
+            result.start = _oasListedParams.query.datetime.split("/")[0];
+          } else {
+            result.start = _oasListedParams.query.datetime.split("/")[0];
+            result.end = _oasListedParams.query.datetime.split("/")[1];
+          }
+        } else {
+          result.one = _oasListedParams.query.datetime.replace(" ", "+");
+        }
+        for (const key in result) {
+          if (result[key]) {
+            result[key] = result[key].replace(" ", "+");
+            if (!dateTimeValidator(result[key])) {
+              throw new Error(
+                "strings in this parameter must conform to the rfc 3339 spec"
+              );
+            }
+          }
+        }
+        _oasListedParams.query.datetime = result;
+      }
     },
   };
-
   //Validate parameter-names
 }
 
@@ -365,19 +475,14 @@ function makeExegesisPlugin(
  * @returns exegesisPlugin
  */
 function validateInitialRequests(
-  nonDocumentedParamsToIgnore: string[],
-  listofCollectionIds: string[]
+  nonDocumentedParamsToIgnore: string[]
 ): ExegesisPlugin {
   return {
     info: {
       name: "exegesis-plugin-ogcedrwktvalidator_postgis",
     },
     makeExegesisPlugin: (data: { apiDoc: any }) =>
-      makeExegesisPlugin(
-        data,
-        nonDocumentedParamsToIgnore,
-        listofCollectionIds
-      ),
+      makeExegesisPlugin(data, nonDocumentedParamsToIgnore),
   };
 }
 

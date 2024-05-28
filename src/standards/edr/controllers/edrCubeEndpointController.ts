@@ -9,7 +9,8 @@ import edrGeoJsonFCInit from "../components/genJsonDocs.ts/featurecollection";
 import collectionHourly2024_QueryInterface from "../components/collectionsQueries/hourly";
 
 async function edrQueryCubeAtCollection(ctx: ExegesisContext) {
-  const { limit, offset, parameter_names } = await edrCommonParams(ctx);
+  //const {  parameter_names } = await edrCommonParams(ctx);
+
   const matchedCollection = edrIndex.collectionsMetadata.find(
     (collection) => collection.id === ctx.params.path.collectionId
   );
@@ -25,7 +26,7 @@ async function edrQueryCubeAtCollection(ctx: ExegesisContext) {
     ctx,
     dbRes.rows,
     dbRes.count,
-    parameter_names,
+    //parameter_names,
     "geom",
     "station",
     matchedCollection.edrVariables
@@ -46,7 +47,8 @@ async function edrQueryCubeAtCollection(ctx: ExegesisContext) {
 }
 
 async function edrQueryCubeAtInstance(ctx: ExegesisContext) {
-  const { limit, offset, parameter_names } = await edrCommonParams(ctx);
+
+  console.log(ctx.params.query.datetime)
   const matchedCollection = edrIndex.collectionsMetadata.find(
     (collection) => collection.id === ctx.params.path.collectionId
   );
@@ -62,8 +64,7 @@ async function edrQueryCubeAtInstance(ctx: ExegesisContext) {
     ctx,
     dbRes.rows,
     dbRes.count,
-    parameter_names,
-    "geom",
+    matchedCollection.geomColumnName,
     "station",
     matchedCollection.edrVariables
   );

@@ -110,11 +110,13 @@ const collectionsMetadata: types.CollectionWithoutProps[] = [
     data_queries: {
       instances: {},
       cube: { height_units: ["m"] },
-      radius: { within_units: ["km"] },
+      radius: { within_units: ["km","meter"] },
       position: {},
       trajectory: {},
       corridor: { width_units: ["km", "m"], height_units: ["km", "m"] },
-      area: {},
+      //area: {},
+      items:{},
+      
     },
   },
 ];
@@ -375,7 +377,6 @@ export default async function edrExegesisInstance() {
   globalexegesisOptions.plugins = [
     validationsPlugin(
       [],
-      collectionsMetadata.map((collection) => collection.id)
     ),
   ];
   return await exegesisExpress.middleware(

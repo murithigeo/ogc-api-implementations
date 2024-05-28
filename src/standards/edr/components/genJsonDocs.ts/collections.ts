@@ -3,29 +3,24 @@ import * as types from "../../types";
 import sequelize from "../../models";
 import return500InternalServerErr from "../../../components/makeInternalServerError";
 import { Op } from "sequelize";
-import * as helperScripts from "../helperScripts";
+import allWhereQueries, * as helperScripts from "../helperScripts";
 import * as DataQueries from "../links/queryTypes";
 import * as crsDetails from "../../../components/crsdetails";
 import genParamNameObj from "../collection_instanceParamNamesObject";
 
-
-
-
 async function genExtentBbox(
   ctx: ExegesisContext,
-  modelName: string
+  modelName: string,
+  geomColumnName: string
 ): Promise<[number, number, number, number, number?, number?]> {
   try {
     const res = (
       (await sequelize.models[modelName].scope("bboxGen").findOne({
-        where: {
-          [Op.and]: [helperScripts.instanceIdColumnQuery(ctx)],
-        },
+        where: await helperScripts.instanceIdColumnQuery(ctx),
         //includeIgnoreAtri
         raw: true,
       })) as any
     ).bbox;
-    //console.log(res);
     //console.log(res);
     return res;
   } catch (err) {
@@ -45,10 +40,10 @@ async function genExtentTempInterval(
   if (datetimeColumns.length > 0) {
     for (const column of datetimeColumns) {
       let min = await sequelize.models[modelName].min(column, {
-        where: { [Op.and]: [helperScripts.instanceIdColumnQuery(ctx)] },
+        where: await helperScripts.instanceIdColumnQuery(ctx),
       });
       let max = await sequelize.models[modelName].max(column, {
-        where: { [Op.and]: [helperScripts.instanceIdColumnQuery(ctx)] },
+        where: await helperScripts.instanceIdColumnQuery(ctx),
       });
       intervals.push([min as string, max as string]);
     }
@@ -76,7 +71,13 @@ async function genCollectionInfo(
   //Instantiate extent_bbox
   let _extent_bbox: [number, number, number, number, number?, number?][];
   try {
-    _extent_bbox = [await genExtentBbox(ctx, collectionConfig.modelName)];
+    _extent_bbox = [
+      await genExtentBbox(
+        ctx,
+        collectionConfig.modelName,
+        collectionConfig.geomColumnName
+      ),
+    ];
   } catch (err) {
     ctx.res.status(500).json(await return500InternalServerErr(ctx));
   }

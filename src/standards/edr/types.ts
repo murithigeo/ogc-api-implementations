@@ -1,14 +1,16 @@
+import unitConverter, { Length, UnitsByMeasure } from "convert";
+
 export type CollectionId = string;
 export type OutputFormats = string[];
 export type Default_output_format = string;
-export type WithinUnits = string[];
-export type HeightUnits = string[];
+export type WithinUnits = Length[];
+export type HeightUnits = Length[];
 interface Crs_Detail {
   crs: string;
   uri?: string;
   wkt: string;
 }
-export type WidthUnits = string[];
+export type WidthUnits = Length[];
 export type Crs_Details = Crs_Detail[];
 
 /**
