@@ -55,6 +55,7 @@ export interface CollectionWithoutProps {
   edrVariables: collectionConfigEdrVariable[];
   allSupportedCrs: string[];
   datetimeColumns: string[];
+  pkeyColumn: string;
   data_queries?: {
     position?: genericDataQueryItemConfig;
     instances?: genericDataQueryItemConfig;

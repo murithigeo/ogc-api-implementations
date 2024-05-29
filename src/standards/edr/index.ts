@@ -57,6 +57,7 @@ export const edrDocument = parseOasDoc("./src/standards/edr/index.yaml", "edr");
 const collectionsMetadata: types.CollectionWithoutProps[] = [
   {
     id: "hourly",
+    pkeyColumn:"station", //Since it has a composite pkey, just disable items
     modelName: "hourly2024",
     geomColumnName: "geom",
     edrVariables: [
@@ -115,7 +116,7 @@ const collectionsMetadata: types.CollectionWithoutProps[] = [
       trajectory: {},
       corridor: { width_units: ["km", "m"], height_units: ["km", "m"] },
       //area: {},
-      items:{},
+      //items:{},
       
     },
   },

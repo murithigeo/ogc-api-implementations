@@ -30,7 +30,7 @@ const collectionHourly2024_QueryInterface = async (
         matchedCollection.edrVariables
       )),
     ],
-    where: await allWhereQueries(ctx, matchedCollection.geomColumnName,matchedCollection.datetimeColumns),
+    where: await allWhereQueries(ctx, matchedCollection.geomColumnName,matchedCollection.datetimeColumns,matchedCollection.pkeyColumn),
     offset: params.offset ? params.offset : undefined,
     limit: params.limit ? params.limit : undefined,
     raw: true,

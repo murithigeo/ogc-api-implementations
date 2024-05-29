@@ -63,20 +63,22 @@ const edrCommonParams = async (ctx: ExegesisContext) => {
 export default edrCommonParams;
 
 const coordsParamInit = async (ctx: ExegesisContext) =>
-  ctx.params.query.coords ?? undefined;
+  (ctx.params.query.coords as {
+    zmin: null | number;
+    zmax: null | number;
+    mmin: string | null;
+    mmax: string | null;
+    coords2d: string;
+  }) ?? undefined;
 
 export const validateCrsUri = async (uri: string) =>
   crsDetails._allCrsProperties.find((crsDet) => crsDet.crs === uri);
 
 const crsParamInit = async (ctx: ExegesisContext) =>
-  ctx.params.query.crs
-    ? ctx.params.query.crs
-    : crsDetails.crs84Uri || crsDetails.crs84hUri;
+  ctx.params.query.crs ?? (crsDetails.crs84Uri || crsDetails.crs84hUri);
 
 const bboxCrsParamInit = async (ctx: ExegesisContext) =>
-  ctx.params.query["bbox-crs"]
-    ? ctx.params.query["bbox-crs"]
-    : crsDetails.crs84Uri || crsDetails.crs84hUri;
+  ctx.params.query["bbox-crs"] ?? (crsDetails.crs84Uri || crsDetails.crs84hUri);
 
 const validateCrsParam = async (ctx: ExegesisContext) =>
   await validateCrsUri(await crsParamInit(ctx));
@@ -240,24 +242,17 @@ const cubeZParamInit = async (ctx: ExegesisContext) =>
     ? (ctx.params.query["cube-z"] as string)
     : undefined;
 
-const zParamInit = async (ctx: ExegesisContext) => {
-  const z = ctx.params.query.z as string;
-
-  if (z) {
-    let separator: "/" | "," | "none";
-    if (z.includes("/")) {
-      separator = "/";
-    } else if (z.includes(",")) {
-      separator = ",";
-    }
-    separator = "none";
-    return {
-      zValues: z.split("/" || ","),
-      separator,
-    };
-  }
-  return undefined;
-};
+const zParamInit = async (ctx: ExegesisContext) =>
+  ctx.params.query.z
+    ? (ctx.params.query.z as {
+        min: number | undefined;
+        max: number | undefined;
+        in: number[] | undefined;
+        one: number | undefined;
+        //incrementBy: number | undefined;
+        //intervalNumber: number | undefined;
+      })
+    : undefined;
 
 //TO DO
 const datetimeParamInit = async (ctx: ExegesisContext) => {

@@ -37,6 +37,9 @@ function makeExegesisPlugin(
   return {
     preRouting: ({ req, res }: { req: HttpIncomingMessage; res: any }) => {},
     postSecurity: async (ctx: ExegesisPluginContext) => {
+      //instantiate new ajv instance
+      const ajv = new Ajv();
+      addFormats(ajv);
       //Construct url
       const _url = new URL(ctx.api.serverObject.url + ctx.req.url);
       //Initialize parameters
@@ -95,21 +98,24 @@ function makeExegesisPlugin(
         const matchedCollection = edrIndex.collectionsMetadata.find(
           (collection) => collection.id === _oasListedParams.path.collectionId
         );
-        const dQuery = allowedQueryTypes.find(
-          (queryType) =>
-            _url.pathname.endsWith(queryType) ||
-            _url.pathname.includes(queryType)
+
+        const dQuery = allowedQueryTypes.filter((queryType) =>
+          //_url.pathname.endsWith(queryType) ||
+          _url.pathname.includes(queryType)
         );
-        if (!matchedCollection.data_queries[dQuery]) {
-          ctx.res
-            .status(400)
-            .json(
-              ctx.makeValidationError(
-                `${matchedCollection.id} does not server via this endpoint`,
-                { in: "path", name: dQuery, docPath: ctx.api.pathItemPtr }
-              )
-            );
-          return;
+        console.log("dquery", dQuery);
+        for (const query of dQuery) {
+          if (!matchedCollection.data_queries[query]) {
+            ctx.res
+              .status(400)
+              .json(
+                ctx.makeValidationError(
+                  `${matchedCollection.id} does not server via this endpoint`,
+                  { in: "path", name: query, docPath: ctx.api.pathItemPtr }
+                )
+              );
+            return;
+          }
         }
 
         if (
@@ -270,13 +276,12 @@ function makeExegesisPlugin(
               "LINESTRINGZ",
               "LINESTRINGZM",
             ];
-            break;
         }
 
         /**
          * @description Trigger 400 error if the provided geometry is not in endpoint' allowed GeometryType
          */
-        if (allowedGeometryTypes.length < 1) {
+        if (!allowedGeometryTypes) {
           ctx.res
             .status(400)
             .json(
@@ -356,24 +361,42 @@ function makeExegesisPlugin(
 
         try {
           const isValidWkt: any = await sequelize.query(
-            `select ST_IsValidReason('${_oasListedParams.query.coords}'::geometry) as isvalid`,
+            `With res as (Select (ST_DumpPoints(
+              ST_GeometryFromText('${_oasListedParams.query.coords as string}')
+              )).geom as newgeom)
+              Select  max(ST_Z(newgeom)) as zmax,
+                      min(ST_Z(newgeom)) as zmin, 
+                      to_timestamp(max(ST_M(newgeom))) as mmax,
+                      to_timestamp(min(ST_M(newgeom))) as mmin, 
+                      ST_AsText(ST_Force2D(ST_GeometryFromText('${
+                        _oasListedParams.query.coords
+                      }'))) as newcoords 
+                      from res;`,
             {
               type: QueryTypes.SELECT,
+              raw: true,
             }
           );
-          if (isValidWkt && isValidWkt[0].isvalid !== "Valid Geometry") {
+          if (!isValidWkt) {
             ctx.res
               .status(400)
               .json(
                 makeQueryValidationError(
                   ctx,
                   "coords",
-                  "Invalid Geometry: " + isValidWkt[0].isvalid
+                  "Invalid Geometry: " //+ isValidWkt[0].isvalid
                 )
               )
               .end();
             return;
           }
+          _oasListedParams.query.coords = {
+            zmin: isValidWkt[0].zmin,
+            zmax: isValidWkt[0].zmax,
+            mmin: isValidWkt[0].mmin,
+            mmax: isValidWkt[0].mmax,
+            coords2d: isValidWkt[0].newcoords,
+          };
         } catch (err) {
           /**
            * If @err message includes "geometry", this implies invalid geometry
@@ -460,8 +483,6 @@ function makeExegesisPlugin(
 
       //Validate datetime
       if (_oasListedParams.query.datetime) {
-        const ajv = new Ajv();
-        addFormats(ajv);
         const dateTimeValidator = ajv.compile({
           type: "string",
           format: "date-time",
@@ -491,16 +512,187 @@ function makeExegesisPlugin(
           if (result[key]) {
             result[key] = result[key].replace(" ", "+");
             if (!dateTimeValidator(result[key])) {
-              throw new Error(
-                "strings in this parameter must conform to the rfc 3339 spec"
-              );
+              ctx.res
+                .status(400)
+                .json(
+                  await makeQueryValidationError(
+                    ctx,
+                    "datetime",
+                    "elements of interval/datetime must be rfc 3339 compliant"
+                  )
+                );
             }
           }
         }
         _oasListedParams.query.datetime = result;
       }
+
+      //Validate and parse z
+      if (_oasListedParams.query.z) {
+        const errorValidationMessge =
+          "Check that the query matches the interval schema";
+        interface NewZ {
+          max: undefined | number;
+          min: undefined | number;
+          in: undefined | number[];
+          one: undefined | number;
+          //incrementBy: undefined | number;
+          //intervalNumber: undefined | number;
+        }
+        let newZ = {
+          max: undefined,
+          min: undefined,
+          in: undefined,
+          one: undefined,
+          //incrementBy: undefined,
+          //intervalNumber: undefined,
+        };
+        const zparam = (_oasListedParams.query.z as string).toUpperCase();
+        if (zparam.startsWith("R")) {
+          //input R10/20/30
+          //After removing R & splitting [10,20,30]
+          const parsedZ = zparam
+            .substring(1)
+            .split("/")
+            .filter((z) => z !== "");
+          if (parsedZ.length < 3) {
+            ctx.res
+              .status(400)
+              .json(
+                await makeQueryValidationError(ctx, "z", errorValidationMessge)
+              );
+            return;
+          }
+          if (parsedZ.length > 3) {
+            ctx.res
+              .status(400)
+              .json(
+                await makeQueryValidationError(ctx, "z", errorValidationMessge)
+              )
+              .end();
+          }
+          for (const val of parsedZ) {
+            if (isNaN(Number(val))) {
+              ctx.res.status(400).json(
+                ctx.makeValidationError("Invalid datatype", {
+                  in: "query",
+                  name: "z",
+                  docPath: ctx.api.pathItemPtr,
+                })
+              );
+            }
+          }
+          newZ.in = [];
+          for (
+            let i = parseInt(parsedZ[1], 10);
+            i <=
+            parseInt(parsedZ[1], 10) +
+              parseInt(parsedZ[0], 10) * parseInt(parsedZ[2]);
+            i += parseInt(parsedZ[2], 10)
+          ) {
+            newZ.in.push(i);
+          }
+        } else if (zparam.includes("/")) {
+          const parsedZ = zparam.split("/").filter((z) => z !== "");
+          if (parsedZ.length < 2) {
+            ctx.res
+              .status(400)
+              .json(
+                await makeQueryValidationError(ctx, "z", errorValidationMessge)
+              );
+          }
+          if (parsedZ.length > 2) {
+            ctx.res
+              .status(400)
+              .json(
+                await makeQueryValidationError(ctx, "z", errorValidationMessge)
+              );
+          }
+          for (const val of parsedZ) {
+            if (isNaN(Number(val))) {
+              ctx.res.status(400).json(
+                ctx.makeValidationError("Invalid datatype", {
+                  in: "query",
+                  name: "z",
+                  docPath: ctx.api.pathItemPtr,
+                })
+              );
+            }
+          }
+          newZ.min = parsedZ[0];
+          newZ.max = parsedZ[1];
+        } else if (zparam.includes(",")) {
+          //console.log(__filename, 596);
+
+          const parsedZ = zparam.split(",").filter((z) => z !== "");
+          for (const val of parsedZ) {
+            if (isNaN(Number(val))) {
+              ctx.res.status(400).json(
+                ctx.makeValidationError("Invalid datatype", {
+                  in: "query",
+                  name: "z",
+                  docPath: ctx.api.pathItemPtr,
+                })
+              );
+            }
+          }
+          newZ.in = parsedZ;
+        } else {
+          //console.log(__filename, 601);
+
+          newZ.one = zparam;
+        }
+        /*
+        const numValidator = ajv.compile({ type: "number", format: "double" });
+        for (const key in newZ) {
+          if (newZ[key]) {
+            console.log(newZ[key]);
+            if (Array.isArray(newZ[key])) {
+              for (const i of newZ[key]) {
+                if (isNaN(Number(i))) {
+                  console.log(611);
+                  ctx.res.status(400).json(
+                    ctx.makeValidationError(
+                      "One or more params is not a __number/compliant with schema",
+                      {
+                        in: "query",
+                        name: "z",
+                        docPath: ctx.api.pathItemPtr,
+                      }
+                    )
+                  );
+                  return;
+                }
+              }
+            } else {
+              if (isNaN(Number(newZ[key]))) {
+                console.log(627);
+                ctx.res
+                  .status(400)
+                  .json(
+                    await makeQueryValidationError(
+                      ctx,
+                      "z",
+                      "One or more params is not a number/compliant with schema"
+                    )
+                  );
+                return;
+              }
+            }
+            if (Array.isArray(newZ[key])) {
+              newZ[key] = (newZ[key] as []).map((i) => parseInt(i, 10));
+            } else {
+              newZ[key] = parseInt(newZ[key], 10);
+            }
+          }
+        }
+        */
+        _oasListedParams.query.z = newZ as NewZ;
+        //ctx.res.status(400).json({ message: "Z param catch" });
+      }
     },
   };
+
   //Validate parameter-names
 }
 
