@@ -5,6 +5,7 @@ import genParamNameObj from "../collection_instanceParamNamesObject";
 import deletePrevNextLinks from "../../../components/deletePrevNextLinks";
 import numMatchedInit from "../../../components/numberMatched";
 import edrCommonParams from "../params";
+import featureCollectionLinks from "../links/featurecollection";
 
 const edrGeoJSON_FeatureCollection_Gen = async (
   ctx: ExegesisContext,
@@ -25,6 +26,7 @@ const edrGeoJSON_FeatureCollection_Gen = async (
     numberMatched: await numMatchedInit(ctx, count),
     numberReturned: dbRes.length,
     features: await parseDbResToEdrFeature(
+      ctx,
       dbRes,
       geomColumnName,
       featureIdColumnName,
@@ -32,7 +34,14 @@ const edrGeoJSON_FeatureCollection_Gen = async (
     ),
 
     parameters: Object.values(await genParamNameObj(edrVariables)),
-    links: await deletePrevNextLinks(ctx, [], count),
+    links: await deletePrevNextLinks(
+      ctx,
+      await featureCollectionLinks(ctx, [
+        { f: "json", contentType: "application/json" },
+        { f: "yaml", contentType: "text/yaml" },
+      ]),
+      count
+    ),
   };
 };
 

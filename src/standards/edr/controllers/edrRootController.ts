@@ -2,9 +2,9 @@ import { ExegesisContext } from "exegesis-express";
 import convertJsonToYAML from "../../components/convertToYaml";
 import makeQueryValidationError from "../../components/makeValidationError";
 import { EDRLandingPage } from "../types";
+import edrRootLinks from "../components/links/path_root";
 
 async function edrGetRoot(ctx: ExegesisContext) {
-  //@ts-ignore
   const landingPageDoc: EDRLandingPage = {
     title:
       "Landing page for the Environmental Data Retrieval API. \n (c) 2024 Murithigeo",
@@ -22,6 +22,10 @@ async function edrGetRoot(ctx: ExegesisContext) {
       hours: "0800H - 1700H",
       country: "KEN",
     },
+    links: await edrRootLinks(ctx, [
+      { f: "json", contentType: "application/json" },
+      { f: "yaml", contentType: "text/yaml" },
+    ]),
   };
   switch (ctx.params.query.f) {
     case "json":

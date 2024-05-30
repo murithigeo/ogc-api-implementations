@@ -1,9 +1,10 @@
 import { ExegesisContext } from "exegesis-express";
 import collectionHourly2024_QueryInterface from "../components/collectionsQueries/hourly";
 import edrGeoJSON_FeatureCollection_Gen from "../components/genJsonDocs.ts/featurecollection";
-import * as edrIndex from "../index"
+import * as edrIndex from "../index";
 import convertJsonToYAML from "../../components/convertToYaml";
 import makeQueryValidationError from "../../components/makeValidationError";
+import invalidGeometryResHandler from "../components/invalidGeometryHandler";
 async function edrQueryPositionAtCollection(ctx: ExegesisContext) {
   const matchedCollection = edrIndex.collectionsMetadata.find(
     (collection) => collection.id === ctx.params.path.collectionId
@@ -12,7 +13,18 @@ async function edrQueryPositionAtCollection(ctx: ExegesisContext) {
   let dbRes: { count: number; rows: any };
   switch (matchedCollection.modelName) {
     case "hourly2024":
-      dbRes = await collectionHourly2024_QueryInterface(ctx, matchedCollection);
+      try {
+        dbRes = await collectionHourly2024_QueryInterface(
+          ctx,
+          matchedCollection
+        );
+      } catch (err) {
+        if ((err.message as string).includes("coordinate" || "coordinate")) {
+          ctx.res
+            .status(400)
+            .json(await makeQueryValidationError(ctx, "coords", err.message));
+        }
+      }
       break;
   }
 

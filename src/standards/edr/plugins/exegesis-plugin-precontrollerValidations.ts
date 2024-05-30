@@ -12,15 +12,7 @@ import * as crsDetails from "../../components/crsdetails";
 import makeQueryValidationError from "../../components/makeValidationError";
 import return500InternalServerErr from "../../components/makeInternalServerError";
 import * as edrIndex from "../index";
-
-type GeometryTypes =
-  | "POINT"
-  | "MULTIPOINT"
-  | "LINESTRING"
-  | "LINESTRINGM"
-  | "LINESTRINGZM"
-  | "POLYGON"
-  | "LINESTRINGZ";
+import { validateCrsUri } from "../components/params";
 
 /**
  * @function makeExegesisPlugin create a new plugin to handle preController, postSecurity validation.
@@ -103,11 +95,14 @@ function makeExegesisPlugin(
           //_url.pathname.endsWith(queryType) ||
           _url.pathname.includes(queryType)
         );
-        console.log("dquery", dQuery);
         for (const query of dQuery) {
+          /**
+           * @description Disallow specific paths for a collection if it does not have them
+           * @example a matched collection does not support a location query. Check if path includes that keyword. If true, error 400
+           */
           if (!matchedCollection.data_queries[query]) {
             ctx.res
-              .status(400)
+              .status(404)
               .json(
                 ctx.makeValidationError(
                   `${matchedCollection.id} does not server via this endpoint`,
@@ -230,13 +225,68 @@ function makeExegesisPlugin(
         return;
       }
 
-      //Validate wkt strings
+      if (_oasListedParams.query.crs) {
+        if (
+          !URL.canParse(_oasListedParams.query.crs) || //If the received crs param is not an url, =>400 or not in the global list of coordinate reference systems
+          !crsDetails._allsupportedcrsUris.includes(_oasListedParams.query.crs)
+        ) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "crs",
+                !URL.canParse(_oasListedParams.query.crs)
+                  ? "CRS must be in the uri syntax http://www.opengis.net/def/crs/{authority}/{version}/{code} to reduce complexity"
+                  : "The CRS requested is not currently supported by this server"
+              )
+            );
+          return;
+        }
+      }
+      /**
+       * @description Validate Well Known Text (wkt) strings. Only for @param coords
+       *
+       */
       if (_oasListedParams.query.coords) {
-        //Convert the coords string to uppercase for better handling
+        // Convert the coords param to uppercase
         _oasListedParams.query.coords =
           _oasListedParams.query.coords.toUpperCase();
 
+        /**
+         * @returns 400 if @param crs is undefined
+         */
+        if (!_oasListedParams.query.crs) {
+          ctx.res
+            .status(400)
+            .json(
+              await makeQueryValidationError(
+                ctx,
+                "coords",
+                "the crs param must be defined before using this endpoint"
+              )
+            );
+          return;
+        }
+        /**
+         * @type GeometryTypes
+         * @description Define what geometryTypes can be inserted into the allowedGeometryTypes
+         */
+        type GeometryTypes =
+          | "POINT"
+          | "MULTIPOINT"
+          | "LINESTRING"
+          | "LINESTRINGM"
+          | "LINESTRINGZM"
+          | "POLYGON"
+          | "LINESTRINGZ";
+
         let allowedGeometryTypes: GeometryTypes[];
+
+        /**
+         * @description Works on the premise that the pathname ends one of the above @interface GeometryTypes
+         * If it ends with one, insert the geometryTypes allowed for the path
+         */
         switch (
           allowedQueryTypes.find((queryType) =>
             _url.pathname.endsWith(queryType)
@@ -247,7 +297,6 @@ function makeExegesisPlugin(
             break;
           case "cube":
             //Do Nothing. No coords param
-            //console.log();
             break;
           case "corridor":
             allowedGeometryTypes = [
@@ -279,7 +328,7 @@ function makeExegesisPlugin(
         }
 
         /**
-         * @description Trigger 400 error if the provided geometry is not in endpoint' allowed GeometryType
+         * @description Trigger 400 error if the path has provided the @param coords but has no allowed coords types
          */
         if (!allowedGeometryTypes) {
           ctx.res
@@ -292,6 +341,10 @@ function makeExegesisPlugin(
               )
             );
         }
+        /**
+         * Split the wkt string upto opening bracket and access the string upto the bracket.
+         * If the resulting string is not in instantiated @interface allowedGeometryTypes. Error 400
+         */
         if (
           !allowedGeometryTypes.includes(
             _oasListedParams.query.coords.split("(")[0].trim()
@@ -312,6 +365,9 @@ function makeExegesisPlugin(
           return;
         }
 
+        /**
+         * @description validate that if @coords is not defined at the same time as @param datetime & @param z for LINESTRINGZM
+         */
         if (
           (_oasListedParams.query.coords as string).startsWith(
             "LINESTRINGZM"
@@ -329,6 +385,10 @@ function makeExegesisPlugin(
             );
           return;
         }
+
+        /**
+         * @description validate that if @coords is not defined at the same time as @param z for LINESTRINGZ
+         */
         if (
           (_oasListedParams.query.coords as string).startsWith("LINESTRINGZ") &&
           _oasListedParams.query.z
@@ -343,7 +403,9 @@ function makeExegesisPlugin(
               )
             );
         }
-
+        /**
+         * @description validate that if @coords is not defined at the same time as @param datetime for LINESTRINGM
+         */
         if (
           (_oasListedParams.query.coords as string).startsWith("LINESTRINGM") &&
           _oasListedParams.query.datetime
@@ -359,18 +421,37 @@ function makeExegesisPlugin(
             );
         }
 
+        /**
+         * @description Receive the @param coords and derive associated elements. Applied on all geometries. Returns null for all fields that do not have associated axis
+         * @returns the following for the param
+         *          @zmin (minimum height for the coords)
+         *          @zmax (maximum height for the coords)
+         *          @mmin (minimum timestamp for the coords)
+         *          @mmax (minimum timestamp for the coords)
+         *          @coords2d (2D wkt for the parameter)
+         */
         try {
           const isValidWkt: any = await sequelize.query(
             `With res as (Select (ST_DumpPoints(
-              ST_GeometryFromText('${_oasListedParams.query.coords as string}')
+              ST_Transform(ST_GeometryFromText('${
+                _oasListedParams.query.coords as string
+              }',${
+              (
+                await validateCrsUri(_oasListedParams.query.crs)
+              ).srid
+            }),3857)
               )).geom as newgeom)
               Select  max(ST_Z(newgeom)) as zmax,
                       min(ST_Z(newgeom)) as zmin, 
                       to_timestamp(max(ST_M(newgeom))) as mmax,
                       to_timestamp(min(ST_M(newgeom))) as mmin, 
-                      ST_AsText(ST_Force2D(ST_GeometryFromText('${
+                      ST_AsText(ST_Force2D(ST_Transform(ST_GeometryFromText('${
                         _oasListedParams.query.coords
-                      }'))) as newcoords 
+                      }',${
+              (
+                await validateCrsUri(_oasListedParams.query.crs)
+              ).srid
+            }),3857))) as newcoords
                       from res;`,
             {
               type: QueryTypes.SELECT,
@@ -390,7 +471,7 @@ function makeExegesisPlugin(
               .end();
             return;
           }
-          _oasListedParams.query.coords = {
+          _oasListedParams.query.parsedcoords = {
             zmin: isValidWkt[0].zmin,
             zmax: isValidWkt[0].zmax,
             mmin: isValidWkt[0].mmin,
@@ -399,9 +480,13 @@ function makeExegesisPlugin(
           };
         } catch (err) {
           /**
-           * If @err message includes "geometry", this implies invalid geometry
+           * If @err message includes "geometry", this implies invalid geometry thus user error
            */
-          if (err.message.includes("geometry")) {
+          if (
+            //err.message.includes("geometry") ||
+            (err.message as string).toLowerCase().includes("invalid")
+            //||err.mmesage.includes("coordinate")
+          ) {
             ctx.res
               .status(400)
               .json(
@@ -410,8 +495,7 @@ function makeExegesisPlugin(
                   "coords",
                   err.message as string
                 )
-              )
-              .end();
+              );
             return;
           } else {
             ctx.res
@@ -423,26 +507,9 @@ function makeExegesisPlugin(
         }
       }
 
-      if (_oasListedParams.query.crs) {
-        if (
-          !URL.canParse(_oasListedParams.query.crs) ||
-          !crsDetails._allsupportedcrsUris.includes(_oasListedParams.query.crs)
-        ) {
-          ctx.res
-            .status(400)
-            .json(
-              await makeQueryValidationError(
-                ctx,
-                "crs",
-                !URL.canParse(_oasListedParams.query.crs)
-                  ? "CRS must be in the uri syntax http://www.opengis.net/def/crs/{authority}/{version}/{code} to reduce complexity"
-                  : "The CRS requested is not currently supported by this server"
-              )
-            );
-          return;
-        }
-      }
-
+      /**
+       * @description Do the same for @param bboxcrs
+       */
       if (_oasListedParams.query["bbox-crs"]) {
         if (
           !URL.canParse(_oasListedParams.query["bbox.crs"]) ||
@@ -465,6 +532,9 @@ function makeExegesisPlugin(
         }
       }
 
+      /**
+       * @description Force user to provide@param bbox. This is because the bbox schema in edrSchemas does not say required:true
+       */
       if (_url.pathname.endsWith("cube")) {
         if (!_oasListedParams.query.bbox) {
           ctx.res
@@ -481,8 +551,13 @@ function makeExegesisPlugin(
         }
       }
 
-      //Validate datetime
+      /**
+       * @description Validate datetime
+       */
       if (_oasListedParams.query.datetime) {
+        /**
+         * @description  Instantiate the ajv package used to validate OAS3.x.x formats
+         */
         const dateTimeValidator = ajv.compile({
           type: "string",
           format: "date-time",
@@ -496,18 +571,23 @@ function makeExegesisPlugin(
           end: undefined,
           one: undefined,
         };
+
         if (_oasListedParams.query.datetime.includes("/")) {
+          //i.e: timestamp/timestamp | ../timestamp | timestamp/..
           if (_oasListedParams.query.datetime.startsWith("../")) {
-            result.end = _oasListedParams.query.datetime.split("/")[1];
+            result.end = _oasListedParams.query.datetime.split("/")[1]; //../timestamp
           } else if (_oasListedParams.query.datetime.endsWith("/..")) {
-            result.start = _oasListedParams.query.datetime.split("/")[0];
+            result.start = _oasListedParams.query.datetime.split("/")[0]; //timestamp/..
           } else {
-            result.start = _oasListedParams.query.datetime.split("/")[0];
+            result.start = _oasListedParams.query.datetime.split("/")[0]; //timestamp/timestamp
             result.end = _oasListedParams.query.datetime.split("/")[1];
           }
         } else {
-          result.one = _oasListedParams.query.datetime.replace(" ", "+");
+          result.one = _oasListedParams.query.datetime.replace(" ", "+"); //timestamp
         }
+        /**
+         * @description validate all entries in the result array to ensure that they are datetimes
+         */
         for (const key in result) {
           if (result[key]) {
             result[key] = result[key].replace(" ", "+");
@@ -524,7 +604,7 @@ function makeExegesisPlugin(
             }
           }
         }
-        _oasListedParams.query.datetime = result;
+        _oasListedParams.query.parseddatetime = result;
       }
 
       //Validate and parse z
@@ -584,6 +664,7 @@ function makeExegesisPlugin(
           }
           newZ.in = [];
           for (
+            //Generate intervals using the param provided
             let i = parseInt(parsedZ[1], 10);
             i <=
             parseInt(parsedZ[1], 10) +
@@ -622,8 +703,6 @@ function makeExegesisPlugin(
           newZ.min = parsedZ[0];
           newZ.max = parsedZ[1];
         } else if (zparam.includes(",")) {
-          //console.log(__filename, 596);
-
           const parsedZ = zparam.split(",").filter((z) => z !== "");
           for (const val of parsedZ) {
             if (isNaN(Number(val))) {
@@ -638,56 +717,10 @@ function makeExegesisPlugin(
           }
           newZ.in = parsedZ;
         } else {
-          //console.log(__filename, 601);
-
           newZ.one = zparam;
         }
-        /*
-        const numValidator = ajv.compile({ type: "number", format: "double" });
-        for (const key in newZ) {
-          if (newZ[key]) {
-            console.log(newZ[key]);
-            if (Array.isArray(newZ[key])) {
-              for (const i of newZ[key]) {
-                if (isNaN(Number(i))) {
-                  console.log(611);
-                  ctx.res.status(400).json(
-                    ctx.makeValidationError(
-                      "One or more params is not a __number/compliant with schema",
-                      {
-                        in: "query",
-                        name: "z",
-                        docPath: ctx.api.pathItemPtr,
-                      }
-                    )
-                  );
-                  return;
-                }
-              }
-            } else {
-              if (isNaN(Number(newZ[key]))) {
-                console.log(627);
-                ctx.res
-                  .status(400)
-                  .json(
-                    await makeQueryValidationError(
-                      ctx,
-                      "z",
-                      "One or more params is not a number/compliant with schema"
-                    )
-                  );
-                return;
-              }
-            }
-            if (Array.isArray(newZ[key])) {
-              newZ[key] = (newZ[key] as []).map((i) => parseInt(i, 10));
-            } else {
-              newZ[key] = parseInt(newZ[key], 10);
-            }
-          }
-        }
-        */
-        _oasListedParams.query.z = newZ as NewZ;
+
+        _oasListedParams.query.parsedz = newZ as NewZ;
         //ctx.res.status(400).json({ message: "Z param catch" });
       }
     },

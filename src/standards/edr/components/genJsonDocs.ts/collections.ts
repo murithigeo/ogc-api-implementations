@@ -7,6 +7,7 @@ import allWhereQueries, * as helperScripts from "../helperScripts";
 import * as DataQueries from "../links/queryTypes";
 import * as crsDetails from "../../../components/crsdetails";
 import genParamNameObj from "../collection_instanceParamNamesObject";
+import { edrCollectionSpecificLink_Root } from "../links/path_collections";
 
 async function genExtentBbox(
   ctx: ExegesisContext,
@@ -154,6 +155,10 @@ async function genCollectionInfo(
     },
     parameter_names: await genParamNameObj(collectionConfig.edrVariables),
     data_queries,
+    links: await edrCollectionSpecificLink_Root(ctx, [
+      { f: "json", contentType: "application/json" },
+      { f: "yaml", contentType: "text/yaml" },
+    ]),
     //If extent[2] && extent[5] =0, then no vertical
   };
 }

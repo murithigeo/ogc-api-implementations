@@ -4,6 +4,7 @@ import sequelize from "../../models";
 import * as types from "../../types";
 import { Op } from "sequelize";
 import edrCommonParams from "../params";
+import makeQueryValidationError from "../../../components/makeValidationError";
 
 const collectionHourly2024_QueryInterface = async (
   ctx: ExegesisContext,
@@ -30,7 +31,12 @@ const collectionHourly2024_QueryInterface = async (
         matchedCollection.edrVariables
       )),
     ],
-    where: await allWhereQueries(ctx, matchedCollection.geomColumnName,matchedCollection.datetimeColumns,matchedCollection.pkeyColumn),
+    where: await allWhereQueries(
+      ctx,
+      matchedCollection.geomColumnName,
+      matchedCollection.datetimeColumns,
+      matchedCollection.pkeyColumn
+    ),
     offset: params.offset ? params.offset : undefined,
     limit: params.limit ? params.limit : undefined,
     raw: true,

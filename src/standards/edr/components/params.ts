@@ -1,23 +1,6 @@
 import { Length } from "convert";
 import * as crsDetails from "../../components/crsdetails";
-import makeQueryValidationError from "../../components/makeValidationError";
-import * as index from "../index";
-/**
- * @path .../trajectory
- * @throws Error if @param coords is @type LINESTRINGZ as well as @param z
- * @throws Error if @param coords is @type LineStringM as well as @param datetime is defined
- * @throws Error if @param coords is @type LineStringZM as well as @param datetime & @param datetime is defined
- * @status 400
- */
-
 import { ExegesisContext } from "exegesis-express";
-
-/**
- * @path ../corridor
- * @throws Error if @param coords is @type LINESTRINGZ as well as @param z
- * @throws Error if @param coords is @type LineStringM as well as @param datetime is defined
- * @throws Error if @param coords is @type LineStringZM as well as @param datetime & @param datetime is defined
- */
 
 /**
  * @function edrCommonParams A function used to get common variables from the exegesis interfaces
@@ -37,7 +20,7 @@ const edrCommonParams = async (ctx: ExegesisContext) => {
     offset: await offsetParamInit(ctx),
     bboxcrs: await validateBboxCrs(ctx),
     parameter_names: await parameter_namesParamInit(ctx),
-    coords: await coordsParamInit(ctx),
+    coords: await parsedCoordsParam(ctx),
     instanceId: await instanceIdParamInit(ctx),
     instanceMode: await instanceModeParamInit(ctx),
     collectionId: await collectionIdParamInit(ctx),
@@ -53,8 +36,8 @@ const edrCommonParams = async (ctx: ExegesisContext) => {
     within_units: await withinUnitsParamInit(ctx),
     within: await withinParamInit(ctx),
     cubeZ: await cubeZParamInit(ctx),
-    z: await zParamInit(ctx),
-    datetime: await datetimeParamInit(ctx),
+    z: await parsedZparam(ctx),
+    datetime: await parsedDatetimeParam(ctx),
 
     //datetime: await datetimeParamInit(ctx),
     //f: await fParamInit(ctx),
@@ -62,15 +45,17 @@ const edrCommonParams = async (ctx: ExegesisContext) => {
 };
 export default edrCommonParams;
 
-const coordsParamInit = async (ctx: ExegesisContext) =>
-  (ctx.params.query.coords as {
+const coordsParamInit_unparsed = async (ctx: ExegesisContext) =>
+  (ctx.params.query.coords as string) ?? undefined;
+
+const parsedCoordsParam = async (ctx: ExegesisContext) =>
+  (ctx.params.query.parsedcoords as {
     zmin: null | number;
     zmax: null | number;
     mmin: string | null;
     mmax: string | null;
     coords2d: string;
   }) ?? undefined;
-
 export const validateCrsUri = async (uri: string) =>
   crsDetails._allCrsProperties.find((crsDet) => crsDet.crs === uri);
 
@@ -159,19 +144,25 @@ const reqUriGen = async (ctx: ExegesisContext) => {
 
   //Add params listed on oas doc
   for (const [k, v] of Object.entries(ctx.params.query)) {
-    if (v) {
+    //console.log("k: ",k, "v: ",v)
+    if (
+      v &&
+      k !== "parsedcoords" &&
+      k !== "parsedz" &&
+      k !== "parseddatetime"
+    ) {
       url.searchParams.set(k, v);
     }
   }
   return url;
 };
 
-const limitParamInit = async (ctx: ExegesisContext) =>
+const limitParamInit = async (ctx: ExegesisContext): Promise<number> =>
   ctx.params.query.limit || ctx.params.query.limit === 0
     ? ctx.params.query.limit
     : 100;
 
-const offsetParamInit = async (ctx: ExegesisContext) =>
+const offsetParamInit = async (ctx: ExegesisContext): Promise<number> =>
   ctx.params.query.limit || ctx.params.query.offset === 0
     ? ctx.params.query.offset
     : 0;
@@ -179,7 +170,7 @@ const offsetParamInit = async (ctx: ExegesisContext) =>
 /**
  * @function instanceModeParamInit not really necessary considering its required by exegesis and it has a default
  */
-const instanceModeParamInit = async (ctx: ExegesisContext) =>
+const instanceModeParamInit = async (ctx: ExegesisContext): Promise<string> =>
   ctx.params.query.instancemode ?? "subregion";
 
 const collectionIdParamInit = async (ctx: ExegesisContext) =>
@@ -242,29 +233,31 @@ const cubeZParamInit = async (ctx: ExegesisContext) =>
     ? (ctx.params.query["cube-z"] as string)
     : undefined;
 
-const zParamInit = async (ctx: ExegesisContext) =>
-  ctx.params.query.z
-    ? (ctx.params.query.z as {
-        min: number | undefined;
-        max: number | undefined;
-        in: number[] | undefined;
-        one: number | undefined;
-        //incrementBy: number | undefined;
-        //intervalNumber: number | undefined;
-      })
-    : undefined;
+const zParamInit_unparsed = async (ctx: ExegesisContext) =>
+  ctx.params.query.z ? (ctx.params.query.z as string) : undefined;
 
+const parsedZparam = async (ctx: ExegesisContext) =>
+  (ctx.params.query.parsedz as {
+    min: number | undefined;
+    max: number | undefined;
+    in: number[] | undefined;
+    one: number | undefined;
+    //incrementBy: number | undefined;
+    //intervalNumber: number | undefined;
+  }) ?? undefined;
 //TO DO
-const datetimeParamInit = async (ctx: ExegesisContext) => {
+const datetimeParamInit_unparsed = async (ctx: ExegesisContext) => {
   return ctx.params.query.datetime
-    ? (ctx.params.query.datetime as {
-        start: string | undefined;
-        end: string | undefined;
-        one: string | undefined;
-      })
+    ? (ctx.params.query.datetime as string)
     : undefined;
 };
 
+const parsedDatetimeParam = async (ctx: ExegesisContext) =>
+  (ctx.params.query.parseddatetime as {
+    start: string | undefined;
+    end: string | undefined;
+    one: string | undefined;
+  }) ?? undefined;
 /** */
 /*
 const fParamInit = async (ctx: ExegesisContext) => {

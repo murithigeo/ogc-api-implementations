@@ -1,8 +1,11 @@
 import { ExegesisContext } from "exegesis-express";
 import * as types from "../../types";
 import * as observationParsers from "../weatherMetadata/parseObservations";
+import edrQueryEndpointLink from "../links/edrQueryEndpoint";
+import featureLink from "../links/edrGeoJSON";
 
 const parseDbResToEdrFeature = async (
+  ctx: ExegesisContext,
   dbRes: any,
   geomColumnName: string,
   featureIdColumnName: string,
@@ -32,7 +35,7 @@ const parseDbResToEdrFeature = async (
           wmo_id: id,
           adm0: others.adm0,
           subregion: others.subregion,
-          edrqueryendpoint: "",
+          edrqueryendpoint: await edrQueryEndpointLink(ctx, id),
           "parameter-name": pNames,
           temperature: others.temperature
             ? await observationParsers.parseTemp(others.temperature, 10)
@@ -53,6 +56,13 @@ const parseDbResToEdrFeature = async (
             ? await observationParsers.parseTemp(others.dew, 10)
             : undefined,
         },
+        //Only for items endpoint
+        /*
+        links: await featureLink(ctx, [
+          { f: "GEOJSON", contentType: "application/geo+json" },
+          { f: "yaml", contentType: "text/yaml" },
+        ]),
+        */
       });
     }
   }

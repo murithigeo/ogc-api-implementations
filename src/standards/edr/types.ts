@@ -10,6 +10,9 @@ interface Crs_Detail {
   uri?: string;
   wkt: string;
 }
+
+export type ContentNegotiationArray = ContentNegotiationOption[];
+export type ContentNegotiationOption = { f: string; contentType: string };
 export type WidthUnits = Length[];
 export type Crs_Details = Crs_Detail[];
 
@@ -201,6 +204,7 @@ export interface Collection {
   crs: string[];
   output_formats: OutputFormats;
   parameter_names: Parameter_Names;
+  links?:Link[]
 }
 export interface Parameter_Names {
   [key: string]: ParameterNames;

@@ -2,6 +2,7 @@ import { ExegesisContext } from "exegesis-express";
 import convertJsonToYAML from "../../components/convertToYaml";
 import { EDRConformancePage } from "../types";
 import makeQueryValidationError from "../../components/makeValidationError";
+import edrConformanceLinks from "../components/links/path_conformance";
 
 async function edrGetConformance(ctx: ExegesisContext) {
   const confClasses: EDRConformancePage = {
@@ -13,7 +14,10 @@ async function edrGetConformance(ctx: ExegesisContext) {
       //"http://www.opengis.net/spec/ogcapi-edr-1/1.0/conf/html", //Provides HTML content. Preferable for html content
       "http://www.opengis.net/spec/ogcapi-edr-1/1.0/conf/geojson", //Serves geojson content
     ],
-    links: [], //None added yet
+    links: await edrConformanceLinks(ctx, [
+      { f: "json", contentType: "application/json" },
+      { f: "yaml", contentType: "text/yaml" },
+    ]), //None added yet
   };
   switch (ctx.params.query.f) {
     case "json":

@@ -110,13 +110,15 @@ const collectionsMetadata: types.CollectionWithoutProps[] = [
     default_output_format: "edrGeoJSON",
     data_queries: {
       instances: {},
-      cube: { height_units: ["m"] },
-      radius: { within_units: ["km","meter"] },
+      cube: { height_units: ["metre"] },
+      radius: { within_units: ["km","metre"] },
       position: {},
       trajectory: {},
-      corridor: { width_units: ["km", "m"], height_units: ["km", "m"] },
+      corridor: { width_units: ["km", "m"], height_units: ["km", "metre"] },
+      locations:{},
+      area:{}
       //area: {},
-      //items:{},
+      //items:{}, // This collection does not support the OGC Features API because the items provided do not have a primary key. i.e featureCollection.features[i].id are duplicated
       
     },
   },
@@ -377,7 +379,7 @@ export default async function edrExegesisInstance() {
   };
   globalexegesisOptions.plugins = [
     validationsPlugin(
-      [],
+      ["f"],//Dont know why a path is triggering unexpectedParams trigger though
     ),
   ];
   return await exegesisExpress.middleware(

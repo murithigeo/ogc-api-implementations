@@ -7,6 +7,7 @@ import { collectionsMetadata } from "..";
 import * as helperScripts from "../components/helperScripts";
 import convertJsonToYAML from "../../components/convertToYaml";
 import makeQueryValidationError from "../../components/makeValidationError";
+import { edrCollectionsInstancesRoot } from "../components/links/path_collections";
 
 async function checkIfCollHasInstances(
   ctx: ExegesisContext,
@@ -38,7 +39,6 @@ async function edrGetAllInstancesInCollection(ctx: ExegesisContext) {
     (collection) => collection.id === ctx.params.path.collectionId
   );
 
-
   const foundInstances = await checkIfCollHasInstances(
     ctx,
     matchedCollection.modelName
@@ -55,7 +55,10 @@ async function edrGetAllInstancesInCollection(ctx: ExegesisContext) {
   }
   let instances: types.InstancesRoot = {
     instances: [],
-    links: [],
+    links: await edrCollectionsInstancesRoot(ctx, [
+      { f: "json", contentType: "application/json" },
+      { f: "yaml", contentType: "text/yaml" },
+    ]),
   };
 
   for (const inst of foundInstances) {

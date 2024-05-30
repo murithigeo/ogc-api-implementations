@@ -6,11 +6,18 @@ import { genCollectionInfo } from "../components/genJsonDocs.ts/collections";
 import convertJsonToYAML from "../../components/convertToYaml";
 import makeQueryValidationError from "../../components/makeValidationError";
 import { collectionsMetadata } from "..";
+import * as collectionsInstancesRootLinks from "../components/links/path_collections";
 
 async function edrGetCollectionsRoot(ctx: ExegesisContext) {
   const collections: types.CollectionsRoot = {
     collections: [],
-    links: [],
+    links: await collectionsInstancesRootLinks.edrCollectionsInstancesRoot(
+      ctx,
+      [
+        { f: "json", contentType: "application/json" },
+        { f: "yaml", contentType: "text/yaml" },
+      ]
+    ),
   };
   for (const collectionConfig of collectionsMetadata) {
     ctx.params.path.collectionId = collectionConfig.id;
