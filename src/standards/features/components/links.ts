@@ -1,24 +1,24 @@
 import { ExegesisContext } from "exegesis-express";
 import { URL, URLSearchParams, Url } from "url";
 import { F_AssociatedType, Link } from "../../../types";
-import initCommonQueryParams from "./params";
+import initCommonQueryParams from "../../components/params";
 
-async function filter_f_types(
-  ctx: ExegesisContext,
+export async function filter_f_types(
+  fParam: string,
   allowed_f_values: F_AssociatedType[]
 ): Promise<{
   optionsForSelf: F_AssociatedType[];
   optionsForAlt: F_AssociatedType[];
 }> {
-  const { f } = await initCommonQueryParams(ctx);
+  //const { f } = await initCommonQueryParams(ctx);
   /**
    * Given that a web resource can only have one Content-Type header, return only the first element of @optionsForSelf
    */
   const optionsForSelf = allowed_f_values
-    .filter((obj) => obj.f === f)
+    .filter((obj) => obj.f === fParam)
     .slice(0, 1);
 
-  const optionsForAlt = allowed_f_values.filter((obj) => obj.f !== f);
+  const optionsForAlt = allowed_f_values.filter((obj) => obj.f !== fParam);
   return { optionsForSelf, optionsForAlt };
 }
 
@@ -39,7 +39,7 @@ async function genLinksAll(
     | "Root"
 ) {
   //Link to current endpoint. It has query parameters
-  const { urlToThisEP } = await initCommonQueryParams(ctx);
+  const { _url } = await initCommonQueryParams(ctx);
 
   /**
    * optionsforSelf &optionsforAlt
@@ -62,7 +62,7 @@ async function genLinksAll(
   })();
 
   const { optionsForSelf, optionsForAlt } = await filter_f_types(
-    ctx,
+    ctx.params.query.f,
     allowed_f_values
   );
 
@@ -77,7 +77,7 @@ async function genLinksAll(
 
   for (const option of optionsForSelf) {
     //Mutate type to application/geo+json if f=json
-    let _tempLink = new URL(urlToThisEP);
+    let _tempLink = new URL(_url);
     _tempLink.searchParams.set("f", option.f);
     links.push({
       rel: "self",
@@ -88,7 +88,7 @@ async function genLinksAll(
   }
 
   for (const option of optionsForAlt) {
-    let _tempLink = new URL(urlToThisEP);
+    let _tempLink = new URL(_url);
     _tempLink.searchParams.set("f", option.f);
     links.push({
       rel: "alternate",
@@ -105,7 +105,7 @@ async function genLinksAll(
       for (const option of allowed_f_values) {
         //Current link : http://serverUrl/features/
         //conformance
-        var _tempLink = new URL(urlToThisEP.href);
+        var _tempLink = new URL(_url.href);
         _tempLink.pathname = _tempLink.pathname + "conformance";
         _tempLink.searchParams.set("f", option.f);
         links.push({
@@ -115,7 +115,7 @@ async function genLinksAll(
           title: `View the conformance document as ${option.f}`,
         });
         //links to collection (rel=data)
-        var _tempLink = new URL(urlToThisEP.href);
+        var _tempLink = new URL(_url.href);
         _tempLink.pathname = _tempLink.pathname + "collections";
         _tempLink.searchParams.set("f", option.f);
         links.push({
@@ -127,7 +127,7 @@ async function genLinksAll(
       }
 
       //Non dynamic routes (/api&/api.html)
-      var _tempLink = new URL(urlToThisEP.href);
+      var _tempLink = new URL(_url.href);
       _tempLink.pathname = _tempLink.pathname + "api";
       _tempLink.search = "";
       links.push({
@@ -137,7 +137,7 @@ async function genLinksAll(
         type: "application/vnd.oai.openapi+json;version=3.0",
       });
 
-      var _tempLink = new URL(urlToThisEP.href);
+      var _tempLink = new URL(_url.href);
       _tempLink.pathname = _tempLink.pathname + "api.html";
       _tempLink.search = "";
       links.push({
@@ -154,7 +154,7 @@ async function genLinksAll(
             option.type = "application/geo+json";
           }
         })();
-        var _tempLink = new URL(urlToThisEP);
+        var _tempLink = new URL(_url);
         _tempLink.search = "";
         _tempLink.pathname = _tempLink.pathname + "/items";
         _tempLink.searchParams.set("f", option.f);
@@ -177,16 +177,14 @@ async function genLinksAll(
       //Prev and next links
       for (let option of optionsForSelf) {
         //uses the original link
-        const { nextPageOffset, prevPageOffset } = await initCommonQueryParams(
-          ctx
-        );
+        const { offset, limit } = await initCommonQueryParams(ctx);
         option = await changeLinkTypeForNestLinks(
           option,
           "json",
           "application/geo+json"
         );
-        var _tempLink = new URL(urlToThisEP);
-        _tempLink.searchParams.set("offset", nextPageOffset.toString());
+        var _tempLink = new URL(_url);
+        _tempLink.searchParams.set("offset", (offset + limit).toString());
         links.push({
           rel: "next",
           title: `View the next page of results as ${option.f}`,
@@ -194,7 +192,7 @@ async function genLinksAll(
           href: _tempLink.toString(),
         });
 
-        _tempLink.searchParams.set("offset", prevPageOffset.toString());
+        _tempLink.searchParams.set("offset", (offset - limit).toString());
         links.push({
           rel: "prev",
           title: `View the previous page of results as ${option.f}`,
@@ -202,11 +200,11 @@ async function genLinksAll(
           href: _tempLink.toString(),
         });
       }
-      //urlToThisEP=http://serverUrl/features/{collectionId}/items
+      //_url=http://serverUrl/features/{collectionId}/items
       //URL to /features/collections/collectionId
 
       for (let option of allowed_f_values) {
-        var _tempLink = new URL(urlToThisEP);
+        var _tempLink = new URL(_url);
         _tempLink = new URL(new URL("..", _tempLink).toString().slice(0, -1));
 
         _tempLink.searchParams.set("f", option.f);
@@ -226,7 +224,7 @@ async function genLinksAll(
     case "Feature":
       //Provide links to /features/{collectionId} && /features/{collectionId}/items
       for (let option of allowed_f_values) {
-        var _tempLink = new URL(urlToThisEP);
+        var _tempLink = new URL(_url);
         _tempLink.search = "";
         _tempLink = new URL(
           new URL("../../", _tempLink).toString().slice(0, -1)
@@ -249,7 +247,7 @@ async function genLinksAll(
           "json",
           "application/geo+json"
         );
-        var _tempLink = new URL(urlToThisEP);
+        var _tempLink = new URL(_url);
         _tempLink.search = "";
         _tempLink = new URL(new URL("./", _tempLink).toString().slice(0, -1));
         _tempLink.searchParams.set("f", option.f);
@@ -288,13 +286,13 @@ async function genLinksToColl_ItemsWhenAtRoot(
   collectionId: string | number,
   allowed_f_values: F_AssociatedType[]
 ): Promise<Link[]> {
-  const { urlToThisEP } = await initCommonQueryParams(ctx);
+  const { _url } = await initCommonQueryParams(ctx);
 
   const links: Link[] = [];
 
   for (let option of allowed_f_values) {
     //links to /{collectionId}
-    var _tempLink = new URL(urlToThisEP);
+    var _tempLink = new URL(_url);
     _tempLink.search = "";
     _tempLink = new URL(new URL(collectionId, _tempLink + "/").toString());
     _tempLink.searchParams.set("f", option.f);
@@ -309,7 +307,7 @@ async function genLinksToColl_ItemsWhenAtRoot(
       title: `View the collection document`,
       type: option.type,
     });
-    var _tempLink = new URL(urlToThisEP);
+    var _tempLink = new URL(_url);
     _tempLink.search = "";
     _tempLink = new URL(
       new URL(collectionId + "/items", _tempLink + "/").toString()

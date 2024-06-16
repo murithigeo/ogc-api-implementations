@@ -110,18 +110,7 @@ export interface Link {
   length?: number;
 }
 
-export interface Crs_prop {
-  /**
-   * @type uri formed by computing `http://www.opengis.net/def/crs/{authority}/{version}/{code}
-   */
-  crs?: string;
-  wkt?: string;
-  version: number;
-  code: string | number;
-  srid: number;
-  authority: string;
-  isGeographic: boolean;
-}
+
 
 export interface Feature {
   geometry: {

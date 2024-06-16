@@ -1,15 +1,14 @@
 import { ExegesisContext } from "exegesis-express";
-import initCommonQueryParams from "../components/params";
+import initCommonQueryParams from "../../components/params";
 import { CN_Value, F_AssociatedType } from "../../../types";
 import { genRootDoc } from "../components/generateJsonDocs";
 import convertJsonToYAML from "../../components/convertToYaml";
 import { allowed_F_values } from "..";
 
 export default async function getFeaturesRoot(ctx: ExegesisContext) {
-  const { f } = await initCommonQueryParams(ctx);
   const _jsonDoc = await genRootDoc(ctx, allowed_F_values);
 
-  switch (f) {
+  switch (ctx.params.query.f) {
     case "json":
       ctx.res
         .status(200)

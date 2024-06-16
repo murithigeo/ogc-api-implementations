@@ -65,7 +65,7 @@ export const globalexegesisOptions: exegesisExpress.ExegesisOptions = {
   },
 };
 // Configure exegesis & express
-async function createServer() {
+export default async function createServer() {
   const app = express();
 
   //app.set("trust proxy", true);

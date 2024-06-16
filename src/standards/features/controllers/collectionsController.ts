@@ -4,7 +4,7 @@ import {
   genCollectionsRootDoc,
   genOneCollectionDoc,
 } from "../components/generateJsonDocs";
-import initCommonQueryParams from "../components/params";
+import initCommonQueryParams from "../../components/params";
 import convertJsonToYAML from "../../components/convertToYaml";
 import { F_AssociatedType } from "../../../types";
 
@@ -15,7 +15,7 @@ async function getCollectionsAll(ctx: ExegesisContext) {
     collections_properties.collections,
     allowed_F_values
   );
-  switch ((await initCommonQueryParams(ctx)).f) {
+  switch (ctx.params.query.f) {
     case "json":
       ctx.res
         .status(200)
@@ -33,17 +33,17 @@ async function getCollectionsAll(ctx: ExegesisContext) {
   }
 }
 async function getCollectionOne(ctx: ExegesisContext) {
-  const { f } = await initCommonQueryParams(ctx);
+  //const { f } = await initCommonQueryParams(ctx);
   const _collectionDoc = await genOneCollectionDoc(
     ctx,
     allowed_F_values,
     collections_properties.collections.find(
       (collection) =>
-        (collection.collectionId = ctx.params.path.collectionId)
+        (collection.id = ctx.params.path.collectionId)
     ),
     "specific"
   );
-  switch (f) {
+  switch (ctx.params.query.f) {
     case "yaml":
       ctx.res
         .status(200)

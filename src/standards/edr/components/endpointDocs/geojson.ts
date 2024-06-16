@@ -1,15 +1,20 @@
-import { ExegesisContext } from "exegesis-express";
 import * as types from "../../types";
-import * as observationParsers from "../weatherMetadata/parseObservations";
+import * as observationParsers from "../parseWeatherData";
 import edrQueryEndpointLink from "../links/edrQueryEndpoint";
 import featureLink from "../links/edrGeoJSON";
+import { ExegesisContext } from "exegesis-express";
+import genParamNameObj from "../collection_instanceParamNamesObject";
+import deletePrevNextLinks from "../../../components/deletePrevNextLinks";
+import numMatchedInit from "../../../components/numberMatched";
+import edrCommonParams from "../../../components/params";
+import featureCollectionLinks from "../links/featurecollection";
 
 const parseDbResToEdrFeature = async (
   ctx: ExegesisContext,
   dbRes: any,
   geomColumnName: string,
   featureIdColumnName: string,
-  pNames: string[]
+  pNames: string[],
 ): Promise<types.EdrGeoJSONFeature[]> => {
   const features: types.EdrGeoJSONFeature[] = [];
   if (dbRes.length < 1) {
@@ -69,4 +74,47 @@ const parseDbResToEdrFeature = async (
   return features;
 };
 
-export default parseDbResToEdrFeature;
+
+
+
+
+
+const edrGeoJSON_FeatureCollection_Gen = async (
+  ctx: ExegesisContext,
+  dbRes: any,
+  count: number,
+  geomColumnName: string,
+  featureIdColumnName: string,
+  edrVariables: types.collectionConfigEdrVariable[]
+): Promise<types.EdrGeoJSONFeatureCollection> => {
+  const { parameter_names } = await edrCommonParams(ctx);
+  const pNames =
+    ctx.params.query["parameter-name"] && parameter_names.length > 0
+      ? parameter_names
+      : edrVariables.map((variable) => variable.id);
+  return {
+    type: "FeatureCollection",
+    timeStamp: new Date().toJSON(),
+    numberMatched: await numMatchedInit(ctx, count),
+    numberReturned: dbRes.length,
+    features: await parseDbResToEdrFeature(
+      ctx,
+      dbRes,
+      geomColumnName,
+      featureIdColumnName,
+      pNames
+    ),
+
+    parameters: Object.values(await genParamNameObj(edrVariables)),
+    links: await deletePrevNextLinks(
+      ctx,
+      await featureCollectionLinks(ctx, [
+        { f: "json", contentType: "application/json" },
+        { f: "yaml", contentType: "text/yaml" },
+      ]),
+      count
+    ),
+  };
+};
+
+export default edrGeoJSON_FeatureCollection_Gen;

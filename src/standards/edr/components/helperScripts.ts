@@ -2,7 +2,7 @@ import { _allCrsProperties } from "../../components/crsdetails";
 import { ExegesisContext } from "exegesis-express";
 import * as types from "../types";
 import { Op, ProjectionAlias, Sequelize, WhereOptions, col } from "sequelize";
-import edrCommonParams from "./params";
+import edrCommonParams from "../../components/params";
 import unitConverter from "convert";
 
 export const instanceIdColumnQuery = async (
@@ -118,8 +118,9 @@ export const transformToCrsOrForce2DQuery = async (
  */
 export const includeColumnsToRetrieve = async (
   ctx: ExegesisContext,
-  edrVariables: types.collectionConfigEdrVariable[]
-) => {
+  edrVariables: types.collectionConfigEdrVariable[],
+  mode: "GEOJSON" | "COVERAGEJSON"
+): Promise<string[] | ProjectionAlias[]> => {
   const pNamesParam = (await edrCommonParams(ctx)).parameter_names;
   const pNames =
     pNamesParam === undefined
@@ -128,10 +129,22 @@ export const includeColumnsToRetrieve = async (
       ? edrVariables.map((variable) => variable.id)
       : pNamesParam;
 
-  const columnsToRetrieve = edrVariables
-    .filter((variable) => pNames.includes(variable.id))
-    .map((variable) => variable.columnDerivedFrom);
-  return columnsToRetrieve;
+  return mode === "GEOJSON"
+    ? edrVariables
+        .filter((variable) => pNames.includes(variable.id))
+        .map((variable) => variable.columnDerivedFrom)
+    : edrVariables
+        .filter((variable) => pNames.includes(variable.id))
+        .map(
+          (variable) =>
+            [
+              Sequelize.fn(
+                "Array_Agg",
+                Sequelize.col(variable.columnDerivedFrom)
+              ),
+              variable.columnDerivedFrom,
+            ] as ProjectionAlias
+        );
 };
 
 export const cubeZQuery = async (ctx: ExegesisContext) => {
@@ -190,7 +203,7 @@ export const positionCoordsQuery = async (
         Sequelize.fn(
           "ST_DWithin",
           Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
-          Sequelize.fn("ST_GeomFromText", coords.coords2d,3857),
+          Sequelize.fn("ST_GeomFromText", coords.coords2d, 3857),
           coordsSearchPrecision
         ),
         true
@@ -218,7 +231,7 @@ const areaCoordsQuery = async (
 const trajectoryCoordsQuery = async (
   ctx: ExegesisContext,
   geomColumnName: string,
-  datetimeColumns: string[]
+  datetimeColumns: string
 ) => {
   const {
     _url,
@@ -247,12 +260,12 @@ const trajectoryCoordsQuery = async (
           ),
           coords.mmin //Just one check because in precontroller validation, it wont accept multidimensional...
             ? {
-                [Op.or]: datetimeColumns.map((column) =>
-                  Sequelize.where(Sequelize.col(column), Op.between, [
+                [Op.or]: [
+                  Sequelize.where(Sequelize.col(datetimeColumns), Op.between, [
                     coords.mmin,
                     coords.mmax,
-                  ])
-                ),
+                  ]),
+                ],
               }
             : undefined,
           coords.zmin
@@ -331,7 +344,7 @@ export const zQuery = async (ctx: ExegesisContext, geomColumnName: string) => {
 };
 export const dateTimeQuery = async (
   ctx: ExegesisContext,
-  datetimeColumns: string[]
+  datetimeColumns: string
 ) => {
   const datetime = (await edrCommonParams(ctx)).datetime;
 
@@ -339,22 +352,30 @@ export const dateTimeQuery = async (
   if (ctx.params.query.datetime) {
     if (datetime.one) {
       whereClause = {
-        [Op.or]: datetimeColumns.map((column) => ({ [column]: datetime.one })),
+        [Op.or]: { [datetimeColumns]: datetime.one },
       };
     } else if (datetime.start && datetime.end) {
       whereClause = {
-        [Op.or]: datetimeColumns.map((column) => [
-          Sequelize.where(Sequelize.col(column), Op.gte, datetime.start),
-          Sequelize.where(Sequelize.col(column), Op.lte, datetime.end),
-        ]),
+        [Op.or]: [
+          Sequelize.where(
+            Sequelize.col(datetimeColumns),
+            Op.gte,
+            datetime.start
+          ),
+          Sequelize.where(Sequelize.col(datetimeColumns), Op.lte, datetime.end),
+        ],
       };
     } else if (!datetime.start && datetime.end) {
-      whereClause = datetimeColumns.map((column) =>
-        Sequelize.where(Sequelize.col(column), Op.lte, datetime.end)
+      whereClause = Sequelize.where(
+        Sequelize.col(datetimeColumns),
+        Op.lte,
+        datetime.end
       );
     } else {
-      whereClause = datetimeColumns.map((column) =>
-        Sequelize.where(Sequelize.col(column), Op.gte, datetime.start)
+      whereClause = Sequelize.where(
+        Sequelize.col(datetimeColumns),
+        Op.gte,
+        datetime.start
       );
     }
     return whereClause;
@@ -365,7 +386,7 @@ export const dateTimeQuery = async (
 const allWhereQueries = async (
   ctx: ExegesisContext,
   geomColumnName: string,
-  datetimeColumns: string[],
+  datetimeColumns: string,
   pKeyColumn: string,
   coordsSearchPrecision?: number
 ): Promise<WhereOptions<any>> => {

@@ -1,5 +1,5 @@
 import { ExegesisContext } from "exegesis-express";
-import edrCommonParams from "../params";
+import edrCommonParams from "../../../components/params";
 import * as types from "../../types";
 import { matchCrsUriToProps } from "../helperScripts";
 

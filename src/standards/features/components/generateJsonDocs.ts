@@ -10,7 +10,7 @@ import {
   Link,
 } from "../../../types";
 import { genLinksAll, genLinksToColl_ItemsWhenAtRoot } from "./links";
-import initCommonQueryParams from "./params";
+import initCommonQueryParams from "../../components/params";
 import { CollectionsConfig, CollectionConfig } from "..";
 import { querySpatialExtent, queryTemporalIntervals } from "./db_queries";
 import * as crsDetails from "../../components/crsdetails";
@@ -109,7 +109,7 @@ async function genOneCollectionDoc(
   );
 
   return {
-    id: collectionOptions.collectionId,
+    id: collectionOptions.id,
     description: collectionOptions.description,
     title: collectionOptions.title,
     extent: {
@@ -155,7 +155,7 @@ async function genOneCollectionDoc(
         ? await genLinksAll(ctx, allowed_f_values, "Collection")
         : await genLinksToColl_ItemsWhenAtRoot(
             ctx,
-            collectionOptions.collectionId,
+            collectionOptions.id,
             allowed_f_values
           ),
   };

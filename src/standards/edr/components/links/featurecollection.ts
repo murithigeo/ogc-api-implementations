@@ -1,7 +1,7 @@
 import { ExegesisContext } from "exegesis-express";
 import self_altLinksFunc from "./self_altLinks";
 import { ContentNegotiationArray } from "../../types";
-import edrCommonParams from "../params";
+import edrCommonParams from "../../../components/params";
 import { filterAllowedContentTypes } from "./helpers";
 
 export default async function featureCollectionLinks(

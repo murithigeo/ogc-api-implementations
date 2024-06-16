@@ -1,13 +1,13 @@
 import { ExegesisContext } from "exegesis-express";
-import * as types from "../../types";
-import sequelize from "../../models";
-import return500InternalServerErr from "../../../components/makeInternalServerError";
+import * as types from "../../../types";
+import sequelize from "../../../models";
+import return500InternalServerErr from "../../../../components/makeInternalServerError";
 import { Op } from "sequelize";
-import allWhereQueries, * as helperScripts from "../helperScripts";
-import * as DataQueries from "../links/queryTypes";
-import * as crsDetails from "../../../components/crsdetails";
-import genParamNameObj from "../collection_instanceParamNamesObject";
-import { edrCollectionSpecificLink_Root } from "../links/path_collections";
+import allWhereQueries, * as helperScripts from "../../helperScripts";
+import * as DataQueries from "../../links/queryTypes";
+import * as crsDetails from "../../../../components/crsdetails";
+import genParamNameObj from "../../collection_instanceParamNamesObject";
+import { edrCollectionSpecificLink_Root } from "../../links/path_collections";
 
 async function genExtentBbox(
   ctx: ExegesisContext,
@@ -32,27 +32,25 @@ async function genExtentBbox(
 async function genExtentTempInterval(
   ctx: ExegesisContext,
   modelName: string,
-  datetimeColumns?: string[]
+  datetimeColumns?: string
 ) {
   //Instantiate temporal interval array
   const intervals: [string | null, string | null][] = [];
 
   //If the datecolumns are listed, then query the database
-  if (datetimeColumns.length > 0) {
-    for (const column of datetimeColumns) {
-      let min = await sequelize.models[modelName].min(column, {
+  if (datetimeColumns) {
+      let min = await sequelize.models[modelName].min(datetimeColumns, {
         where: await helperScripts.instanceIdColumnQuery(ctx),
       });
-      let max = await sequelize.models[modelName].max(column, {
+      let max = await sequelize.models[modelName].max(datetimeColumns, {
         where: await helperScripts.instanceIdColumnQuery(ctx),
       });
       intervals.push([min as string, max as string]);
     }
-  } else {
+   else {
     //Push null vals if datetime columns are undefined
     intervals.push([null, null]);
   }
-
   return intervals;
 }
 

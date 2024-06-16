@@ -1,5 +1,5 @@
 import { ExegesisContext } from "exegesis-express";
-import edrCommonParams from "../params";
+import edrCommonParams from "../../../components/params";
 
 const edrQueryEndpointLink = async (
   ctx: ExegesisContext,

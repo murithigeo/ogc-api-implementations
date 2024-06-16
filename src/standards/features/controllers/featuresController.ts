@@ -3,7 +3,7 @@ import sequelize from "../models";
 import parseDbResToGeoJson from "../components/parsedbResToGeoJson";
 import { F_AssociatedType, RawGeoDataResult } from "../../../types";
 
-import initCommonQueryParams from "../components/params";
+import initCommonQueryParams from "../../components/params";
 import {
   genFeature,
   genFeatureCollection,
@@ -11,18 +11,13 @@ import {
 import { allowed_F_values } from "..";
 
 import { Op, Sequelize } from "sequelize";
-import * as crsDetails from "../../components/crsdetails"
+import * as crsDetails from "../../components/crsdetails";
 import convertJsonToYAML from "../../components/convertToYaml";
 
 async function queryAllItems(ctx: ExegesisContext) {
   const { contentcrsHeader, f } = await initCommonQueryParams(ctx);
 
-  const dbResponse = await dbQueryMountains(
-    ctx,
-    "name",
-    "mountains",
-    "geom"
-  );
+  const dbResponse = await dbQueryMountains(ctx, "name", "mountains", "geom");
 
   //Parse the dbresult to geojson
   //TODO: Find alternatives or find a sureway method using ST_asGeoJSOn to reduce latency
@@ -35,20 +30,20 @@ async function queryAllItems(ctx: ExegesisContext) {
     dbResponse.count,
     allowed_F_values
   );
-  switch (f) {
-    case "json":
+  switch (f.f) {
+    case "GEOJSON":
       ctx.res
         .status(200)
-        .set("content-type", "application/geo+json")
+        .set("content-type", f.contentType)
         .set("content-crs", contentcrsHeader)
         .setBody(_fcDoc)
         .end();
       break;
-    case "yaml":
+    case "YAML":
       ctx.res
         .status(200)
         .set("content-crs", contentcrsHeader)
-        .set("content-type", "text/yaml")
+        .set("content-type", f.contentType)
         .setBody(await convertJsonToYAML(_fcDoc))
         .end();
       break;
@@ -64,7 +59,7 @@ async function queryAllItems(ctx: ExegesisContext) {
 }
 
 async function querySpecificItem(ctx: ExegesisContext) {
-  const { f, contentcrsHeader } = await initCommonQueryParams(ctx);
+  let { f, contentcrsHeader } = await initCommonQueryParams(ctx);
   const _geojsonF_array = await dbQueryMountains(
     ctx,
     "name",
@@ -77,12 +72,12 @@ async function querySpecificItem(ctx: ExegesisContext) {
       status: "Not found",
     });
   } else {
-    switch (f) {
-      case "json":
+    switch (f.f) {
+      case "GEOJSON":
         ctx.res
           .status(200)
           .set("content-crs", contentcrsHeader)
-          .set("content-type", "application/geo+json")
+          .set("content-type", f.contentType)
           .setBody(
             await genFeature(
               ctx,
@@ -91,10 +86,10 @@ async function querySpecificItem(ctx: ExegesisContext) {
             )
           );
         break;
-      case "yaml":
+      case "YAML":
         ctx.res
           .status(200)
-          .set("content-type", "text/yaml")
+          .set("content-type", f.contentType)
           .setBody(
             await convertJsonToYAML(
               await genFeature(
@@ -117,7 +112,7 @@ async function dbQueryMountains(
   geomColumnName: string
 ) {
   //Initialize common parameters to be used
-  const { reqCrs, reqBboxcrs, limit, offset, bboxArray } =
+  const { bboxcrs, crs, limit, offset, xyAxisBbox, zAxisBbox } =
     await initCommonQueryParams(ctx);
 
   //retrive a specific item
@@ -134,11 +129,11 @@ async function dbQueryMountains(
             Sequelize.col(geomColumnName),
             Sequelize.fn(
               "ST_MakeEnvelope",
-              bboxArray[0],
-              bboxArray[1],
-              bboxArray[3],
-              bboxArray[4],
-              reqBboxcrs.srid
+              xyAxisBbox[0],
+              xyAxisBbox[1],
+              xyAxisBbox[2],
+              xyAxisBbox[3],
+              bboxcrs.srid
             )
           ),
           true
@@ -147,7 +142,7 @@ async function dbQueryMountains(
           Sequelize.fn(
             "ST_Intersects",
             Sequelize.col(geomColumnName),
-            Sequelize.fn("ST_MakeEnvelope", ...bboxArray, reqBboxcrs.srid)
+            Sequelize.fn("ST_MakeEnvelope", ...xyAxisBbox, bboxcrs.srid)
           ),
           true
         )
@@ -161,13 +156,8 @@ async function dbQueryMountains(
           [Op.and]: [
             Sequelize.where(
               Sequelize.fn("ST_Z", Sequelize.col(geomColumnName)),
-              Op.gte,
-              bboxArray[2]
-            ),
-            Sequelize.where(
-              Sequelize.fn("ST_Z", Sequelize.col(geomColumnName)),
-              Op.lte,
-              bboxArray[5]
+              Op.between,
+              zAxisBbox
             ),
           ],
         }
@@ -185,10 +175,10 @@ async function dbQueryMountains(
          * @param reqCrs.uri === CRS84h is intended for collections with z-axis
          * If CRS84, return as is
          */
-        reqCrs.crs === crsDetails.crs84hUri
+        crs.crs === crsDetails.crs84hUri
           ? [Sequelize.col(geomColumnName), geomColumnName]
           : //Otherwise if its not crs84h, start the next conditional checks
-          reqCrs.isGeographic === true
+          crs.isGeographic === true
           ? //If requested crs is geographic, Flipthe coords which have been transformed but first forced to a 2D dimensional space
             [
               Sequelize.fn(
@@ -196,7 +186,7 @@ async function dbQueryMountains(
                 Sequelize.fn(
                   "ST_Transform",
                   Sequelize.fn("ST_Force2D", Sequelize.col(geomColumnName)),
-                  reqCrs.srid
+                  crs.srid
                 )
               ),
               "geom",
@@ -207,7 +197,7 @@ async function dbQueryMountains(
               Sequelize.fn(
                 "ST_Transform",
                 Sequelize.fn("ST_Force2D", Sequelize.col(geomColumnName)),
-                reqCrs.srid
+                crs.srid
               ),
               geomColumnName,
             ],

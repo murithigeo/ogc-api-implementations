@@ -1,5 +1,14 @@
 import unitConverter, { Length, UnitsByMeasure } from "convert";
-
+export type EdrQueryTypes =
+  | "instances"
+  | "locations"
+  | "items"
+  | "radius"
+  | "position"
+  | "area"
+  | "trajectory"
+  | "corridor"
+  | "cube";
 export type CollectionId = string;
 export type OutputFormats = string[];
 export type Default_output_format = string;
@@ -7,7 +16,7 @@ export type WithinUnits = Length[];
 export type HeightUnits = Length[];
 interface Crs_Detail {
   crs: string;
-  uri?: string;
+  //uri?: string;
   wkt: string;
 }
 
@@ -19,7 +28,7 @@ export type Crs_Details = Crs_Detail[];
 /**
  * @interface InstanceOrCollectionProps
  */
-interface genericDataQueryItemConfig {
+export interface genericDataQueryItemConfig {
   specificOutputFormats?: string[];
   specificDefOutputFormat?: string;
   specificCrs?: string[];
@@ -57,7 +66,7 @@ export interface CollectionWithoutProps {
   modelName: string;
   edrVariables: collectionConfigEdrVariable[];
   allSupportedCrs: string[];
-  datetimeColumns: string[];
+  datetimeColumns: string;
   pkeyColumn: string;
   data_queries?: {
     position?: genericDataQueryItemConfig;
@@ -204,10 +213,10 @@ export interface Collection {
   crs: string[];
   output_formats: OutputFormats;
   parameter_names: Parameter_Names;
-  links?:Link[]
+  links?: Link[];
 }
 export interface Parameter_Names {
-  [key: string]: ParameterNames;
+  [key: string]: Parameter;
 }
 export type QueryType =
   | "instances"
@@ -231,11 +240,11 @@ interface DataQueryLinkDefault<T = {}> extends Link {
 }
 
 /**
- * @interface ParameterNames
+ * @interface Parameter
  * @example ParameterNamesExample
  */
 
-const ParameterNamesExample: ParameterNames = {
+const ParameterNamesExample: Parameter = {
   type: "Parameter",
   id: "sea_ice",
   description: "Sea Ice concentration (ice=1; no ice=0)",
@@ -251,7 +260,7 @@ const ParameterNamesExample: ParameterNames = {
     label: "Sea Ice Concentration",
   },
 };
-export interface ParameterNames {
+export interface Parameter {
   type: "Parameter";
   description?: string | i18N;
   id?: string; //Unique id of the parameter
@@ -308,12 +317,23 @@ export interface ObservedProperty {
     description?: string | i18N;
   }[];
 }
-interface CoverageJSON {
+
+/**
+ * @description A geospatial coverage interface format based on JSON
+ */
+
+export interface CoverageJSON {
   type: "Coverage" | "CoverageCollection" | "Domain";
-  domainType?: string;
+  domainType?:
+    | "Point"
+    | "PointSeries"
+    | "Grid"
+    | "Polygon"
+    | "MultiPolygon"
+    | "";
   coverages: Coverage[];
   parameters: {
-    [key: string]: EdrGeoJSONParameter;
+    [key: string]: Parameter;
   };
   ranges?: {
     [key: string]: NdArray;
@@ -321,7 +341,7 @@ interface CoverageJSON {
   referencing?: ReferenceSystemConnection[];
 }
 
-interface Coverage {
+export interface Coverage {
   type: "Coverage";
   domain: Domain;
   ranges: {
@@ -331,31 +351,35 @@ interface Coverage {
 /**
  * @interface NdArray description: Object representing a multidimensional (>= 0D) array with named
   axes, encoded as a flat one-dimensional array in row-major order
-  @type axisNames. Items should be Unique
-  @type value. Unique=true. MinItems=1
+  *@type axisNames. Items should be Unique
+  *@type value. Unique=true. MinItems=1
+  *@description  Object representing a multidimensional (>= 0D) array with named
+  axes, encoded as a flat one-dimensional array in row-major order
  */
 interface NdArray {
   type: "NdArray";
   dataType: "float" | "integer" | "string";
   shape: number[];
   axisNames: string[];
-  values: number[] | string[] | null;
+  values: number[] | string[] | boolean[] | null; //To be confirmed since schemas state that they must be number[]
+}
+export type Axes = NumericAxes | CompositeAxis;
+interface NumericAxes {
+  x: NumericAxis;
+  y: NumericAxis;
+  z?: NumericAxis;
+  t?: NumericAxis;
+}
+interface CompositeAxis {
+  composite: TupleValueAxis;
+  z?: NumericAxis;
+  t?: NumericAxis;
 }
 interface Domain {
   type: "Domain";
-  axes:
-    | {
-        x: NumericAxis;
-        y: NumericAxis;
-        z: NumericAxis;
-        t: NumericAxis;
-      }
-    | {
-        axes: {
-          composite: TupleValueAxis;
-          z?: NumericAxis;
-        };
-      };
+  domainType: string;
+  axes: Axes;
+
   referencing?: ReferenceSystemConnection[];
 }
 
@@ -367,9 +391,9 @@ type ReferenceSystem =
     }
   | {
       id: string;
-      label: i18N;
-      description: i18N;
-      targetConcept: { id?: string; label: i18N; description?: i18N };
+      label?: i18N;
+      description?: i18N;
+      targetConcept?: { id?: string; label: i18N; description?: i18N };
       identifiers?: {
         [key: string]: { id?: string; label: i18N; description?: i18N };
       };
@@ -379,9 +403,9 @@ interface ReferenceSystemConnection {
   system: ReferenceSystem;
 }
 interface TupleValueAxis {
-  dataType: "tuple";
-  values: (string | number)[][];
-  coordinates: {};
+  dataType: "tuple" | "Polygon" | "Point";
+  values: string[][] | number[][] | number[];
+  coordinates: string[];
   bounds?: any[];
 }
 
@@ -395,7 +419,11 @@ interface PrimitiveValuesAxis extends ValuesAxisBase {
   values: string[] | number[];
 }
 
-interface PolygonValuesAxis {}
+interface PolygonValuesAxis extends ValuesAxisBase {
+  dataType: "polygon";
+  values: number[][][][];
+  coordinates: string[];
+}
 
 type NumericAxis = NumericValuesAxis | NumericRegularlySpacedAxis;
 
@@ -409,6 +437,8 @@ interface NumericRegularlySpacedAxis {
   num: number;
 }
 
+export type anyAxis = ValuesAxis | NumericRegularlySpacedAxis;
+
 /**
  * @interface ValuesAxisBase
  * @type dataType !=="primitive"
@@ -416,14 +446,14 @@ interface NumericRegularlySpacedAxis {
  * @type bounds.length should be >1(minItems=2)
  */
 type ValuesAxisBase = {
-  dataType: string;
+  dataType?: string;
   values: any[];
   coordinates?: string[];
   bounds?: any[];
 };
 interface NumericValuesAxis extends ValuesAxisBase {
-  values: number[];
-  bounds: number[];
+  values: number[]|string[]; //Not conformant
+  bounds?: number[];
 }
 export interface EdrGeoJSONFeatureCollection {
   type: "FeatureCollection";
@@ -431,7 +461,7 @@ export interface EdrGeoJSONFeatureCollection {
   timeStamp: string;
   numberMatched: number;
   numberReturned: number;
-  parameters: EdrGeoJSONParameter[]; //ParameterNames[]
+  parameters: Parameter[]; //Parameter[]
   links?: Link[];
 }
 
@@ -442,16 +472,7 @@ export interface EdrGeoJSONFeature {
   geometry: GeoJSONPoint | GeoJSONGeometryCollection;
   properties: edrGeoJSONProperties;
 }
-interface EdrGeoJSONParameter {
-  type: "Parameter";
-  id?: string;
-  description?: i18N | string;
-  observedProperty: ObservedProperty;
-  unit?: Unit;
-  categoryEncoding?: {
-    [key: string]: number | number[];
-  };
-}
+
 type Symbol =
   | {
       value: string; //Representation of the units symbol

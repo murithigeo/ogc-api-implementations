@@ -1,6 +1,6 @@
 import { ExegesisContext } from "exegesis-express";
 import { ContentNegotiationArray } from "../../types";
-import edrCommonParams from "../params";
+import edrCommonParams from "../../../components/params";
 import * as linkHelpers from "./helpers";
 import { Link } from "../../../../types";
 

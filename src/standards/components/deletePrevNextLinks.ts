@@ -1,6 +1,6 @@
 import { ExegesisContext } from "exegesis-express";
 import { Link } from "../../types";
-import edrCommonParams from "../edr/components/params";
+import edrCommonParams from "../components/params";
 
 export default async function deletePrevNextLinks(
   ctx: ExegesisContext,

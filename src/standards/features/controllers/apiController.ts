@@ -1,6 +1,6 @@
 import YAML from "js-yaml";
 import { ExegesisContext } from "exegesis-express";
-import initCommonQueryParams from "../components/params";
+import initCommonQueryParams from "../../components/params";
 import { featuresOasDoc } from "..";
 
 async function getServiceDoc(ctx: ExegesisContext) {

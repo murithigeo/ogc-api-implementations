@@ -1,12 +1,12 @@
 import { ExegesisContext } from "exegesis-express";
-import edrCommonParams from "../components/params";
+import edrCommonParams from "../../components/params";
 import sequelize from "../models";
 import * as edrIndex from "../index";
 import makeQueryValidationError from "../../components/makeValidationError";
 import * as types from "../types";
 import convertJsonToYAML from "../../components/convertToYaml";
-import edrGeoJsonFCInit from "../components/genJsonDocs.ts/featurecollection";
-import collectionHourly2024_QueryInterface from "../components/collectionsQueries/hourly";
+import edrGeoJSON_FeatureCollection_Gen from "../components/endpointDocs/geojson"
+import collectionHourly2024_QueryInterface from "../components/queries/geojson";
 
 async function edrQueryCubeAtCollection(ctx: ExegesisContext) {
   //const {  parameter_names } = await edrCommonParams(ctx);
@@ -22,7 +22,7 @@ async function edrQueryCubeAtCollection(ctx: ExegesisContext) {
       break;
   }
 
-  const featureCollection = await edrGeoJsonFCInit(
+  const featureCollection = await edrGeoJSON_FeatureCollection_Gen(
     ctx,
     dbRes.rows,
     dbRes.count,
@@ -60,7 +60,7 @@ async function edrQueryCubeAtInstance(ctx: ExegesisContext) {
       break;
   }
 
-  const featureCollection = await edrGeoJsonFCInit(
+  const featureCollection = await edrGeoJSON_FeatureCollection_Gen(
     ctx,
     dbRes.rows,
     dbRes.count,

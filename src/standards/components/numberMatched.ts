@@ -1,5 +1,5 @@
 import { ExegesisContext } from "exegesis-express";
-import edrCommonParams from "../edr/components/params";
+import edrCommonParams from "../components/params";
 
 export default async function numMatchedInit(
   ctx: ExegesisContext,

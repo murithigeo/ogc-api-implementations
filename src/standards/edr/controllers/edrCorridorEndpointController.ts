@@ -1,6 +1,6 @@
 import { ExegesisContext } from "exegesis-express";
-import edrGeoJSON_FeatureCollection_Gen from "../components/genJsonDocs.ts/featurecollection";
-import collectionHourly2024_QueryInterface from "../components/collectionsQueries/hourly";
+import edrGeoJSON_FeatureCollection_Gen from "../components/endpointDocs/geojson"
+import collectionHourly2024_QueryInterface from "../components/queries/geojson";
 import convertJsonToYAML from "../../components/convertToYaml";
 import makeQueryValidationError from "../../components/makeValidationError";
 import * as edrIndex from "../index";

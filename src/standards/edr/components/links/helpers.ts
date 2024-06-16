@@ -1,6 +1,6 @@
 import { ExegesisContext } from "exegesis-express";
 import * as types from "../../types";
-import edrCommonParams from "../params";
+import edrCommonParams from "../../../components/params";
 
 export const filterAllowedContentTypes = async (
   ctx: ExegesisContext,

@@ -4,3 +4,4 @@ compile
 build
 .vscode
 /src/logs
+.tap

@@ -48,16 +48,17 @@ import {
   edrQueryCorridorAtCollection,
   edrQueryCorridorAtInstance,
 } from "./controllers/edrCorridorEndpointController";
-import validationsPlugin from "./plugins/exegesis-plugin-precontrollerValidations";
 
 import * as types from "./types";
+
+import allPlugins from "../components/plugins";
 export const edrDocument = parseOasDoc("./src/standards/edr/index.yaml", "edr");
 //instances & collections config
 
 const collectionsMetadata: types.CollectionWithoutProps[] = [
   {
     id: "hourly",
-    pkeyColumn:"station", //Since it has a composite pkey, just disable items
+    pkeyColumn: "station", //Since it has a composite pkey, just disable items
     modelName: "hourly2024",
     geomColumnName: "geom",
     edrVariables: [
@@ -66,14 +67,14 @@ const collectionsMetadata: types.CollectionWithoutProps[] = [
         id: "dewPointTemperature",
         name: "dewPointTemp",
         unit: "temperature",
-        dataType: "float"
+        dataType: "float",
       },
       {
         id: "temperature",
         dataType: "float",
         name: "temperature",
         unit: "temperature",
-        columnDerivedFrom: "temperature"
+        columnDerivedFrom: "temperature",
       },
       {
         columnDerivedFrom: "slp",
@@ -104,25 +105,27 @@ const collectionsMetadata: types.CollectionWithoutProps[] = [
         unit: "windSpeed",
       },
     ],
-    datetimeColumns: ["date"],
+    datetimeColumns: "date",
     allSupportedCrs: ["http://www.opengis.net/def/crs/OGC/1.3/CRS84"],
     output_formats: ["covjson", "edrGeoJSON"],
     default_output_format: "edrGeoJSON",
     data_queries: {
       instances: {},
       cube: { height_units: ["metre"] },
-      radius: { within_units: ["km","metre"] },
+      radius: { within_units: ["km", "metre"] },
       position: {},
       trajectory: {},
       corridor: { width_units: ["km", "m"], height_units: ["km", "metre"] },
-      locations:{},
-      area:{}
+      locations: {},
+      area: {},
       //area: {},
       //items:{}, // This collection does not support the OGC Features API because the items provided do not have a primary key. i.e featureCollection.features[i].id are duplicated
-      
     },
   },
 ];
+
+//TODO: Add a function to process.exit if the collectionName matches queryType
+
 const contentNegotiationValues: { f: string; contentType: string }[] = [];
 
 const allowedFValues = contentNegotiationValues.map((negValue) => negValue.f);
@@ -377,11 +380,7 @@ export default async function edrExegesisInstance() {
       edrQueryCorridorAtInstance,
     },
   };
-  globalexegesisOptions.plugins = [
-    validationsPlugin(
-      ["f"],//Dont know why a path is triggering unexpectedParams trigger though
-    ),
-  ];
+  globalexegesisOptions.plugins = [...allPlugins([])];
   return await exegesisExpress.middleware(
     await edrDocument,
     globalexegesisOptions

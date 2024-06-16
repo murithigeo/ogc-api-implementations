@@ -1,4 +1,4 @@
-const codes = {
+const httpCodes = {
   202: "Successful Request. Wait for processing to finish. Include a Retry-After Header (in seconds)",
   204: "Successful Request. No data found to complete the request",
   304: "An entity tag was provided in the request and the resource has not changed since the prev request",
@@ -9,7 +9,7 @@ const codes = {
   404: "Resource does not exist on this server",
   405: "Method not allowed: Example POST requests on GET routes",
   413: "Requestbody too large to be processed by server",
-  500: "Internal server error"
+  500: "Internal server error",
 };
 
-export default codes;
+export default httpCodes;

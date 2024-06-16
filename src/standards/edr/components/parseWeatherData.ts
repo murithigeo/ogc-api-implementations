@@ -27,7 +27,7 @@ export const parseWind = async (
   windObservation: WindObservation,
   directionScalingFactor: number,
   speedScalingFactor: number
-) => {
+): Promise<{ windDirection: number; windSpeed: number; windType: string }> => {
   let windType: string;
   switch (windObservation[2]) {
     case "A":
@@ -64,10 +64,7 @@ export const parseWind = async (
 
   return {
     windSpeed: parseInt(windObservation[3]) / speedScalingFactor,
-    windDirection:
-      windObservation[0] === "999"
-        ? "Missing"
-        : parseInt(windObservation[0], 10) / directionScalingFactor,
+    windDirection: parseInt(windObservation[0], 10) / directionScalingFactor,
     windType,
   };
 };
@@ -76,13 +73,10 @@ type RawPressure = [string, string]; //[actualPressure,qualitycode]
 export const parsePressure = async (
   rawPressure: RawPressure,
   scalingFactor: number
-) =>
-  rawPressure[0] === "+9999"
-    ? "Missing"
-    : parseInt(rawPressure[0], 10) / scalingFactor;
+): Promise<number> => parseInt(rawPressure[0], 10) / scalingFactor;
 
 /**
- *
+ * Used in GeoJSON
  * @param rawTemp Array containing a [temperature,qualityCode]
  * temperature is in Celsius, needing conversion to Kelvin
  * if(temperature=+9999= missing)
@@ -93,13 +87,44 @@ type RawTemperature = [string, string]; //[value,qualitycode]
 export const parseTemp = async (
   rawTemp: RawTemperature,
   scalingFactor: number
-) => {
-  let temp: string | number;
-  if (rawTemp[0] === "+9999") {
-    return (temp = "Missing");
-  }
-  temp = unitConverter(parseInt(rawTemp[0], 10) / scalingFactor, "celsius").to(
+): Promise<number> =>
+  unitConverter(parseInt(rawTemp[0], 10) / scalingFactor, "celsius").to(
     "kelvin"
   );
-  return temp;
+
+/**
+ * @function
+ * @description parse Temperature Values but for CovJson
+ */
+
+export const parseTempCovJSON = async (
+  tempValuesArray: RawTemperature[],
+  scalingFactor: number
+) =>
+  tempValuesArray.map(
+    async (rawTemp) => await parseTemp(rawTemp, scalingFactor)
+  );
+
+export const parsePressureCovJSON = async (
+  pressureValuesArray: RawPressure[],
+  scalingFactor: number
+) =>
+  pressureValuesArray.map(
+    async (pressureVal) => await parsePressure(pressureVal, scalingFactor)
+  );
+
+export const parseWindCovJSON = async (
+  windValuesArray: WindObservation[],
+  directionScalingFactor: number,
+  speedScalingFactor: number
+) => {
+  const parsedWind = windValuesArray.map(
+    async (windObs) =>
+      await parseWind(windObs, directionScalingFactor, speedScalingFactor)
+  );
+  return {
+    windDirection: parsedWind.map(async (val) => (await val).windDirection),
+    windSpeed: parsedWind.map(async (val) => (await val).windSpeed),
+    windType: parsedWind.map(async (val) => (await val).windType),
+  };
 };

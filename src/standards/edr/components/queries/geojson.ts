@@ -2,9 +2,8 @@ import { ExegesisContext } from "exegesis-express";
 import allWhereQueries, * as helperScripts from "../helperScripts";
 import sequelize from "../../models";
 import * as types from "../../types";
-import { Op } from "sequelize";
-import edrCommonParams from "../params";
-import makeQueryValidationError from "../../../components/makeValidationError";
+import { Op, Sequelize } from "sequelize";
+import edrCommonParams from "../../../components/params";
 
 const collectionHourly2024_QueryInterface = async (
   ctx: ExegesisContext,
@@ -28,7 +27,8 @@ const collectionHourly2024_QueryInterface = async (
       "subregion",
       ...(await helperScripts.includeColumnsToRetrieve(
         ctx,
-        matchedCollection.edrVariables
+        matchedCollection.edrVariables,
+        "GEOJSON"
       )),
     ],
     where: await allWhereQueries(
@@ -50,3 +50,37 @@ const collectionHourly2024_QueryInterface = async (
 };
 
 export default collectionHourly2024_QueryInterface;
+
+export const hourly2024CovJSON_Interface = async (
+  ctx: ExegesisContext,
+  matchedCollection: types.CollectionWithoutProps
+) => {
+  const params = await edrCommonParams(ctx);
+  return await sequelize.models.hourly2024.findAll({
+    raw: true,
+    group: matchedCollection.geomColumnName,
+    where: await allWhereQueries(
+      ctx,
+      matchedCollection.geomColumnName,
+      matchedCollection.datetimeColumns,
+      "station"
+    ),
+    attributes: [
+      //matchedCollection.geomColumnName,
+      ...(await helperScripts.includeColumnsToRetrieve(
+        ctx,
+        matchedCollection.edrVariables,
+        "COVERAGEJSON"
+      )),
+      [Sequelize.fn("Array_Agg",Sequelize.col(matchedCollection.datetimeColumns)),matchedCollection.datetimeColumns],
+      await helperScripts.transformToCrsOrForce2DQuery(
+        ctx,
+        matchedCollection.geomColumnName,
+        true
+      ),
+    ],
+    limit: params.limit,
+    //groupedLimit: params.limit,
+    offset: params.offset,
+  });
+};

@@ -1,6 +1,6 @@
 import { ExegesisContext } from "exegesis-express";
 import * as types from "../../types";
-import edrCommonParams from "../params";
+import edrCommonParams from "../../../components/params";
 import self_altLinksFunc from "./self_altLinks";
 import * as linkHelpers from "./helpers";
 import { Url } from "url";

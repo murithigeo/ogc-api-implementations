@@ -2,9 +2,8 @@ import * as exegesisExpress from "exegesis-express";
 import * as path from "path";
 import parseOasDoc from "../../components/parseOasDoc";
 import { globalexegesisOptions } from "../../server";
-import validateRequestsPlugin from "./plugins/exegesis-plugin-validateRequests";
+import allPlugins from "../components/plugins";
 import { F_AssociatedType } from "../../types";
-import { Crs_prop } from "../../types";
 import _getFeaturesRoot from "./controllers/rootController";
 import getConformance from "./controllers/conformanceController";
 import { getServiceDesc, getServiceDoc } from "./controllers/apiController";
@@ -17,7 +16,8 @@ import {
   getCollectionOne,
   getCollectionsAll,
 } from "./controllers/collectionsController";
-import * as crsDetails from '../components/crsdetails';
+import { genericDataQueryItemConfig } from "../edr/types";
+import * as crsDetails from "../components/crsdetails";
 //All possible content-negotiation values
 const allowed_F_values: F_AssociatedType[] = [
   {
@@ -32,7 +32,7 @@ const allowed_F_values: F_AssociatedType[] = [
 
 //collections configuration
 interface CollectionConfig {
-  collectionId: string;
+  id: string;
   modelName: string;
   bboxgenScope: string;
   zAxis: boolean;
@@ -40,6 +40,9 @@ interface CollectionConfig {
   title?: string;
   description?: string;
   supportedCrs?: string[]; //Allow for collection specific CRS's. These must also be valid in _allCrsProperties
+  data_queries: {
+    items: genericDataQueryItemConfig;
+  };
 }
 interface CollectionsConfig {
   fallbackCrs: string[];
@@ -49,12 +52,15 @@ const collections_properties: CollectionsConfig = {
   fallbackCrs: [crsDetails.crs84Uri],
   collections: [
     {
-      collectionId: "mountains",
+      id: "mountains",
       bboxgenScope: "bboxgenScope",
       zAxis: true,
       datetimeColumns: null,
       modelName: "mountains",
       supportedCrs: ["http://www.opengis.net/def/crs/EPSG/0/4326"],
+      data_queries: {
+        items: {},
+      },
     },
   ],
 };
@@ -85,16 +91,7 @@ async function featuresExegesisInstance() {
       getCollectionsAll,
     },
   };
-  globalexegesisOptions.plugins = [
-    validateRequestsPlugin(
-      allowed_F_values.map((opt) => opt.f),
-      ["apiKey"], //Used for auth but is not listed by the queryParams Interface
-      //Generate a list of collections
-      collections_properties.collections.map(
-        (collection) => collection.collectionId
-      )
-    ),
-  ];
+  globalexegesisOptions.plugins = [...allPlugins([])];
   return exegesisExpress.middleware(
     await featuresOasDoc,
     globalexegesisOptions

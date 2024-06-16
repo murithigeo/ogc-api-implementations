@@ -1,8 +1,7 @@
 import { ExegesisContext } from "exegesis-express";
-import sequelize from "../models";
-import getPostGisVersion from "../models/scripts/postgis_version";
+
 import * as types from "../types";
-import { genCollectionInfo } from "../components/genJsonDocs.ts/collections";
+import { genCollectionInfo } from "../components/endpointDocs/json/collections";
 import convertJsonToYAML from "../../components/convertToYaml";
 import makeQueryValidationError from "../../components/makeValidationError";
 import { collectionsMetadata } from "..";

@@ -1,5 +1,5 @@
 import { ExegesisContext } from "exegesis-express";
-import { genCollectionInfo } from "../components/genJsonDocs.ts/collections";
+import { genCollectionInfo } from "../components/endpointDocs/json/collections"
 import * as types from "../types";
 import sequelize from "../models";
 import { Op, Sequelize } from "sequelize";
