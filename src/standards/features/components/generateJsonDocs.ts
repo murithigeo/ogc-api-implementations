@@ -105,7 +105,7 @@ async function genOneCollectionDoc(
 
   const _extent_interval = await queryTemporalIntervals(
     collectionOptions.modelName,
-    collectionOptions.datetimeColumns
+    collectionOptions.datetimeColumn
   );
 
   return {

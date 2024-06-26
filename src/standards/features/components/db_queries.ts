@@ -26,13 +26,13 @@ async function querySpatialExtent(
 }
 async function queryTemporalIntervals(
   modelName: string,
-  dateTimeColumns: string[] | null
+  datetimeColumn: string[] | null
 ): Promise<[number, number][] | [null, null][]> {
   const intervals: [number, number][] | [null, null][] = [];
-  if (!dateTimeColumns) {
+  if (!datetimeColumn) {
     intervals.push([null, null]);
   } else {
-    for (const column of dateTimeColumns) {
+    for (const column of datetimeColumn) {
       let min = await sequelize.models[modelName].min(column);
       let max = await sequelize.models[modelName].max(column);
       intervals.push([min as any, max as any]);

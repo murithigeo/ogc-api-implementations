@@ -3,6 +3,7 @@ import {
   ExegesisPluginContext,
   ExegesisPluginInstance,
 } from "exegesis-express";
+import * as edrIndex from "../../edr/index";
 import makeQueryValidationError from "../../components/makeValidationError";
 import sequelize from "../models";
 import { validateCrsUri } from "../params";
@@ -13,9 +14,9 @@ import { allowedQueryTypes } from ".";
 export default function makeCoordsPlugin(): ExegesisPluginInstance {
   return {
     postSecurity: async (ctx: ExegesisPluginContext) => {
-      const queryParamsInterface = (await ctx.getParams()).query;
+      const params = await ctx.getParams();
+      const queryParamsInterface = params.query;
       const reqUrl = new URL(ctx.api.serverObject.url + ctx.req.url);
-
 
       /**
        * @description Validate Well Known Text (wkt) strings. Only for @param coords
@@ -61,7 +62,7 @@ export default function makeCoordsPlugin(): ExegesisPluginInstance {
          */
         switch (
           allowedQueryTypes.find((queryType) =>
-            reqUrl.pathname.endsWith(queryType)
+            reqUrl.pathname.includes(queryType)
           )
         ) {
           case "radius":
@@ -200,16 +201,20 @@ export default function makeCoordsPlugin(): ExegesisPluginInstance {
          *          @mmax (minimum timestamp for the coords)
          *          @coords2d (2D wkt for the parameter)
          */
+        const matchedCollection = edrIndex.collectionsMetadata.find(
+          (col) => col.id === params.path.collectionId
+        );
         try {
+          //TODO: Revert to EPSG:4326 as default
           const isValidWkt: any = await sequelize.query(
-            `With res as (Select (ST_DumpPoints(
-                    ST_Transform(ST_GeometryFromText('${
+            `With res as (Select (ST_DumpPoints(ST_Transform(
+                    ST_GeometryFromText('${
                       queryParamsInterface.coords as string
                     }',${
               (
                 await validateCrsUri(queryParamsInterface.crs)
               ).srid
-            }),3857)
+            }),${matchedCollection.geomSrid})
                     )).geom as newgeom)
                     Select  max(ST_Z(newgeom)) as zmax,
                             min(ST_Z(newgeom)) as zmin, 
@@ -221,7 +226,7 @@ export default function makeCoordsPlugin(): ExegesisPluginInstance {
               (
                 await validateCrsUri(queryParamsInterface.crs)
               ).srid
-            }),3857))) as newcoords
+            }),${matchedCollection.geomSrid}))) as newcoords
                             from res;`,
             {
               type: QueryTypes.SELECT,
@@ -243,7 +248,10 @@ export default function makeCoordsPlugin(): ExegesisPluginInstance {
           }
           queryParamsInterface.parsedcoords = {
             zmin: isValidWkt[0].zmin,
-            zmax: isValidWkt[0].zmax,
+            zmax:
+              isValidWkt[0].zmax === isValidWkt[0].zmin
+                ? null
+                : isValidWkt[0].zmax,
             mmin: isValidWkt[0].mmin,
             mmax: isValidWkt[0].mmax,
             coords2d: isValidWkt[0].newcoords,
@@ -279,4 +287,3 @@ export default function makeCoordsPlugin(): ExegesisPluginInstance {
     },
   };
 }
-

@@ -36,7 +36,7 @@ interface CollectionConfig {
   modelName: string;
   bboxgenScope: string;
   zAxis: boolean;
-  datetimeColumns: null | string[]; //The dbQuery will query each column  included
+  datetimeColumn: null | string[]; //The dbQuery will query each column  included
   title?: string;
   description?: string;
   supportedCrs?: string[]; //Allow for collection specific CRS's. These must also be valid in _allCrsProperties
@@ -55,7 +55,7 @@ const collections_properties: CollectionsConfig = {
       id: "mountains",
       bboxgenScope: "bboxgenScope",
       zAxis: true,
-      datetimeColumns: null,
+      datetimeColumn: null,
       modelName: "mountains",
       supportedCrs: ["http://www.opengis.net/def/crs/EPSG/0/4326"],
       data_queries: {

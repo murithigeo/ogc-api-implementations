@@ -49,7 +49,11 @@ interface RadiusDataQueryItemConfig extends genericDataQueryItemConfig {
 export interface collectionConfigEdrVariable {
   id: string;
   dataType: "string" | "float" | "integer";
-  columnDerivedFrom: string;
+  columnProperties: {
+    name: string;
+    arrayIndex?: number;
+    //fullPath?:string;
+  };
   //description?: string;
   name:
     | "temperature"
@@ -59,14 +63,17 @@ export interface collectionConfigEdrVariable {
     | "windType"
     | "windSpeed";
   unit: "pressure" | "temperature" | "windSpeed" | "windDirection" | "windType";
+  scalingFactor: number;
 }
 export interface CollectionWithoutProps {
   id: string;
   geomColumnName: string;
+  geomSrid: number;
+  geomSearchPrecision?: number;
   modelName: string;
   edrVariables: collectionConfigEdrVariable[];
   allSupportedCrs: string[];
-  datetimeColumns: string;
+  datetimeColumn: string;
   pkeyColumn: string;
   data_queries?: {
     position?: genericDataQueryItemConfig;
@@ -322,15 +329,20 @@ export interface ObservedProperty {
  * @description A geospatial coverage interface format based on JSON
  */
 
+export type DomainType =
+  | "Point"
+  | "PointSeries"
+  | "Grid"
+  | "Polygon"
+  | "PolygonSeries"
+  | "MultiPolygon"
+  | "MultiPolygonSeries"
+  | "MultiPointSeries"
+  | "MultiPoint"
+  | "Trajectory";
 export interface CoverageJSON {
   type: "Coverage" | "CoverageCollection" | "Domain";
-  domainType?:
-    | "Point"
-    | "PointSeries"
-    | "Grid"
-    | "Polygon"
-    | "MultiPolygon"
-    | "";
+  domainType?: DomainType;
   coverages: Coverage[];
   parameters: {
     [key: string]: Parameter;
@@ -368,16 +380,21 @@ interface NumericAxes {
   x: NumericAxis;
   y: NumericAxis;
   z?: NumericAxis;
-  t?: NumericAxis;
+  t?: TemporalAxis;
+}
+
+interface TemporalAxis {
+  values: string[];
+  bounds?: string[];
 }
 interface CompositeAxis {
   composite: TupleValueAxis;
   z?: NumericAxis;
-  t?: NumericAxis;
+  t?: TemporalAxis;
 }
 interface Domain {
   type: "Domain";
-  domainType: string;
+  domainType: DomainType;
   axes: Axes;
 
   referencing?: ReferenceSystemConnection[];
@@ -421,7 +438,7 @@ interface PrimitiveValuesAxis extends ValuesAxisBase {
 
 interface PolygonValuesAxis extends ValuesAxisBase {
   dataType: "polygon";
-  values: number[][][][];
+  values: number[];
   coordinates: string[];
 }
 
@@ -447,14 +464,16 @@ export type anyAxis = ValuesAxis | NumericRegularlySpacedAxis;
  */
 type ValuesAxisBase = {
   dataType?: string;
-  values: any[];
+  values: string[] | number[];
   coordinates?: string[];
   bounds?: any[];
 };
 interface NumericValuesAxis extends ValuesAxisBase {
-  values: number[]|string[]; //Not conformant
+  values: number[]; //Not conformant
   bounds?: number[];
 }
+
+//interface tAxisValues  extends ValuesAxisBase
 export interface EdrGeoJSONFeatureCollection {
   type: "FeatureCollection";
   features: EdrGeoJSONFeature[];

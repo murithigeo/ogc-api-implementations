@@ -4,12 +4,101 @@ import genParamNameObj from "../collection_instanceParamNamesObject";
 import edrCommonParams from "../../../components/params";
 import { parseTempCovJSON, parseWindCovJSON } from "../parseWeatherData";
 import { Model } from "sequelize";
+import { CrsDetail } from "../../../types";
 
-export const parseDbResToPointDomain = async (
+/**
+ * @param
+ */
+async function domainTypeDetermination(
+  geomColumnType:
+    | "Point"
+    | "MultiPoint"
+    | "Polyon"
+    | "MultiPolyon"
+    | "LineString"
+    | "Trajectory",
+  datetime: string[]
+): Promise<types.DomainType> {
+  //let datetime: string[] = row[matchedCollection.datetimeColumn];
+  //const geomType = geomColumn.type;
+
+  //Change geomColumnType if LineString
+  geomColumnType =
+    geomColumnType === "LineString" ? "Trajectory" : geomColumnType;
+
+  //Cast to array: Use "," because the char does not exist in timestamp. Update to correct
+
+  //@ts-expect-error
+  return datetime.length > 1 && geomColumnType !== "Trajectory"
+    ? geomColumnType + `Series`
+    : geomColumnType;
+}
+
+async function parseAxes(
+  domainType: types.DomainType,
+  geom: any,
+  crs: CrsDetail,
+  datetime: string[]
+): Promise<types.Axes> {
+  const CRS84h = crs.code === "CRS84h";
+
+  return domainType === "PointSeries" || domainType === "Point"
+    ? {
+        x: {
+          values: crs.isGeographic ? geom.coordinates[1] : geom.coordinates[0],
+        },
+        y: {
+          values: crs.isGeographic ? geom.coordinates[0] : geom.coordinates[1],
+        },
+        z: crs.code === "CRS84h" ? { values: geom.coordinates[3] } : undefined,
+        t: { values: datetime },
+      }
+    : domainType === "MultiPointSeries" || domainType === "MultiPoint"
+    ? {
+        composite: {
+          dataType: "tuple",
+          coordinates:
+            //crs.code === "CRS84h"
+            CRS84h
+              ? ["x", "y", "z"]
+              : crs.isGeographic
+              ? ["y", "x"]
+              : ["x", "y"],
+          values: geom.coordinates,
+        },
+        //TODO: Get Z value from Polygon
+        //https://docs.ogc.org/cs/21-069r2/21-069r2.html#_053fa087-bc08-4ef5-a98d-a9a915a2dc56:~:text=coordinate%20value%20only.-,The%20axis%20%22composite%22%20MUST%20have%20the%20data%20type%20%22polygon%22%20and%20the%20coordinate%20identifiers%20%22x%22%2C%22y%22%2C%20in%20that%20order.,-Domain%20example%3
+      }
+    : domainType === "Polygon" || domainType === "PolygonSeries"
+    ? {
+        composite: {
+          dataType: "Polygon",
+          coordinates: CRS84h
+            ? ["x", "y", "z"]
+            : crs.isGeographic
+            ? ["y", "x"]
+            : ["x", "y"],
+          values: geom.coordinates,
+        },
+        t: { values: datetime },
+      }
+    : //domainType==="MultiPolygon"||domainType==="MultiPolygonSeries"?
+      {
+        composite: {
+          coordinates: CRS84h
+            ? ["x", "y", "z"]
+            : crs.isGeographic
+            ? ["y", "x"]
+            : ["x", "y"],
+          values: geom.coordinates,
+          dataType: "Polygon",
+        },
+      };
+}
+const parseDbResToPointDomain = async (
   ctx: ExegesisContext,
   dbRes: any, // Model<any, any>[],
-  matchedCollection: types.CollectionWithoutProps,
-  pNames: string[]
+  matchedCollection: types.CollectionWithoutProps
 ): Promise<types.CoverageJSON> => {
   const { crs } = await edrCommonParams(ctx);
   const coverages: types.Coverage[] = [];
@@ -22,100 +111,78 @@ export const parseDbResToPointDomain = async (
     temperature?: string[][];
   }
   for (const row of dbRes) {
-    async function genXYZ(coordinates: number[]): Promise<types.Axes> {
-      return {
-        composite: {
-          dataType: "Point",
-          values: coordinates as number[],
-          coordinates: crs.isGeographic
-            ? (coordinates as number[]).length > 2
-              ? ["y", "x", "z"]
-              : ["y", "x"]
-            : (coordinates as number[]).length > 2
-            ? ["x", "y", "z"]
-            : ["x", "y"],
-        },
-        t: {
-          values: row[matchedCollection.datetimeColumns] as string[],
-        },
-      };
-    }
+    row.datetime = Array.isArray(row.datetime) ? row.datetime : [row.datetime];
+    const domainType = await domainTypeDetermination(
+      row.geom.type,
+      row[matchedCollection.datetimeColumn]
+    );
+    const axes = await parseAxes(
+      domainType,
+      row[matchedCollection.geomColumnName],
+      crs,
+      row[matchedCollection.datetimeColumn]
+    );
     //console.log(row.geom);
     //console.log(row.geom.coordinates)
-    const axesValues = await genXYZ(
-      row[matchedCollection.geomColumnName].coordinates
-    );
-    const windObservations = row.wind
-      ? await parseWindCovJSON(row.wind, 1, 10)
-      : undefined;
-    const dewPointTemp = row.dew
-      ? await parseTempCovJSON(row.dew, 10)
-      : undefined;
-    const temperature = row.temperature
-      ? await parseTempCovJSON(row.temperature, 10)
-      : undefined;
 
     coverages.push({
       type: "Coverage",
       domain: {
         type: "Domain",
-        domainType: "PointSeries",
-        axes: axesValues,
+        domainType,
+        axes,
       },
       ranges: {
-        windSpeed: pNames.includes("windSpeed")
+        windSpeed: row.windSpeed
           ? {
               type: "NdArray",
               dataType:
-                typeof windObservations.windSpeed[0] === "number"
+                typeof row.windSpeed[0] === "number" ? "float" : "string",
+              axisNames: ["t"],
+              shape: [row.windSpeed.length],
+              values: row.windSpeed,
+            }
+          : undefined,
+        windType: row.windType
+          ? {
+              type: "NdArray",
+              dataType:
+                typeof row.windSpeed[0] === "number" ? "float" : "string",
+              axisNames: ["t"],
+              shape: [row.windType.length],
+              values: row.windType,
+            }
+          : undefined,
+        windDirection: row.windDirection
+          ? {
+              type: "NdArray",
+              dataType:
+                typeof row.windDirection[0] === "number" ? "float" : "string",
+              axisNames: ["t"],
+              shape: [row.windDirection.length],
+              values: row.windDirection,
+            }
+          : undefined,
+        dewPointTemperature: row.dewPointTemperature
+          ? {
+              type: "NdArray",
+              dataType:
+                typeof row.dewPointTemperature[0] === "number"
                   ? "float"
                   : "string",
               axisNames: ["t"],
-              shape: [windObservations.windSpeed.length],
-              values: await Promise.all(windObservations.windSpeed),
+              shape: [row.dewPointTemperature.length],
+              values: row.dewPointTemperature,
             }
           : undefined,
-        windType: pNames.includes("windType")
+        temperature: row.temperature
           ? {
               type: "NdArray",
               dataType:
-                typeof windObservations.windSpeed[0] === "number"
-                  ? "float"
-                  : "string",
+                typeof row.temperature[0] === "number" ? "float" : "string",
               axisNames: ["t"],
-              shape: [windObservations.windType.length],
-              values: await Promise.all(windObservations.windType),
-            }
-          : undefined,
-        windDirection: pNames.includes("windDirection")
-          ? {
-              type: "NdArray",
-              dataType:
-                typeof windObservations.windDirection[0] === "number"
-                  ? "float"
-                  : "string",
-              axisNames: ["t"],
-              shape: [windObservations.windDirection.length],
-              values: await Promise.all(windObservations.windDirection),
-            }
-          : undefined,
-        dewPointTemperature: pNames.includes("dewPointTemperature")
-          ? {
-              type: "NdArray",
-              dataType:
-                typeof dewPointTemp[0] === "number" ? "float" : "string",
-              axisNames: ["t"],
-              shape: [dewPointTemp.length],
-              values: await Promise.all(dewPointTemp),
-            }
-          : undefined,
-        temperature: pNames.includes("temperature")
-          ? {
-              type: "NdArray",
-              dataType: typeof temperature[0] === "number" ? "float" : "string",
-              axisNames: ["t"],
-              shape: [temperature.length],
-              values: await Promise.all(temperature),
+              shape: [row.temperature.length],
+              values: row.temperature,
             }
           : undefined,
       },
@@ -161,3 +228,4 @@ export const parseDbResToPointDomain = async (
     ],
   };
 };
+export default parseDbResToPointDomain;

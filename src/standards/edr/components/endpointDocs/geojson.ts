@@ -8,13 +8,12 @@ import deletePrevNextLinks from "../../../components/deletePrevNextLinks";
 import numMatchedInit from "../../../components/numberMatched";
 import edrCommonParams from "../../../components/params";
 import featureCollectionLinks from "../links/featurecollection";
+import commonParams from "../../../components/params";
 
 const parseDbResToEdrFeature = async (
   ctx: ExegesisContext,
   dbRes: any,
-  geomColumnName: string,
-  featureIdColumnName: string,
-  pNames: string[],
+  matchedCollection: types.CollectionWithoutProps
 ): Promise<types.EdrGeoJSONFeature[]> => {
   const features: types.EdrGeoJSONFeature[] = [];
   if (dbRes.length < 1) {
@@ -22,90 +21,50 @@ const parseDbResToEdrFeature = async (
   } else {
     for (const row of dbRes) {
       const {
-        [geomColumnName]: geom,
-        [featureIdColumnName]: id,
+        [matchedCollection.geomColumnName]: geom,
+        [matchedCollection.pkeyColumn]: id,
         ...others
       } = row;
       const { type, coordinates } = geom;
-      const windObservations = others.wind
-        ? await observationParsers.parseWind(others.wind, 1, 10)
-        : undefined;
+
       features.push({
         type: "Feature",
         id,
         geometry: { type, coordinates },
         properties: {
-          datetime: others.date,
-          label: others.name,
-          wmo_id: id,
-          adm0: others.adm0,
-          subregion: others.subregion,
-          edrqueryendpoint: await edrQueryEndpointLink(ctx, id),
-          "parameter-name": pNames,
-          temperature: others.temperature
-            ? await observationParsers.parseTemp(others.temperature, 10)
-            : undefined,
-          pressure: others.pressure
-            ? await observationParsers.parsePressure(others.pressure, 10)
-            : undefined,
-          windType: pNames.includes("windType")
-            ? windObservations.windType
-            : undefined,
-          windSpeed: pNames.includes("windSpeed")
-            ? windObservations.windSpeed
-            : undefined,
-          windDirection: pNames.includes("windDirection")
-            ? windObservations.windDirection
-            : undefined,
-          dewPointTemperature: pNames.includes("dewPointTemperature")
-            ? await observationParsers.parseTemp(others.dew, 10)
-            : undefined,
+          datetime: others[matchedCollection.datetimeColumn],
+          edrqueryendpoint: await edrQueryEndpointLink(
+            ctx,
+            (
+              await commonParams(ctx)
+            ).locationId
+          ),
+          "parameter-name":
+            (await commonParams(ctx)).parameter_names ??
+            matchedCollection.edrVariables.map((variable) => variable.id),
+          ...others,
         },
-        //Only for items endpoint
-        /*
-        links: await featureLink(ctx, [
-          { f: "GEOJSON", contentType: "application/geo+json" },
-          { f: "yaml", contentType: "text/yaml" },
-        ]),
-        */
       });
     }
   }
   return features;
 };
 
-
-
-
-
-
-const edrGeoJSON_FeatureCollection_Gen = async (
+const parseToFeatureCollection = async (
   ctx: ExegesisContext,
   dbRes: any,
   count: number,
-  geomColumnName: string,
-  featureIdColumnName: string,
-  edrVariables: types.collectionConfigEdrVariable[]
+  matchedCollection: types.CollectionWithoutProps
 ): Promise<types.EdrGeoJSONFeatureCollection> => {
-  const { parameter_names } = await edrCommonParams(ctx);
-  const pNames =
-    ctx.params.query["parameter-name"] && parameter_names.length > 0
-      ? parameter_names
-      : edrVariables.map((variable) => variable.id);
   return {
     type: "FeatureCollection",
     timeStamp: new Date().toJSON(),
     numberMatched: await numMatchedInit(ctx, count),
     numberReturned: dbRes.length,
-    features: await parseDbResToEdrFeature(
-      ctx,
-      dbRes,
-      geomColumnName,
-      featureIdColumnName,
-      pNames
+    features: await parseDbResToEdrFeature(ctx, dbRes, matchedCollection),
+    parameters: Object.values(
+      await genParamNameObj(matchedCollection.edrVariables)
     ),
-
-    parameters: Object.values(await genParamNameObj(edrVariables)),
     links: await deletePrevNextLinks(
       ctx,
       await featureCollectionLinks(ctx, [
@@ -117,4 +76,4 @@ const edrGeoJSON_FeatureCollection_Gen = async (
   };
 };
 
-export default edrGeoJSON_FeatureCollection_Gen;
+export default parseToFeatureCollection;

@@ -4,6 +4,7 @@ import * as types from "../types";
 import { Op, ProjectionAlias, Sequelize, WhereOptions, col } from "sequelize";
 import edrCommonParams from "../../components/params";
 import unitConverter from "convert";
+import { Col } from "sequelize/lib/utils";
 
 export const instanceIdColumnQuery = async (
   ctx: ExegesisContext
@@ -82,8 +83,8 @@ export const zAxisBboxQuery = async (
  */
 export const transformToCrsOrForce2DQuery = async (
   ctx: ExegesisContext,
-  geomColumnName: string,
-  resWithZaxis: boolean
+  geomColumnName: string
+  //resWithZaxis: boolean
 ): Promise<ProjectionAlias> => {
   const crs = (await edrCommonParams(ctx)).crs;
   const reusable = Sequelize.fn(
@@ -91,11 +92,9 @@ export const transformToCrsOrForce2DQuery = async (
     Sequelize.col(geomColumnName),
     crs.srid
   );
-  if (resWithZaxis) {
-    if (crs.isGeographic) {
-      return [Sequelize.fn("ST_FlipCoordinates", reusable), geomColumnName];
-    }
-    return [reusable, geomColumnName];
+
+  if (crs.code === "CRS84h") {
+    return [Sequelize.fn("ST_Force3D", reusable), geomColumnName];
   } else {
     if (crs.isGeographic) {
       return [
@@ -129,10 +128,36 @@ export const includeColumnsToRetrieve = async (
       ? edrVariables.map((variable) => variable.id)
       : pNamesParam;
 
+  const nonAggFunction = (variable: types.collectionConfigEdrVariable) =>
+    Sequelize.literal(
+      variable.columnProperties.arrayIndex
+        ? `${variable.columnProperties.name}[${
+            variable.columnProperties.arrayIndex
+          }]::${
+            variable.dataType === "string"
+              ? "varchar"
+              : variable.dataType === "float"
+              ? "double precision" +
+                (variable.unit === "temperature"
+                  ? ` +273.15::double precision`
+                  : "")
+              : "int" +
+                (variable.unit === "temperature"
+                  ? ` +273.15::double precision`
+                  : "")
+          }${
+            variable.dataType !== "string" ? "/" + variable.scalingFactor : ""
+          }`
+        : variable.columnProperties.name
+    );
+
   return mode === "GEOJSON"
     ? edrVariables
         .filter((variable) => pNames.includes(variable.id))
-        .map((variable) => variable.columnDerivedFrom)
+        .map(
+          (variable) =>
+            [nonAggFunction(variable), variable.id] as ProjectionAlias
+        )
     : edrVariables
         .filter((variable) => pNames.includes(variable.id))
         .map(
@@ -140,9 +165,10 @@ export const includeColumnsToRetrieve = async (
             [
               Sequelize.fn(
                 "Array_Agg",
-                Sequelize.col(variable.columnDerivedFrom)
+                //Sequelize.col(variable.columnProperties.arrayIndex? )
+                nonAggFunction(variable)
               ),
-              variable.columnDerivedFrom,
+              variable.id,
             ] as ProjectionAlias
         );
 };
@@ -174,7 +200,8 @@ export const nonNullGeometryFilter = async (geomColumnName: string) => {
 
 export const radiusCoordsQuery = async (
   ctx: ExegesisContext,
-  geomColumnName: string
+  geomColumnName: string,
+  geomSrid: number
 ) => {
   const { within, within_units, coords, _url, crs } = await edrCommonParams(
     ctx
@@ -183,8 +210,8 @@ export const radiusCoordsQuery = async (
     ? Sequelize.where(
         Sequelize.fn(
           "ST_DistanceSphere",
-          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
-          Sequelize.fn("ST_GeomFromText", coords.coords2d, 3857)
+          Sequelize.fn("ST_SetSRID", Sequelize.col(geomColumnName), geomSrid),
+          Sequelize.fn("ST_GeomFromText", coords.coords2d, geomSrid)
         ),
         "<=",
         unitConverter(within, within_units).to("meter")
@@ -195,6 +222,7 @@ export const radiusCoordsQuery = async (
 export const positionCoordsQuery = async (
   ctx: ExegesisContext,
   geomColumnName: string,
+  geomSrid: number,
   coordsSearchPrecision: number
 ) => {
   const { coords, _url, crs } = await edrCommonParams(ctx);
@@ -202,8 +230,10 @@ export const positionCoordsQuery = async (
     ? Sequelize.where(
         Sequelize.fn(
           "ST_DWithin",
-          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
-          Sequelize.fn("ST_GeomFromText", coords.coords2d, 3857),
+          //Sequelize.fn("ST_Transform",
+          Sequelize.col(geomColumnName),
+          //, 3857),
+          Sequelize.fn("ST_GeomFromText", coords.coords2d, geomSrid),
           coordsSearchPrecision
         ),
         true
@@ -213,15 +243,16 @@ export const positionCoordsQuery = async (
 
 const areaCoordsQuery = async (
   ctx: ExegesisContext,
-  geomColumnName: string
+  geomColumnName: string,
+  geomSrid: number
 ) => {
   const { crs, coords, _url } = await edrCommonParams(ctx);
   return coords && _url.pathname.endsWith("area")
     ? Sequelize.where(
         Sequelize.fn(
           "ST_Intersects",
-          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
-          Sequelize.fn("ST_GeomFromText", coords.coords2d, 3857)
+          Sequelize.fn("St_SetSRID", Sequelize.col(geomColumnName), geomSrid),
+          Sequelize.fn("ST_GeomFromText", coords.coords2d, geomSrid)
         ),
         true
       )
@@ -230,8 +261,7 @@ const areaCoordsQuery = async (
 
 const trajectoryCoordsQuery = async (
   ctx: ExegesisContext,
-  geomColumnName: string,
-  datetimeColumns: string
+  mCollection: types.CollectionWithoutProps
 ) => {
   const {
     _url,
@@ -250,8 +280,16 @@ const trajectoryCoordsQuery = async (
           Sequelize.where(
             Sequelize.fn(
               "ST_DWithin",
-              Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857),
-              Sequelize.fn("ST_GeomFromText", coords.coords2d, 3857),
+              Sequelize.fn(
+                "ST_SetSRID",
+                Sequelize.col(mCollection.geomColumnName),
+                mCollection.geomSrid
+              ),
+              Sequelize.fn(
+                "ST_GeomFromText",
+                coords.coords2d,
+                mCollection.geomSrid
+              ),
               corridor_width
                 ? unitConverter(corridor_width, width_units).to("m")
                 : 30
@@ -261,10 +299,11 @@ const trajectoryCoordsQuery = async (
           coords.mmin //Just one check because in precontroller validation, it wont accept multidimensional...
             ? {
                 [Op.or]: [
-                  Sequelize.where(Sequelize.col(datetimeColumns), Op.between, [
-                    coords.mmin,
-                    coords.mmax,
-                  ]),
+                  Sequelize.where(
+                    Sequelize.col(mCollection.datetimeColumn),
+                    Op.between,
+                    [coords.mmin, coords.mmax]
+                  ),
                 ],
               }
             : undefined,
@@ -276,7 +315,7 @@ const trajectoryCoordsQuery = async (
                       "ST_Z",
                       Sequelize.fn(
                         "ST_Transform",
-                        Sequelize.col(geomColumnName),
+                        Sequelize.col(mCollection.geomColumnName),
                         3857
                       )
                     ),
@@ -292,7 +331,7 @@ const trajectoryCoordsQuery = async (
                   "ST_Z",
                   Sequelize.fn(
                     "ST_Transform",
-                    Sequelize.col(geomColumnName),
+                    Sequelize.col(mCollection.geomColumnName),
                     3857
                   )
                 ),
@@ -305,7 +344,11 @@ const trajectoryCoordsQuery = async (
     : undefined;
 };
 
-export const zQuery = async (ctx: ExegesisContext, geomColumnName: string) => {
+export const zQuery = async (
+  ctx: ExegesisContext,
+  geomColumnName: string,
+  geomSrid: number
+) => {
   const { z } = await edrCommonParams(ctx);
   let whereClause: WhereOptions;
   if (z) {
@@ -313,7 +356,7 @@ export const zQuery = async (ctx: ExegesisContext, geomColumnName: string) => {
       return (whereClause = Sequelize.where(
         Sequelize.fn(
           "ST_Z",
-          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857)
+          Sequelize.fn("ST_SetSRID", Sequelize.col(geomColumnName), geomSrid)
         ),
         Op.in,
         //[...z.in]
@@ -324,7 +367,7 @@ export const zQuery = async (ctx: ExegesisContext, geomColumnName: string) => {
       return (whereClause = Sequelize.where(
         Sequelize.fn(
           "ST_Z",
-          Sequelize.fn("ST_Transform", Sequelize.col(geomColumnName), 3857)
+          Sequelize.fn("ST_SetSRID", Sequelize.col(geomColumnName), geomSrid)
         ),
         Op.between,
         [z.min, z.max]
@@ -344,7 +387,7 @@ export const zQuery = async (ctx: ExegesisContext, geomColumnName: string) => {
 };
 export const dateTimeQuery = async (
   ctx: ExegesisContext,
-  datetimeColumns: string
+  datetimeColumn: string
 ) => {
   const datetime = (await edrCommonParams(ctx)).datetime;
 
@@ -352,28 +395,28 @@ export const dateTimeQuery = async (
   if (ctx.params.query.datetime) {
     if (datetime.one) {
       whereClause = {
-        [Op.or]: { [datetimeColumns]: datetime.one },
+        [Op.or]: { [datetimeColumn]: datetime.one },
       };
     } else if (datetime.start && datetime.end) {
       whereClause = {
         [Op.or]: [
           Sequelize.where(
-            Sequelize.col(datetimeColumns),
+            Sequelize.col(datetimeColumn),
             Op.gte,
             datetime.start
           ),
-          Sequelize.where(Sequelize.col(datetimeColumns), Op.lte, datetime.end),
+          Sequelize.where(Sequelize.col(datetimeColumn), Op.lte, datetime.end),
         ],
       };
     } else if (!datetime.start && datetime.end) {
       whereClause = Sequelize.where(
-        Sequelize.col(datetimeColumns),
+        Sequelize.col(datetimeColumn),
         Op.lte,
         datetime.end
       );
     } else {
       whereClause = Sequelize.where(
-        Sequelize.col(datetimeColumns),
+        Sequelize.col(datetimeColumn),
         Op.gte,
         datetime.start
       );
@@ -385,29 +428,31 @@ export const dateTimeQuery = async (
 
 const allWhereQueries = async (
   ctx: ExegesisContext,
-  geomColumnName: string,
-  datetimeColumns: string,
-  pKeyColumn: string,
-  coordsSearchPrecision?: number
+  matchedCollection: types.CollectionWithoutProps
 ): Promise<WhereOptions<any>> => {
   return {
     [Op.and]: [
-      await nonNullGeometryFilter(geomColumnName),
+      await nonNullGeometryFilter(matchedCollection.geomColumnName),
       await instanceIdColumnQuery(ctx),
-      await xyBboxQuery(ctx, geomColumnName),
-      await zAxisBboxQuery(ctx, geomColumnName),
+      await xyBboxQuery(ctx, matchedCollection.geomColumnName),
+      await zAxisBboxQuery(ctx, matchedCollection.geomColumnName),
       await locationIdQuery(ctx),
       await positionCoordsQuery(
         ctx,
-        geomColumnName,
-        coordsSearchPrecision ?? 0.0001
+        matchedCollection.geomColumnName,
+        4326,
+        matchedCollection.geomSearchPrecision ?? 0.0001
       ),
-      await radiusCoordsQuery(ctx, geomColumnName),
-      await dateTimeQuery(ctx, datetimeColumns),
-      await areaCoordsQuery(ctx, geomColumnName),
-      await trajectoryCoordsQuery(ctx, geomColumnName, datetimeColumns),
-      await zQuery(ctx, geomColumnName),
-      await itemIdQuery(ctx, pKeyColumn),
+      await radiusCoordsQuery(
+        ctx,
+        matchedCollection.geomColumnName,
+        matchedCollection.geomSrid
+      ),
+      await dateTimeQuery(ctx, matchedCollection.datetimeColumn),
+      await areaCoordsQuery(ctx, matchedCollection.geomColumnName, 4326),
+      await trajectoryCoordsQuery(ctx, matchedCollection),
+      await zQuery(ctx, matchedCollection.geomColumnName, 4326),
+      await itemIdQuery(ctx, matchedCollection.pkeyColumn),
       //await cubeZQuery(ctx),
       //await includeColumnsToRetrieve(ctx, edrVariables),
       //await transformToCrsOrForce2DQuery(ctx, geomColumnName, resultWithZAxis),

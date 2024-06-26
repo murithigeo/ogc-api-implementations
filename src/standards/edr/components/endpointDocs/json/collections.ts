@@ -32,17 +32,17 @@ async function genExtentBbox(
 async function genExtentTempInterval(
   ctx: ExegesisContext,
   modelName: string,
-  datetimeColumns?: string
+  datetimeColumn?: string
 ) {
   //Instantiate temporal interval array
   const intervals: [string | null, string | null][] = [];
 
   //If the datecolumns are listed, then query the database
-  if (datetimeColumns) {
-      let min = await sequelize.models[modelName].min(datetimeColumns, {
+  if (datetimeColumn) {
+      let min = await sequelize.models[modelName].min(datetimeColumn, {
         where: await helperScripts.instanceIdColumnQuery(ctx),
       });
-      let max = await sequelize.models[modelName].max(datetimeColumns, {
+      let max = await sequelize.models[modelName].max(datetimeColumn, {
         where: await helperScripts.instanceIdColumnQuery(ctx),
       });
       intervals.push([min as string, max as string]);
@@ -84,7 +84,7 @@ async function genCollectionInfo(
   const tempInterval = await genExtentTempInterval(
     ctx,
     collectionConfig.modelName,
-    collectionConfig.datetimeColumns
+    collectionConfig.datetimeColumn
   );
 
   let isUTC: boolean = false;
